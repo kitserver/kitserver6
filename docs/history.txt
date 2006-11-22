@@ -45,3 +45,8 @@ v6.2.0:
 - various fixes for kserv (ML, international challenge hidden teams)
 - stadium server
 
+2006-11-21
+----------
+v6.3.0:
+- standardized input. Support for keyboard/gamepad
+

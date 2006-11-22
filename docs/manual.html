@@ -26,6 +26,8 @@
         tr.newf td {background-color:#efd}
         span.exclam {font-weight:bold;color:#484;}
         div.hist {color:#888;float:right;}
+        span.buttontext {font-weight:bold;color:#000;background-color:#888}
+        a.ac{font-weight:bold;}
     </style>
 </head>
 <body>
@@ -34,11 +36,11 @@
 Version history: <a href="history.txt">history.txt</a>
 </div>
 <div>
-November 12, 2006<br />
-Module Versions: <a href="#kitserver">Kserv 6.2.0</a>, 
-<a href="#ballserver">Ballserver 6.2.0</a>,
-<a href="#lodmixer">LOD Mixer 6.1.2</a>,
-<a href="#stadiumserver">Stadium Server 6.2.0</a>
+November 21, 2006<br />
+Module Versions: <a href="#kitserver">Kserv 6.3.0</a>, 
+<a href="#ballserver">Ballserver 6.3.0</a>,
+<a href="#lodmixer">LOD Mixer 6.3.0</a>,
+<a href="#stadiumserver">Stadium Server 6.3.0</a>
 </div>
 
 
@@ -48,7 +50,7 @@ Module Versions: <a href="#kitserver">Kserv 6.2.0</a>,
 <p>
 Kitserver 6 is an add-on program for Pro Evolution Soccer 6.
 It is a loader and manager for various modules.
-Kserv Module 6.2.0 provides the alternative way of managing players and goalkeeper kits
+Kserv Module 6.3.0 provides the alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
 Also, you are not restricted to just 1st and 2nd kit for each team - you can have as many as you like.
@@ -64,14 +66,14 @@ teams - licensed and unlicensed!</span>
 </p>
 
 <p>
-The BallServer Module 6.2.0 does similar things to KitServer, it offers the
+The BallServer Module 6.3.0 does similar things to KitServer, it offers the
 possibility of chosing a ball from the GDB. Of course it is possible to store
 as many balls as you like. You can use different texture sizes for the balls: standard - 256x256,
 and also 512x512 and 1024x1024.
 </p>
 
 <p>
-LOD Mixer Module 6.1.2 allows to make some tweaks to the graphics engine of the game, such
+LOD Mixer Module 6.3.0 allows to make some tweaks to the graphics engine of the game, such
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
@@ -122,11 +124,112 @@ want. (Or you can leave it there - it won't do any harm, and you'll be able to q
 re-enable kitserver later, if you run setup again and press "Install" button.)
 </p>
 
+<h3>1.4 Kitserver actions and hot-keys</h3>
+
+<p>
+Certain actions that Kitserver performs need to be triggered or initiated by the user. 
+Starting from version 6.3.0, both keyboard and gamepad controllers are supported. Different 
+modules of Kitserver use different "action triggers", but there's a fixed set of actions
+that the modules utilize. Typically, the same hotkeys can be and are re-used by different 
+modules, unless there is a conflict between them.
+</p>
+
+<p>
+Here is the list of actions and default bindings for keyboard and gamepad:<br />
+
+<table>
+    <tr>
+        <th>Kitserver action</th>
+        <th>Keyboard/Gamepad</th>
+        <th>Extra (Keyboard-only)</th>
+    </tr>
+    <tr>
+        <td><a name="ac_switch_left">Switch left kit</a></td>
+        <td><img src="l1.gif" /></td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td><a name="ac_switch_right">Switch right kit</a></td>
+        <td><img src="r1.gif" /></td>
+        <td>2</td>
+    </tr>
+    <tr>
+        <td><a name="ac_reset">Reset</a></td>
+        <td><img src="square.gif" /></td>
+        <td>7</td>
+    </tr>
+    <tr>
+        <td><a name="ac_random">Random</a></td>
+        <td><img src="circle.gif" /></td>
+        <td>8</td>
+    </tr>
+    <tr>
+        <td><a name="ac_prev">Previous</a></td>
+        <td><img src="l1.gif" /></td>
+        <td>9</td>
+    </tr>
+    <tr>
+        <td><a name="ac_next">Next</a></td>
+        <td><img src="r1.gif" /></td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td><a name="ac_prev_val">Previous value</a></td>
+        <td><img src="square.gif" /></td>
+        <td>Ins (Num 0)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_next_val">Next value</a></td>
+        <td><img src="cross.gif" /></td>
+        <td>Del (Num Del)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_info_prev">Information page previous</a></td>
+        <td>(no binding)</td>
+        <td>PageUp (Num 9)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_info_next">Information page next</a></td>
+        <td><span class="buttontext">Select</span></td>
+        <td>PageDn (Num 3)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_action1">Action 1</a></td>
+        <td><img src="square.gif"/></td>
+        <td>(no binding)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_action2">Action 2</a></td>
+        <td><img src="cross.gif"/></td>
+        <td>Tab</td>
+    </tr>
+    <tr>
+        <td><a name="ac_switch1">Switch 1</a></td>
+        <td><img src="l2.gif"/></td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td><a name="ac_switch2">Switch 2</a></td>
+        <td><img src="r2.gif"/></td>
+        <td>2</td>
+    </tr>
+</table>
+</p>
+
+<p>
+<div class="note">
+Standard Keyword/Gamepad bindings are fixed, however the "Extra" keyword 
+bindings can be remapped, using <b>keybind.exe</b> program:<br/>
+</div>
+
+<img src="keybind.gif"/>
+</p>
+
 
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kitserver">Kserv Module 6.2.0 (kserv.dll)</h2>
+<h2 id="kitserver">Kserv Module 6.3.0 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -374,10 +477,10 @@ To fix that, simply modify kserv.cfg and add that model number to corresponding 
 
 <p>
 You can switch between 1st/2nd kits as before - using your keyboard or gamepad - whatever you
-have configured. In order to get to the extra kits, press <b>[1]</b> button - to load next extra 
-kit for home team, <b>[2]</b> - to load next extra kit for away team.
+have configured. In order to get to the extra kits, use <a class="ac" href="#ac_switch_left">Switch left kit</a> action - to load next extra 
+kit for home team, <a class="ac" href="#ac_switch_right">Switch right kit</a> action - to load next extra kit for away team.
 It is also possible to set goalkeepers kits. There are now 2 modes of kit selection: "Player mode" and
-"Goalkeepers mode". You can switch between them by pressing <b>[Tab]</b> key. For goalkeeper,
+"Goalkeepers mode". You can switch between them by pressing <a class="ac" href="#ac_action2">Action 2</a> hot-key. For goalkeeper,
 choose the kits the same way as you did for the players.
 </p>
 
@@ -395,15 +498,15 @@ choose the kits the same way as you did for the players.
 <p>
 In the bottom section of the screen, there might be additional information displayed by
 kitserver modules. Since there is not enough space, these are split into pages between which 
-you can switch using <b>[PAGE UP]</b> and <b>[PAGE DOWN]</b> keys. 
-On the picture above, you can see the page called "Ball selection". It shows
-currently selected ball from  GDB. To go a different page of inforamtion - lodmixer settings,
-for example, press <b>[PAGE UP]/[PAGE DOWN]</b>.
+you can switch using <a class="ac" href="#ac_info_prev">Info-page Previous</a> and <a class="ac" href="#ac_info_next">Info-page Next</a> actions. 
+On the picture above, you can see the information page called "Ball selection". The orange text
+at the bottom shows the name of the page and also its ordinal in the list of pages and the total
+number of available pages.
 </p>
 
 <!-- ### BALLSERVER ### -->
 
-<h2 id="ballserver">Ballserver Module 6.2.0 (bserv.dll)</h2>
+<h2 id="ballserver">Ballserver Module 6.3.0 (bserv.dll)</h2>
 
 <h3>3.1 Quick summary of the features</h3>
 
@@ -462,10 +565,12 @@ texture should work with a 512x512 texture as well. If you're unsure, just try i
 <p>
 Start the game just as usual. When you come to Strip Selection, you will see a new text under the mini-kits saying 
 <b>"Ball: game choice"</b> by default. In this case, you will recognize no change when playing as the ball you selected in 
-the options will be used. Now comes the new feature: press <b>B</b> on your keyboard to select the next ball (or <b>V</b> 
-to cycle back). The text will change into <b>"Ball: <i>&lt;name configured in map.txt&gt;</i>"</b> and if everything is
-well-configured, you will play with that ball. To choose a random ball, press <b>R</b> and to reset the ball to game choice 
-press <b>C</b>. Under the text you can see a 3D preview. It doesn't need any configuration or additional files in the GDB
+the options will be used. Now comes the new feature: use <a class="ac" href="#ac_next">Next</a> action to select the next ball,
+or <a class="ac" href="#ac_prev">Previous</a> - to pick the previous ball from the list. 
+The text will change into <b>"Ball: <i>&lt;name configured in map.txt&gt;</i>"</b> and if everything is
+well-configured, you will play with that ball. To choose a random ball, use <a class="ac" href="#ac_random">Random</a> action 
+and to reset the ball to game choice - <a class="ac" href="#ac_reset">Reset</a> action. 
+Under the text you can see a 3D preview. It doesn't need any configuration or additional files in the GDB
 as it is created from the texture and the model file defined in your map.txt.
 
 <img src="ballsel.jpg" />
@@ -479,7 +584,7 @@ say "Ball selection" then.
 
 <!-- ### LODMIXER ### -->
 
-<h2 id="lodmixer">LOD Mixer Module 6.1.2 (lodmixer.dll)</h2>
+<h2 id="lodmixer">LOD Mixer Module 6.3.0 (lodmixer.dll)</h2>
 
 <h3>4.1 How to use</h3>
 
@@ -508,13 +613,14 @@ the corresponding page in Strip Selection (<a href="#kitinfoscreen">see instruct
 <img src="lodingame.jpg"/>
 
 <p>
-The controls are quite simple: With the keys <b>[Home]</b> and <b>[End]</b> you choose the setting
-you want to change. With <b>[Ins]</b> and <b>[Del]</b> you can change the value now.
-The configuration is saved automatically and also works for friendly matches now.
+The controls are quite simple: With the <a class="ac" href="#ac_prev">Previous</a> and 
+<a class="ac" href="#ac_next">Next</a> hotkeys, you choose the setting
+you want to change. <a class="ac" href="#ac_prev_val">Previous value</a> and <a class="ac" href="#ac_next_val">Next value</a> actions 
+let you can change the value.  The configuration is saved automatically.
 </p>
 
 <!-- ### STADIUM SERVER ### -->
-<h2 id="stadiumserver">Stadium Server Module 6.2.0 (stadium.dll)</h2>
+<h2 id="stadiumserver">Stadium Server Module 6.3.0 (stadium.dll)</h2>
 <h3>5.1 Introduction</h3>
 <p>
 Stadium Server is a plug-in module for Kitserver. It allows to use additional stadiums, which
@@ -644,7 +750,7 @@ The <b>map.txt</b> in Stadium Server is used slightly differently compared to ot
 (such as Kitserver or Ballserver, etc.). To use a GDB stadium in the game, you don't necessarily
 need the map.txt file. However, what it allows to do, is to define a "home stadium" for a team.
 Then, whenever the Stadium Server is in the "home team" mode (you can turn it on/off by pressing 
-<b>[7]</b> key), it will determine which team is the home team, and try to load the corresponding
+<a class="ac" href="#ac_reset">Reset</a> hot-key), it will determine which team is the home team, and try to load the corresponding
 stadium from GDB. Here's a simple map.txt, with 2 teams having home stadiums associated with 
 them:</p>
 
@@ -666,15 +772,20 @@ folder name. For IDs for all the teams - see <a href="uni.txt">uni.txt</a> file<
 <h3>5.5. Modes of operation</h3>
 
 <p>During the Strip Selection screen, you will see a text showing the currently selected 
-stadium (or stadium mode), and 4 new hotkeys will be activated: <b>[7],[8],[9],[0]</b>:
+stadium (or stadium mode), and you can use the following actions: 
+<a class="ac" href="#ac_reset">Reset</a>,
+<a class="ac" href="#ac_reset">Random</a>,
+<a class="ac" href="#ac_reset">Previous</a>,
+<a class="ac" href="#ac_reset">Next</a>.
 <p>
 
 <img src="selected.jpg" />
 
 <p>Stadium Server basically has 2 modes of operation, where it will load the stadiums from the
-GDB: "selected stadium" mode and "home team stadium" mode. Using <b>[9]</b> and <b>[0]</b> keys
-you can move back and forth among available GDB stadiums. The <b>[8]</b> randomly picks a 
-stadium from the GDB. Pressing <b>[7]</b> key, you alternate between "game choice" and "home
+GDB: "selected stadium" mode and "home team stadium" mode. Using <a class="ac" href="#ac_prev">Previous</a> and 
+<a class="ac" href="#ac_next">Next</a> hot-keys, you can move back and forth among available GDB stadiums,
+pick a random GDB stadium with <a class="ac" href="#ac_random">Random</a>. Pressing
+<a class="ac" href="#ac_reset">Reset</a> hot-key, you alternate between "game choice" and "home
 team stadium" mode. If "game choice" is selected - the stadium from the AFS is used.</p>
 
 <img src="hometeam.jpg" />
@@ -682,10 +793,15 @@ team stadium" mode. If "game choice" is selected - the stadium from the AFS is u
 <h3>5.6. "View Stadiums"</h3>
 
 <p>You can view all of your GDB stadiums in the "View Stadiums" mode of the game. To do that, 
-simply press the <b>[1]</b> key. To choose the weather, use the <b>[2]</b> key.
+simply use <a class="ac" href="#ac_switch1">Switch 1</a> action. To choose the weather, use 
+the <a class="ac" href="#ac_switch2">Switch 2</a> action.
 </p>
 
 <img src="viewstadiums.gif" />
+
+<p>
+<div class="note">NOTE: Currently only keyboard hotkeys are supported
+in "View Stadiums" mode. Gamepad doesn't work.</div>
 
 
 <!-- ### ADVANCED CONFIGURATION ### -->
