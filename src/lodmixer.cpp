@@ -22,7 +22,7 @@ enum {SET_TIMEOFDAY, SET_WEATHER, SET_SEASON, SET_NUMSUBS, SET_EFFECTS,
 		SET_CROWDSTANCE, SET_HOMECROWD, SET_AWAYCROWD,	
 		SET_LAST, //equal to number of settings
 };
-int numValues[]={4,7,4,6,3,4,5,5};
+int numValues[]={4,4,4,6,3,4,5,5};
 int values[]={0,0,0,0,0,0,0,0};
 char* timeOfDay_Values[]={
 	"Game choice",
@@ -35,9 +35,6 @@ char* weather_Values[]={
 	"Fine",
 	"Rain",
 	"Snow",
-	"Konami Random",
-	"Warm Random",
-	"Cold Random",
 };
 char* season_Values[]={
 	"Game choice",
