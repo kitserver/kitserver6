@@ -49,4 +49,8 @@ v6.2.0:
 ----------
 v6.3.0:
 - standardized input. Support for keyboard/gamepad
+- utility for changing keyboard bindings
+- bug-fix for kload.dll (should stabilize all modules)
+- ball server fixes to eliminate crashes, when 512x512 ball textures
+are installed in the AFS.
 
