@@ -973,7 +973,9 @@ bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
                 LogWithTwoNumbers(&k_stadium,"stadGetNumPages: new size: %08x pages (%08x bytes)", 
                         numPages, numPages*0x800);
 
-                *retval = numPages;
+                *retval = max(numPages, orgNumPages);
+                LogWithTwoNumbers(&k_stadium, "stadGetNumPages: returning size: %08x pages (%08x bytes)",
+                        *retval, *retval*0x800);
             }
 
             g_afsId = afsId;
@@ -1002,7 +1004,7 @@ void stadBeginUniSelect()
 
 void stadEndUniSelect()
 {
-    Log(&k_stadium, "stadEndUniSelect");
+    //Log(&k_stadium, "stadEndUniSelect");
     
     isSelectMode=false;
 
@@ -1770,7 +1772,7 @@ void CheckViewStadiumMode()
 
 DWORD stadReadLCM(DWORD p1, DWORD p2, DWORD p3, DWORD p4)
 {
-    Log(&k_stadium, "stadReadLCM: CALLED");
+    //Log(&k_stadium, "stadReadLCM: CALLED");
 
     // avoid Club House
 	LCM* lcm=(LCM*)data[TEAM_IDS];
@@ -1787,7 +1789,7 @@ DWORD stadReadLCM(DWORD p1, DWORD p2, DWORD p3, DWORD p4)
 	
 DWORD stadSetLCM(DWORD p1)
 {
-    Log(&k_stadium, "stadSetLCM: CALLED");
+    //Log(&k_stadium, "stadSetLCM: CALLED");
 	stadEndUniSelect();
 
 	LCM* lcm=(LCM*)data[TEAM_IDS];
