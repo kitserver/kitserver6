@@ -37,6 +37,7 @@ RECT ballTextureRect;
 bool isPNGtexture=false;
 char currTextureName[BUFLEN];
 IDirect3DTexture8* g_lastBallTex;
+IDirect3DTexture8* g_gdbBallTexture;
 
 static DWORD g_afsId = 0xffffffff;
 static DWORD g_fileId = 0xffffffff;
@@ -123,7 +124,8 @@ static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize)
 void ApplyAlphaChunk(RGBQUAD* palette, BYTE* memblk, DWORD size);
 void FreePNGTexture(BITMAPINFO* bitmap);
 
-bool CreateBallTexture();
+HRESULT CreateBallTexture(IDirect3DDevice8* dev, UINT width, UINT height, UINT levels, DWORD usage,
+        D3DFORMAT format, IDirect3DTexture8** ppTexture);
 void FreeBallTexture();
 HRESULT STDMETHODCALLTYPE bservCreateTexture(IDirect3DDevice8* self, UINT width, UINT height,UINT levels,
 	DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, DWORD src, bool* IsProcessed);
@@ -329,6 +331,7 @@ void bservReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 void bservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
   LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
 {
+    //LogWithNumber(&k_bserv, "bservAfterReadFile: nNumberOfBytesToRead: %08x", nNumberOfBytesToRead);
 	int found=-1;
 	char tmp[BUFLEN];
 	
@@ -455,7 +458,9 @@ bool bservGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
 		g_afsId = afsId;
 		g_fileId = fileId;
 
-        *retval = (numPages>0) ? numPages : orgNumPages;
+        *retval = max(numPages, orgNumPages);
+        LogWithTwoNumbers(&k_bserv, "bservGetNumPages: returning size: %08x pages (%08x bytes)",
+                *retval, *retval*0x800);
         return true;
     };
     return false;
@@ -1229,13 +1234,11 @@ BOOL ReadConfig(BSERV_CFG* config, char* cfgFile)
 	return true;
 }
 
-bool CreateBallTexture()
+HRESULT CreateBallTexture(IDirect3DDevice8* dev, UINT width, UINT height, UINT levels, DWORD usage,
+        D3DFORMAT format, IDirect3DTexture8** ppTexture) 
 {
-	BYTE* result=NULL;
 	char tmp[BUFLEN];
 	ZeroMemory(tmp,BUFLEN);
-	DWORD size;
-	BITMAPINFOHEADER *bmpinfo=NULL;
 	
 	if (selectedBall<0) return false;
 		
@@ -1243,44 +1246,38 @@ bool CreateBallTexture()
 		return true;
 		
 	FreeBallTexture();
-	
 	sprintf(tmp,"%sGDB\\balls\\%s",GetPESInfo()->gdbDir,texture);
 	
-	if (!FileExists(tmp))
-		return false;
-	
-	if (lstrcmpi(tmp + lstrlen(tmp)-4, ".png")==0) {
-		ballTextureSize=LoadPNGTexture((BITMAPINFO**)&ballTexture,tmp);
-		if (ballTexture==NULL)
-			return false;
-		bmpinfo=(BITMAPINFOHEADER*)ballTexture;
-		isPNGtexture=true;
+    D3DXIMAGE_INFO imageInfo;
+    if (SUCCEEDED(D3DXGetImageInfoFromFile(tmp, &imageInfo))) {
+        // it's IMPORTANT not to downsize the texture, because it will
+        // lead to crashes, as the game still thinks the texture at least 
+        // width*height size.
+        ballTextureRect.right = max(imageInfo.Width, width);
+        ballTextureRect.bottom = max(imageInfo.Height, height);
 
-	} else if (lstrcmpi(tmp + lstrlen(tmp)-4, ".bmp")==0) {
-		read_file_to_mem(tmp,&ballTexture,&ballTextureSize);
-		if (ballTexture==NULL)
-			return false;
-		bmpinfo=(BITMAPINFOHEADER*)((DWORD)ballTexture+sizeof(BITMAPFILEHEADER));
-		isPNGtexture=false;
-		
-	} else {
-		return false;
-	};
-	ballTextureRect.right=bmpinfo->biWidth;
-	ballTextureRect.bottom=bmpinfo->biHeight;
-	
-	strcpy(currTextureName,texture);
-	
+        if (FAILED(D3DXCreateTextureFromFileEx(
+                    dev, tmp, ballTextureRect.right, ballTextureRect.bottom, 
+                    levels, usage, format, D3DPOOL_MANAGED, 
+                    D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, ppTexture
+                ))) {
+            LogWithString(&k_bserv, "D3DXCreateTextureFromFileEx FAILED for %s", tmp);
+            return false;
+        }
+
+        strcpy(currTextureName,texture);
+    } else {
+        LogWithString(&k_bserv, "D3DXGetImageInfoFromFile FAILED for %s", tmp);
+        return false;
+    }
+
 	return true;
 };
 
 void FreeBallTexture()
 {
-	if (ballTexture!=NULL)
-		HeapFree(GetProcessHeap(), 0, ballTexture);
-	
+    SafeRelease(&g_gdbBallTexture);
 	strcpy(currTextureName,"\0");
-	
 	return;
 };
 
@@ -1310,18 +1307,18 @@ DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, DWOR
 	if (src!=0 && src==gdbBallAddr) {
 		Log(&k_bserv,"bservCreateTexture called for ball texture.");
 		
-		if (!CreateBallTexture()) goto NoReplacingTexture;
-		
+        if (FAILED(CreateBallTexture(self,width,height,levels,usage,format,&g_gdbBallTexture))) {
+            *IsProcessed = false;
+            return res;
+        }
+
 		res = OrgCreateTexture(self, ballTextureRect.right, ballTextureRect.bottom,
 				levels,usage,format,pool,ppTexture);
-		g_lastBallTex = *ppTexture;
+
+        g_lastBallTex = *ppTexture;
+        *IsProcessed = true;
 		TRACE2(&k_bserv,"tex = %08x", (DWORD)g_lastBallTex);
 	};
-
-	NoReplacingTexture:
-
-	if (g_lastBallTex != NULL)
-		*IsProcessed=true;
 
 	return res;
 }
@@ -1330,31 +1327,31 @@ void bservUnlockRect(IDirect3DTexture8* self,UINT Level)
 {
 	//LogWithTwoNumbers(&k_bserv,"bservUnlockRect: Processing texture %x, level %d",(DWORD)self,Level);
 	
-	if (ballTexture==NULL || g_lastBallTex==NULL)
+	if (g_gdbBallTexture==NULL || g_lastBallTex==NULL)
 		return;
 		
-	IDirect3DSurface8* g_surf = NULL;
+    IDirect3DSurface8* src = NULL;
+    IDirect3DSurface8* dest = NULL;
 
-	if (SUCCEEDED(g_lastBallTex->GetSurfaceLevel(0, &g_surf))) {
-		if (SUCCEEDED(D3DXLoadSurfaceFromFileInMemory(
-						g_surf, NULL, NULL, //destination
-						ballTexture, ballTextureSize, NULL, //source
-						D3DX_FILTER_NONE, 0, NULL)))
-		{ 
-			TRACE(&k_bserv,"Replacing ball texture COMPLETE");
-		}
-		else
-		{
-			TRACE(&k_bserv,"Replacing ball texture FAILED");
-		}
+    if (SUCCEEDED(g_lastBallTex->GetSurfaceLevel(0, &dest))) {
+        if (SUCCEEDED(g_gdbBallTexture->GetSurfaceLevel(0, &src))) {
+            if (SUCCEEDED(D3DXLoadSurfaceFromSurface(
+                            dest, NULL, NULL,
+                            src, NULL, NULL,
+                            D3DX_FILTER_NONE, 0))) {
+                TRACE(&k_bserv,"Replacing ball texture COMPLETE");
 
-		g_surf->Release();
-	}
+            } else {
+                TRACE(&k_bserv,"Replacing ball texture FAILED");
+            }
+            src->Release();
+        }
+        dest->Release();
+    }
 
 	g_lastBallTex=NULL;
-
 	return;
-};
+}
 
 DWORD SetBallName(char** names, DWORD numNames, DWORD p3, DWORD p4, DWORD p5, DWORD p6, DWORD p7)
 {
