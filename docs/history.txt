@@ -47,7 +47,7 @@ v6.2.0:
 
 2006-11-21
 ----------
-v6.3.0:
+v6.2.1:
 - standardized input. Support for keyboard/gamepad
 - utility for changing keyboard bindings
 - bug-fix for kload.dll (should stabilize all modules)
