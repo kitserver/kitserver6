@@ -1,0 +1,25 @@
+BUILD INSTRUCTIONS
+==========================================================================
+
+The Makefile (in the src folder) is intended to be used by Microsoft NMAKE 
+tool, which comes with Visual C++ 6. You will need the following 3rd-party
+software to build this program:
+
+- DirectX 9 SDK (or DirectX 8 SDK) 
+(Modify the Makefile so that it points to correct location
+of the SDK on your disk. Default is \DXSDK9)
+
+Three types of build are supported by the current Makefile: 
+"debug" and "release"
+
+To perform "debug" build, just type "nmake".
+To perform "release" build, type "nmake release".
+
+Currently, the difference between "debug" and "release" builds is in the
+way the debug configuration parameter is treated. The "release" build
+ignores debug values > 1, while "debug" build provides more detailed 
+logging for debug > 1. This behaviour, however, may change in the future.
+
+(NOTE: You can also build the EXE and DLL files separately, using 
+appropriate targets, specified in the Makefile.)
+

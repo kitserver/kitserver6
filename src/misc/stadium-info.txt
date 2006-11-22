@@ -1,0 +1,44 @@
+PES6 PC  0_text.afs Stadiums list
+
+stadium | start at | ends at | Konami NAme | REAL NAME | ingame nr |
+
+01 | 6941 | 7006 | Kanji Dome | Sapporo Dome | 27 |
+02 | 7007 | 7072 | Dietro Monte | Kashima Stadium | 28 |
+03 | 7073 | 7138 | Porto Folio | Nissan Stadium | 29 |
+04 | 7139 | 7204 | Queen Land Park | Nagai | 30 |
+05 | 7205 | 7270 | Haze Hills | Olympic Stadium of Tokyo | 31 |
+06 | 7271 | 7336 | Occhio del MAr| Niigata | 32 |
+07 | 7337 | 7402 | Ayase Nakano | Oita | 33 |
+08 | 7403 | 7468 | Kusonoko Mihama | Saitama | bonus 2|
+
+09 | 7469 | 7534 | Pro Evolution House | Training Ground | bonus 1 |
+
+10 | 7535 | 7600 | San Siro | San Siro | 08 |
+11 | 7601 | 7670 | Catalonia Stadium | Camp Nou | 18 |
+12 | 7671 | 7736 | Highbury | Highbury | 2 |
+13 | 7737 | 7802 | Orange Arena | Amsterdam Arena | 15 |
+14 | 7803 | 7868 | Isaar | Olympiastadion Munchen | ? |
+15 | 7869 | 7934 | Stade Louis II | Stade Louis II | 5 |
+16 | 7935 | 8000 | Old Trafford | Old Trafford | 1 |
+17 | 8001 | 8066 | Nakhon Ramashima | Nakhon Ramashima | 26 |
+18 | 8067 | 8132 | Gran Chaco | La Bombonera | 24 |
+19 | 8133 | 8198 | Cuito Cuanavale | Vodacom Park | 22 |
+20 | 8199 | 8264 | Amerigo Atlantis | Nacional Santiago | 25|
+21 | 8265 | 8330 | Delle Alpi | Delle Alpi | 9 |
+22 | 8331 | 8396 | Stadio Olimpico | Stadio Olimpico | 10 |
+23 | 8397 | 8462 | Stadio Ennio Tardini | Stadio Ennio Tardini | 11 |
+24 | 8463 | 8528 | Stamford Bridge | Stamford Bridge | ? |
+25 | 8529 | 8594 | Red Cauldron | Anfield Road | 3 |
+26 | 8595 | 8660 | Lutecia Park | Parc de Princes | 6 |
+27 | 8661 | 8726 | Massilia Stadium | Stade Velodrome | 7 |
+28 | 8727 | 8792 | Santiago Bernabeu | Santiago Bernabeu | 17 |
+29 | 8793 | 8858 | Borussia Stadion | Signal-Iduna Park | 12 |
+30 | 8859 | 8924 | Stockholm Arena | Rasunda | 21 |
+31 | 8925 | 8990 | Magpie Park | St.James Park | 4 |
+32 | 8991 | 9056 | Rotterdam Stadion | De Kuip | 16 |
+33 | 9057 | 9122 | Blautrum Stadion | Online Stadium| 14 |
+34 | 9123 | 9188 | Diamond Stadium | Newlands | 23 |
+35 | 9189 | 9254 | Hauptstadtstadion | Olympiastadion Berlin | 13 |
+36 | 9255 | 9320 | Riazor | Riazor | 19 |
+37 | 9321 | 9386 | Estadio Palo | Mestalla | 20 |
+38 | 9387 | 9452 | Nangsoh Stadium | Seoul SANG-AM STadium | bonus3 |

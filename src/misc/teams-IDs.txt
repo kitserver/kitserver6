@@ -1,0 +1,222 @@
+     TEAM id           Model      Name
+     DEC (hex)         DEC (hex)  
+=====================================================================
+
+team   0 (0x00): model   0 (0x00) Austria
+team   1 (0x01): model   0 (0x00) Belgium
+team   2 (0x02): model   0 (0x00) Burlgaria
+team   3 (0x03): model   0 (0x00) Croatia
+team   4 (0x04): model  60 (0x3c) Czech Republic - wideback
+team   5 (0x05): model   0 (0x00) Denmark
+team   6 (0x06): model   9 (0x09) England - wideback
+team   7 (0x07): model   0 (0x00) Finland
+team   8 (0x08): model 101 (0x65) France - wideback with logo
+team   9 (0x09): model   0 (0x00) Germany
+team  10 (0x0a): model   0 (0x00) Greece
+team  11 (0x0b): model   0 (0x00) Hungary
+team  12 (0x0c): model   0 (0x00) Republic of Ireland
+team  13 (0x0d): model 104 (0x68) Italy - wideback
+team  14 (0x0e): model   0 (0x00) Latvia 
+team  15 (0x0f): model 105 (0x69) Netherlands - wideback
+team  16 (0x10): model   0 (0x00) Northern Ireland
+team  17 (0x11): model   0 (0x00) Norway
+team  18 (0x12): model   0 (0x00) Poland
+team  19 (0x13): model   0 (0x00) Portugal
+team  20 (0x14): model   0 (0x00) Romania
+team  21 (0x15): model   0 (0x00) Russia
+team  22 (0x16): model   0 (0x00) Scotland
+team  23 (0x17): model   0 (0x00) Serbia & Montenegro
+team  24 (0x18): model   0 (0x00) Slovakia
+team  25 (0x19): model   0 (0x00) Slovenia
+team  26 (0x1a): model 100 (0x64) Spain - wideback with logo
+team  27 (0x1b): model 106 (0x6a) Sweden - wideback
+team  28 (0x1c): model   0 (0x00) Switzerland
+team  29 (0x1d): model   0 (0x00) Turkey
+team  30 (0x1e): model   0 (0x00) Ukraine
+team  31 (0x1f): model   0 (0x00) Wales
+ 
+team  32 (0x20): model   0 (0x00) Angola
+team  33 (0x21): model   0 (0x00) Cameroon
+team  34 (0x22): model   0 (0x00) Cote d'Ivoire
+team  35 (0x23): model   0 (0x00) Ghana
+team  36 (0x24): model   0 (0x00) Nigeria
+team  37 (0x25): model   0 (0x00) South Africa
+team  38 (0x26): model   0 (0x00) Togo
+team  39 (0x27): model   0 (0x00) Tunisia
+
+team  40 (0x28): model   0 (0x00) Costa Rica
+team  41 (0x29): model   0 (0x00) Mexico
+team  42 (0x2a): model   0 (0x00) Trinidad & Tobago
+team  43 (0x2b): model   0 (0x00) United States
+
+team  44 (0x2c): model 102 (0x66) Argentina - wideback with logo
+team  45 (0x2d): model   0 (0x00) Brazil
+team  46 (0x2e): model   0 (0x00) Chile
+team  47 (0x2f): model   0 (0x00) Columbia 
+team  48 (0x30): model   0 (0x00) Equador
+team  49 (0x31): model   0 (0x00) Paraguay
+team  50 (0x32): model   0 (0x00) Peru
+team  51 (0x33): model   0 (0x00) Uruguay
+
+team  52 (0x34): model   0 (0x00) Iran
+team  53 (0x35): model  12 (0x0c) Japan  - wideback with logo
+team  54 (0x36): model   0 (0x00) Saudi Arabia
+team  55 (0x37): model  13 (0x0d) South Korea - wideback
+team  56 (0x38): model  51 (0x33) Australia - wideback
+
+team  57 (0x39): model  14 (0x0e) Classic England
+team  58 (0x3a): model  14 (0x0e) Classic France
+team  59 (0x3b): model  14 (0x0e) Classic Germany
+team  60 (0x3c): model  14 (0x0e) Classic Italy
+team  61 (0x3d): model  14 (0x0e) Classic Netherlands
+team  62 (0x3e): model  14 (0x0e) Classic Argentina
+team  63 (0x3f): model  14 (0x0e) Classic Brazil
+
+team  64 (0x40): model  71 (0x47) Arsenal
+team  65 (0x41): model   0 (0x00) Aston Villa
+team  66 (0x42): model   0 (0x00) Blackburn
+team  67 (0x43): model   0 (0x00) Bolton Wanderers
+team  68 (0x44): model   0 (0x00) Charlton
+team  69 (0x45): model   0 (0x00) Chelsea
+team  70 (0x46): model   0 (0x00) Everton
+team  71 (0x47): model   0 (0x00) Fulham
+team  72 (0x48): model   0 (0x00) Liverpool
+team  73 (0x49): model   0 (0x00) Manchester City
+team  74 (0x4a): model 131 (0x83) Manchester United
+team  75 (0x4b): model   0 (0x00) Middlesbrough
+team  76 (0x4c): model   0 (0x00) Newcastle United
+team  77 (0x4d): model   0 (0x00) Portsmouth
+team  78 (0x4e): model   0 (0x00) Reading
+team  79 (0x4f): model   0 (0x00) Sheffield United
+team  80 (0x50): model   0 (0x00) Tottenham
+team  81 (0x51): model   0 (0x00) Watford
+team  82 (0x52): model   0 (0x00) West Ham
+team  83 (0x53): model   0 (0x00) Wigan
+
+team  84 (0x54): model  49 (0x31) AJ Auxerre 
+team  85 (0x55): model 147 (0x93) Bordeaux
+team  86 (0x56): model 126 (0x7e) Le Mans
+team  87 (0x57): model  74 (0x4a) RC Lens
+team  88 (0x58): model 124 (0x7c) Lille
+team  89 (0x59): model 140 (0x8c) FC Lorient
+team  90 (0x5a): model 134 (0x86) Olympique Lyonnais 
+team  91 (0x5b): model  54 (0x36) Olympique de Marseille
+team  92 (0x5c): model 148 (0x94) AS Monaco
+team  93 (0x5d): model 138 (0x8a) AS Nancy-Lorraine
+team  94 (0x5e): model 137 (0x89) FC Nantes
+team  95 (0x5f): model 132 (0x84) OGC Nice
+team  96 (0x60): model  74 (0x4a) Paris Saint-Germain
+team  97 (0x61): model 125 (0x7d) Stade Rennais FC
+team  98 (0x62): model  54 (0x36) AS Saint-Etienne 
+team  99 (0x63): model 125 (0x7d) CS Sedan
+team 100 (0x64): model  49 (0x31) FC Sochaux
+team 101 (0x65): model 139 (0x8b) Toulouse FC 
+team 102 (0x66): model 129 (0x81) ES Troyes AC 
+team 103 (0x67): model 128 (0x80) Valenciennes FC
+
+team 104 (0x68): model  58 (0x3a) Ascoli
+team 105 (0x69): model  84 (0x54) Atalanta 
+team 106 (0x6a): model  35 (0x23) Cagliari
+team 107 (0x6b): model 133 (0x85) Catania
+team 108 (0x6c): model  25 (0x19) Chievo Verona
+team 109 (0x6d): model  83 (0x53) Empoli
+team 110 (0x6e): model  33 (0x21) Fiorentina
+team 111 (0x6f): model  46 (0x2e) Inter
+team 112 (0x70): model  32 (0x20) Lazio
+team 113 (0x71): model  47 (0x2f) Livorno
+team 114 (0x72): model  73 (0x49) Messina
+team 115 (0x73): model 143 (0x8f) AC Milan
+team 116 (0x74): model  27 (0x1b) Palermo
+team 117 (0x75): model  67 (0x43) Parma
+team 118 (0x76): model  28 (0x1c) Reggina
+team 119 (0x77): model  50 (0x32) AS Roma
+team 120 (0x78): model  64 (0x40) Sampdoria 
+team 121 (0x79): model  30 (0x1e) Siena
+team 122 (0x7a): model 141 (0x8d) Torino
+team 123 (0x7b): model  29 (0x1d) Udinese
+
+team 124 (0x7c): model 146 (0x92) ADO Den Haag
+team 125 (0x7d): model 115 (0x73) Ajax
+team 126 (0x7e): model 127 (0x7f) AZ
+team 127 (0x7f): model 117 (0x75) SBV Excelsior
+team 128 (0x80): model 116 (0x74) Feyenoord
+team 129 (0x81): model 118 (0x76) FC Groningen
+team 130 (0x82): model  20 (0x14) SC Heerenveen
+team 131 (0x83): model  91 (0x5b) Heracles Almelo
+team 132 (0x84): model  61 (0x3d) NAC Breda - squashed with logo
+team 133 (0x85): model  49 (0x31) NEC Nijmegen
+team 134 (0x86): model  19 (0x13) PSV Eindhoven
+team 135 (0x87): model  74 (0x4a) RKC Waalwijk
+team 136 (0x88): model  21 (0x15) Roda JC
+team 137 (0x89): model  68 (0x44) Sparta Rotterdam
+team 138 (0x8a): model  18 (0x12) FC Twente - squashed with logo
+team 139 (0x8b): model  69 (0x45) FC Utrecht
+team 140 (0x8c): model  70 (0x46) Vitesse
+team 141 (0x8d): model  21 (0x15) Willem II
+
+team 142 (0x8e): model  34 (0x22) Athletic Club
+team 143 (0x8f): model  84 (0x54) FC Barcelona
+team 144 (0x90): model  66 (0x42) R. Betis
+team 145 (0x91): model   6 (0x06) RC Celta
+team 146 (0x92): model  53 (0x35) RC Deportivo la Coruna
+team 147 (0x93): model   5 (0x05) RCD Espanyol
+team 148 (0x94): model  84 (0x54) Getafe CF
+team 149 (0x95): model 135 (0x87) C. Gimnastic
+team 150 (0x96): model  85 (0x55) RC Recreativo de Huelva
+team 151 (0x97): model  96 (0x60) Levante UD
+team 152 (0x98): model  79 (0x4f) C. Atletico Madrid
+team 153 (0x99): model  31 (0x1f) Real Madrid
+team 154 (0x9a): model  83 (0x53) RCD Mallorca
+team 155 (0x9b): model  83 (0x53) CA Osasuna
+team 156 (0x9c): model  23 (0x17) R. Racing C.
+team 157 (0x9d): model  56 (0x38) R. Sociedad
+team 158 (0x9e): model  84 (0x54) Sevilla FC
+team 159 (0x9f): model  65 (0x41) Valencia CF
+team 160 (0xa0): model  75 (0x4b) Villarreal CF
+team 161 (0xa1): model  83 (0x53) R. Zaragoza
+
+team 162 (0xa2): model   0 (0x00) Anderlecht
+team 163 (0xa3): model   0 (0x00) Club Brugge
+team 164 (0xa4): model   0 (0x00) AC Sparta Praha
+team 165 (0xa5): model  86 (0x56) FC Copenhagen
+team 166 (0xa6): model 108 (0x6c) Bayern Munchen
+team 167 (0xa7): model 136 (0x88) Olympiacos Piraeus
+team 168 (0xa8): model   0 (0x00) Panathinaikos
+team 169 (0xa9): model  63 (0x3f) Juventus
+team 170 (0xaa): model 113 (0x71) Rosenborg BK
+team 171 (0xab): model 144 (0x90) Benfica
+team 172 (0xac): model  40 (0x28) FC Porto
+team 173 (0xad): model 142 (0x8e) Sporting Lisbon
+team 174 (0xae): model  89 (0x59) Celtic
+team 175 (0xaf): model  41 (0x29) Rangers
+team 176 (0xb0): model 113 (0x71) Djurgardens IF
+team 177 (0xb1): model   0 (0x00) Besiktas
+team 178 (0xb2): model   0 (0x00) Fenerbahce
+team 179 (0xb3): model  43 (0x2b) Galatasaray
+team 180 (0xb4): model  42 (0x2a) Dynamo Kiev
+
+team 181 (0xb5): model   0 (0x00) Boca Juniors
+team 182 (0xb6): model   0 (0x00) River Plate
+team 183 (0xb7): model   0 (0x00) Sao Paolo FC
+team 184 (0xb8): model  22 (0x16) PES United 
+team 185 (0xb9): model  22 (0x16) WE United
+
+team 186 (0xba): model   0 (0x00) Team A
+team 187 (0xbb): model   0 (0x00) Team B
+team 188 (0xbc): model   0 (0x00) Team C
+team 189 (0xbd): model   0 (0x00) Team D
+team 190 (0xbe): model   0 (0x00) Team E
+team 191 (0xbf): model   0 (0x00) Team F
+team 192 (0xc0): model   0 (0x00) Team G
+team 193 (0xc1): model   0 (0x00) Team H
+team 194 (0xc2): model   0 (0x00) Team I
+team 195 (0xc3): model   0 (0x00) Team J
+team 196 (0xc4): model   0 (0x00) Team K
+team 197 (0xc5): model   0 (0x00) Team L
+team 198 (0xc6): model   0 (0x00) Team M
+team 199 (0xc7): model   0 (0x00) Team N
+team 200 (0xc8): model   0 (0x00) Team O
+team 201 (0xc9): model   0 (0x00) Team P
+team 202 (0xca): model   0 (0x00) Team Q
+team 203 (0xcb): model   0 (0x00) Team R
+

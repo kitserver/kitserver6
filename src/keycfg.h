@@ -1,0 +1,88 @@
+#ifndef _KEYCFG_H
+#define _KEYCFG_H
+
+#include "input.h"
+
+/*
+ * Define abstract operations triggered by hot keys
+ * and default keyboard bindings for those keys.
+ */
+
+typedef struct _KEYBOARD_KEYCFG {
+    BYTE keySwitchLeft;
+    BYTE keySwitchRight;
+    BYTE keyReset;
+    BYTE keyRandom;
+    BYTE keyPrev;
+    BYTE keyNext;
+    BYTE keyPrevVal;
+    BYTE keyNextVal;
+    BYTE keyInfoPagePrev;
+    BYTE keyInfoPageNext;
+    BYTE keyAction1;
+    BYTE keyAction2;
+    BYTE keySwitch1;
+    BYTE keySwitch2;
+
+} KEYBOARD_KEYCFG;
+
+typedef struct _GAMEPAD_KEYCFG {
+    DWORD keySwitchLeft;
+    DWORD keySwitchRight;
+    DWORD keyReset;
+    DWORD keyRandom;
+    DWORD keyPrev;
+    DWORD keyNext;
+    DWORD keyPrevVal;
+    DWORD keyNextVal;
+    DWORD keyInfoPagePrev;
+    DWORD keyInfoPageNext;
+    DWORD keyAction1;
+    DWORD keyAction2;
+    DWORD keySwitch1;
+    DWORD keySwitch2;
+
+} GAMEPAD_KEYCFG;
+
+typedef struct _KEYCFG {
+    KEYBOARD_KEYCFG keyboard;
+    GAMEPAD_KEYCFG gamepad;
+
+} KEYCFG;
+
+#define KEYCFG_KEYBOARD_DEFAULT_SWITCH_LEFT   0x31
+#define KEYCFG_KEYBOARD_DEFAULT_SWITCH_RIGHT   0x32
+#define KEYCFG_KEYBOARD_DEFAULT_RESET  0x37
+#define KEYCFG_KEYBOARD_DEFAULT_RANDOM 0x38
+#define KEYCFG_KEYBOARD_DEFAULT_PREV 0x39
+#define KEYCFG_KEYBOARD_DEFAULT_NEXT 0x30
+#define KEYCFG_KEYBOARD_DEFAULT_PREVVAL VK_INSERT
+#define KEYCFG_KEYBOARD_DEFAULT_NEXTVAL VK_DELETE
+#define KEYCFG_KEYBOARD_DEFAULT_INFOPAGEPREV VK_PRIOR
+#define KEYCFG_KEYBOARD_DEFAULT_INFOPAGENEXT VK_NEXT
+#define KEYCFG_KEYBOARD_DEFAULT_ACTION1 0
+#define KEYCFG_KEYBOARD_DEFAULT_ACTION2 VK_TAB
+#define KEYCFG_KEYBOARD_DEFAULT_SWITCH1 0x31
+#define KEYCFG_KEYBOARD_DEFAULT_SWITCH2 0x32
+
+#define KEYCFG_GAMEPAD_DEFAULT_SWITCH_LEFT   L1_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_SWITCH_RIGHT   R1_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_RESET  SQUARE_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_RANDOM CIRCLE_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_PREV L1_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_NEXT R1_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_PREVVAL SQUARE_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_NEXTVAL CIRCLE_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_INFOPAGEPREV 0
+#define KEYCFG_GAMEPAD_DEFAULT_INFOPAGENEXT SELECT_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_ACTION1 SQUARE_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_ACTION2 CIRCLE_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_SWITCH1 L2_PRESSED
+#define KEYCFG_GAMEPAD_DEFAULT_SWITCH2 R2_PRESSED
+
+KEXPORT KEYCFG* GetInputCfg();
+void ReadKeyCfg(KEYCFG* cfg, const char* filename);
+void WriteKeyCfg(KEYCFG* cfg, const char* filename);
+
+#endif
+

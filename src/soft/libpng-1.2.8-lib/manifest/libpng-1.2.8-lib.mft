@@ -1,0 +1,13 @@
+include/libpng13/png.h
+include/libpng13/pngconf.h
+include/png.h
+include/pngconf.h
+lib/libpng-bcc.lib
+lib/libpng.a
+lib/libpng.def
+lib/libpng.dll.a
+lib/libpng.lib
+lib/libpng13.a
+lib/libpng13.dll.a
+manifest/libpng-1.2.8-lib.mft
+manifest/libpng-1.2.8-lib.ver
