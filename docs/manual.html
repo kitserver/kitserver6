@@ -1,0 +1,784 @@
+<html>
+<head>
+    <title>Kitserver 6 Manual</title>
+    <style>
+        img { display:block;margin:10px 0 10px 0;border:1px solid #000; }
+        div.note { background-color:#fdc;color:#800;padding:5px; }
+        table {padding:10px 0 10px 0}
+        table td {padding:5px;border:1px solid #000}
+        table th {padding:5px;border:1px solid #000;background-color:#ccc}
+        span.kitid {color:#080;font-style:italic}
+        pre {background-color:#ffd;border-top:1px solid #aa8;border-bottom:1px solid #aa8}
+        h3,h4 {background-color:#dda;display:block;padding:5px;font-family:verdana,arial}
+        h2 {display:block;padding:5px 0 5px 0;font-family:verdana,arial;border-bottom:3px solid #aa8}
+        div,span,p,li {font-family:verdana,arial;}
+        li {margin-bottom:10px;}
+        table {font-family:verdana,arial;}
+        table.shpal td {padding:5px 20px 5px 0;border-bottom:1px solid #000;
+            border-top:none;border-left:none;border-right:none}
+        table.shpal td.top {border-top:1px solid #000}
+        span.soft {font-weight:bold;color:#696;}
+        span.ex {font-weight:bold;color:#669;}
+        a {color:#448;}
+        a:visited {color:#448;}
+        a:hover {color:#448;background-color:#ccf}
+        a:active {color:#448;}
+        tr.newf td {background-color:#efd}
+        span.exclam {font-weight:bold;color:#484;}
+        div.hist {color:#888;float:right;}
+    </style>
+</head>
+<body>
+<h2>Kitserver 6 Manual</h2>
+<div class="hist">
+Version history: <a href="history.txt">history.txt</a>
+</div>
+<div>
+November 12, 2006<br />
+Module Versions: <a href="#kitserver">Kserv 6.2.0</a>, 
+<a href="#ballserver">Ballserver 6.2.0</a>,
+<a href="#lodmixer">LOD Mixer 6.1.2</a>,
+<a href="#stadiumserver">Stadium Server 6.2.0</a>
+</div>
+
+
+<!-- ### GENERAL ### -->
+
+<h3>1.1 Introduction</h3>
+<p>
+Kitserver 6 is an add-on program for Pro Evolution Soccer 6.
+It is a loader and manager for various modules.
+Kserv Module 6.2.0 provides the alternative way of managing players and goalkeeper kits
+outside of the game's AFS file: you organize the PNG or BMP kit images into an external
+database, which is basically a collection of folders and files that follows few simple rules.
+Also, you are not restricted to just 1st and 2nd kit for each team - you can have as many as you like.
+</p>
+
+<p>
+NOTE: Those who have some experience with editing previous versions of Pro Evolution Soccer
+or Winning Eleven, know that every team used to have kit slots in 0_text.afs. In PES6,
+however, only "licensed" teams have the slots, which makes it pretty much impossible to
+import kits for "unlicensed" teams by editing the AFS.<br />
+<span class="exclam">With Kitserver, however, there is no such limitation, so you can have the kits for all 
+teams - licensed and unlicensed!</span>
+</p>
+
+<p>
+The BallServer Module 6.2.0 does similar things to KitServer, it offers the
+possibility of chosing a ball from the GDB. Of course it is possible to store
+as many balls as you like. You can use different texture sizes for the balls: standard - 256x256,
+and also 512x512 and 1024x1024.
+</p>
+
+<p>
+LOD Mixer Module 6.1.2 allows to make some tweaks to the graphics engine of the game, such
+as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
+some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
+for example.
+</p>
+
+<h3>1.2 Installation</h3>
+
+<p>
+As usual: copy the entire kitserver folder into your game folder, so
+that the directory structure looks like this:
+</p>
+
+<img src="install.jpg" />
+
+<p>
+Go to kitserver folder and run setup.exe. The "PES6.exe" in the
+drop-down list should be pre-selected. If not, select whatever executable
+you use as your game executable. 
+
+<img src="setup2.gif" />
+
+If you placed the kitserver files correctly, the "Install" button should
+become enabled, so just press it.
+The kitserver should show a message box saying that the installation
+was successful. (If you get an error message, make sure that you
+not currently running the game, and that the PES6.exe file is not 
+marked as read-only)
+
+</p>
+
+<p>
+For information how to disable/re-enable individual modules, see <a href="#advconfig"> "Advanced
+Configuration"</a> at the bottom of the manual.
+</p>
+
+<h3>1.3 Removal</h3>
+
+<p>
+Go to kitserver folder and run setup.exe. The "PES6.exe" in the
+drop-down list should be pre-selected. (Select it, if not so). 
+
+<img src="setup.gif" />
+
+Press "Remove" button.
+The kitserver should show a message box saying that the uninstallation
+was successful. You can now delete the whole kitserver folder, if you
+want. (Or you can leave it there - it won't do any harm, and you'll be able to quickly
+re-enable kitserver later, if you run setup again and press "Install" button.)
+</p>
+
+
+
+<!-- ### KITSERVER ### -->
+
+<h2 id="kitserver">Kserv Module 6.2.0 (kserv.dll)</h2>
+
+<h3>2.1 GDB organization</h3>
+<p>
+The GDB contains a folder named <b>uni</b>, which is responsible for storing
+the team kits (uniforms). The single most important file inside <b>uni</b> is called <b>map.txt</b>.
+This file tells kitserver where to find the kits for particular team. As you know, each team
+has a unique id - a integer number from 0 to 203, i think. So
+for every team in the GDB, you must specify in the map.txt, where the kits are for this team.
+Here is an example:
+
+<pre>
+# This config maps team number into folder name
+# Format: &lt;team-num&gt;,"&lt;folder name&gt;"
+# Example: 21,"Russia"
+
+8,"National\France"
+9,"National\Germany"
+65,"EPL\Aston_Villa"
+74,"EPL\Man Utd"
+76,"EPL\Newcastle"
+</pre>
+</p>
+
+<div class="note">IMPORTANT: Double quotes are required - just so that there is no ambiguity about 
+folder name. For IDs for all the teams - see <a href="uni.txt">uni.txt</a> file</div>
+
+<p>
+Please note that the sample GDB (provided with kitserver) is just one possible way of organizing the teams and 
+folders. It uses "EPL" folder to group all english teams, "National" - to group all national
+teams, and so for. You may find that you just prefer a flat list of folders - without these
+extra groups. In that case, just modify the <b>map.txt</b> file accordingly, and create
+the structure of folders that you prefer. That's the main advantage of having map.txt - the
+flexibility of kit organization.
+</p>
+
+<p>
+You can see from map.txt above that in order to find a kit for team #8, the kitserver needs to go to the 
+folder <b>GDB\uni\National\France</b>. This folder will contain all of the kits that are
+available to team #8. Inside it, you must create an individual folder for each kit. Like this:
+
+<img src="france.jpg"/>
+
+For players, 1st kit must have a folder name <b>pa</b>, 2nd - <b>pb</b>. Extra kits can have 
+any folder names that start with letter "p". I found it useful to prefix all extra kits with 
+<b>px-</b>. For example, <b>px-blue</b>. For the goalkeepers, 1st kit must be in the folder
+<b>ga</b>, 2nd - in the <b>gb</b>. Extra kits can have any folder names that start with letter "g".
+</p>
+
+<div class="note">IMPORTANT: Folder name acts as a kind of ID for kitserver, which puts the 
+additional restriction on all those folder names: they cannot contain spaces, and preferably
+they should be relatively short, and in English,French or other language withing Latin1 
+(iso8859-1) character set. Typically, if you want to make sure kitserver can properly
+find/read the folder, just use latin characters, digits, underscore, and the dash (minus sign).
+</div>
+
+<p>
+Now let's move on inside one of the kit folders. Take <b>pa</b>, for example.
+
+<img src="pa.jpg" />
+
+See the table below for explanation of each file:
+</p>
+
+<div class="note">Images can be either PNG or BMP format. So the filename must have 
+either ".png" or ".bmp" extensions.</b></div>
+
+<p>
+<table>
+    <tr><th>Reserved PNG file name</th><th>Reserved BMP file name</th><th>Meaning</th></tr>
+    <tr><td>all.png</td><td>all.bmp</td><td>512x256 kit texture (Must be 8-bit with palette. Alpha transparency
+            is supported in both PNG and BMP, although alpha-bytes in BMP-palettes are not really
+            a standard feature of BMP-format.)</td></tr>
+    <tr><td>font.png</td><td>font.bmp</td><td>256x64 image with font for displaying player names on the back
+            of the shirt</td></tr>
+</table>
+</p>
+
+<h4>2.2. config.txt</h4>
+
+<p>
+This is the attribute configuration file (in previous Kitservers it was called "attrib.cfg").
+As before, it is just a plain text file - you can use Notepad or any other text editor to
+view or modify it. For each folder, you should have a <b>config.txt</b> file in it.</p>
+
+<p>
+Here's the summary table of all the supported attributes:<br />
+("shirt.number.location" is a new attribute - that's why it is highlighted) 
+</p>
+
+<table>
+    <tr><th>Attribute name</th><th>Meaning</th><th>Format</th><th>Example</th></tr>
+    <tr>
+        <td><b>model</b></td>
+        <td>identifier for 3D-model of the shirt</td>
+        <td>decimal integer</td>
+        <td><nobr>model = 37</nobr></td>
+    </tr>
+    <tr>
+        <td><b>collar</b></td>
+        <td>Presense of collar</td>
+        <td>yes/no</td>
+        <td><nobr>collar = no</nobr></td>
+    </tr>
+    <tr>
+        <td><b>numbers</b></td>
+        <td>Filename (with path, relative to kit folder) of the image that contains 
+            numbers texture: 256x128 4bit/8bit paletted image</td>
+        <td>string in double quotes</td>
+        <td><nobr>numbers = "..\num-white.png"</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shorts.num-pal.<span class="kitid">X</span></b></td>
+        <td>Filename (with path, relative to kit folder) of the image that contains 
+            numbers palette: a 4bit/8bit paletted image. The "X" must match the kit
+            folder name. (So, for config.txt in <b>pa</b> folder, you must have an
+            attribute <b>shorts.num-pal.pa</b> in it.)</td>
+        <td>string in double quotes</td>
+        <td><nobr>shorts.num-pal.pa = "..\pal-black.png"</nobr></td>
+    </tr>
+    <tr class="newf">
+        <td><b>shirt.number.location</b></td>
+        <td>Where on the front of the shirt the number should be placed. ("off" means the number
+will not be displayed at all.) This only applies to national teams.
+        </td>
+        <td>center|topright|off</td>
+        <td><nobr>shirt.number.location = topright</nobr></td>
+    </tr>
+
+    <tr>
+        <td><b>shorts.number.location</b></td>
+        <td>Where on the shorts the number should be placed. ("off" means the number
+will not be displayed at all.)
+        </td>
+        <td>left|right|both|off</td>
+        <td><nobr>shorts.number.location = left</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.location</b></td>
+        <td>Where on the shirt the name of the player should be placed. This is useful
+for teams like Boca Juniors, who have player names printed at the bottom of the
+shirt. ("off" means the name will not be displayed at all.)</td>
+        <td>top|bottom|off</td>
+        <td><nobr>name.location = top</nobr></td>
+    </tr>
+    <tr>
+        <td><b>logo.location</b></td>
+        <td>Where on the shirt the sponsor logo should be placed. (This attribute
+is probably not gonna be very useful with kitserver, since if the
+team has the logo on the back of the shirt, it will probably be painted
+as part of the kit texture itself, by kitmaker)</td>
+        <td>top|bottom|off</td>
+        <td><nobr>logo.location = off</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.shape</b></td>
+        <td>Indicates whether the name should be curved or straight. The values
+have the same meaning as in Edit Mode: type1 - straight, type2 - slightly curved,
+type3 - curved.</td>
+        <td>type1|type2|type3</td>
+        <td><nobr>name.shape = type1</nobr></td>
+    </tr>
+	<tr>
+        <td><b>radar.color</b></td>
+        <td>This attributes specifies the color you see on the ingame radar. It 
+        also influences the kit that is selected by default after selecting teams, 
+        as PES6 uses it as an indicator whether two kits have similar colors and 
+        would be too confusing together. Be careful: This is also the main color 
+        of standard mini-kits (not 2.5D)!</td>
+        <td>color, written in hexadecimal format RRGGBB (red,green,blue)</td>
+        <td><nobr>radar.color = 0A5D88</nobr></td>
+    </tr>
+</table>
+
+<p>For examples of <b>shorts.num-pal.<span class="kitid">X</span></b> usage - study the
+sample GDB. Here's a <b>config.txt</b> from Germany "pb" folder:
+<pre>
+
+collar = no
+logo.location = off
+model = 0
+name.location = top
+name.shape = type3
+numbers = "..\..\adidas_blue.png"
+shirt.number.location = topright
+shorts.num-pal.pb = "..\..\adidas_white.png"
+shorts.number.location = left
+
+</pre>
+
+<p>
+What this means in plain English is the following:<br/>
+For the shirt use blue Adidas numbers. Apply palette file "adidas_white.png", 
+which effectively renders white numbers on the shorts.
+</p>
+
+<h3>2.4 Strip Selection and 2.5D kits</h3>
+
+<p>
+In order to provide a visual reference for currently selected GDB kits (including extra kits), 
+these so-called "2.5D" kits are overlayed on top of the KONAMIs mini-kits. The name originated
+from the fact that these are 2Dkits, but they are built with the real textures that are used
+in the match. Since this unfortunately turned out to be a very clumsy name, i'm going to refer to them
+from now on simply as "mini-kits" instead, and when referring to original ones, i will
+say "KONAMI mini-kits". Here's a screenshot:
+
+<img src="stripsel-pl.jpg" />
+
+(When the team doesn't have the kits in GDB, the original KONAMI mini-kits will still be visible.)
+</p>
+
+<p>
+In Pro EvolutionSoccer 6, KONAMI introduced quite a few different kit texture types, which kitserver
+needs to "understand" in order to correctly render the mini-kits. For that, it uses a configuration
+file <b>kserv.cfg</b>, which contains a map of how kit models relate to the texture templates:
+
+<pre>
+# KitServer configuration file
+
+debug = 1
+
+# mini-kits model map. 
+# Needed only for correct display of mini-kits, 
+# but doesn't affect the in-game kits.
+#
+# Note: the map might be incomplete, so feel free to add the model
+# numbers to correct groups, if you notice that a mini-kit for
+# certain model is rendered incorrectly.
+
+mini-kits.narrow-backs = [8]
+mini-kits.wide-backs = [0,9,12,13,51,60,100,101,102,104,105,106]
+mini-kits.squashed-with-logo = [18,19,20,21,49,54,61,68,69,70,74,91,115,116,117,118,124,125,126,127,128,129,132,134,137,138,139,140,146,147,148]
+
+# any other other model is assumed to be "squashed-without-logo"
+# (meaning the new PES6 model with squashed shirt, but no logo
+# in the bottom-right area of the texture.)
+# Some examples: 31,71,84,etc. 
+
+</pre>
+
+<p>
+As stated in the comments, the map is probably incomplete. Which means that if you use 
+a model that kitserver incorrectly classifies, then the mini-kit won't look right. 
+To fix that, simply modify kserv.cfg and add that model number to corresponding list.
+</p>
+
+<p>
+You can switch between 1st/2nd kits as before - using your keyboard or gamepad - whatever you
+have configured. In order to get to the extra kits, press <b>[1]</b> button - to load next extra 
+kit for home team, <b>[2]</b> - to load next extra kit for away team.
+It is also possible to set goalkeepers kits. There are now 2 modes of kit selection: "Player mode" and
+"Goalkeepers mode". You can switch between them by pressing <b>[Tab]</b> key. For goalkeeper,
+choose the kits the same way as you did for the players.
+</p>
+
+<img src="stripsel-gk.jpg" />
+
+<div class="NOTE">
+    Be aware that Kitserver disables itself in Edit Mode. This is done
+    on purpose - to avoid crashes in edit mode that had happened in the past with PES5.
+    Kitserver activates the GDB kits during matches and replays.
+</div>
+
+<a name="kitinfoscreen"> </a>
+<h3>2.5 Information pages</h3>
+
+<p>
+In the bottom section of the screen, there might be additional information displayed by
+kitserver modules. Since there is not enough space, these are split into pages between which 
+you can switch using <b>[PAGE UP]</b> and <b>[PAGE DOWN]</b> keys. 
+On the picture above, you can see the page called "Ball selection". It shows
+currently selected ball from  GDB. To go a different page of inforamtion - lodmixer settings,
+for example, press <b>[PAGE UP]/[PAGE DOWN]</b>.
+</p>
+
+<!-- ### BALLSERVER ### -->
+
+<h2 id="ballserver">Ballserver Module 6.2.0 (bserv.dll)</h2>
+
+<h3>3.1 Quick summary of the features</h3>
+
+<p>
+<li><b>Ball selection on "Strip Selection" screen.</b><br />
+A 3D preview of the ball is shown. (You can turn that feature off in
+the bserv.cfg file, if for some reason this causes problems.)</li>
+<li><b>Support for different texture sizes.</b><br />
+You can use 256x256, 512x512 and even 1024x1024 pixel textures, saved in either 
+BMP or PNG format. The size is auto-detected, so there's no need  to configure it.</li>
+</p>
+
+<h3>3.2 GDB configuration</h3>
+
+<p>
+Ballserver uses the same GDB folder as the other modules like Kitserver. The subfolder is named 
+<b>balls</b>. You'll notice that there is a file inside called <b>map.txt</b> (like in Kitserver) 
+to configure the balls. The format is quite simple: one line is one ball, and there are three 
+attributes. The first one is the name displayed in the ingame selection, followed by the name of 
+the 3D model file and the texture file. Look at the example:
+</p>
+
+<pre>
+# This is the configuration file for Ballserver
+# Format: "&lt;name displayed in game&gt;","&lt;model file&gt;","&lt;texture file&gt;"
+# Example: "adidas Finale Capitano Grey","ariel_mdl.bin","adidas_finale_capitano_grey.bmp"
+# Texture paths are relative to GDB\balls\, model paths to GDB\balls\mdl\
+
+# adidas
+"adidas Finale Capitano Grey","ariel_mdl.bin","adidas_finale_capitano_grey.bmp"
+"adidas Teamgeist Blue","gwidon_mdl.bin","adidas_teamgeist_blue.png"
+
+# Nike
+
+# Puma
+
+# This comment makes sure you have pressed the enter key after the last ball
+</pre>
+
+<p>
+Please don't forget the quotes, they are important! If your map.txt looks like this (and you have those 
+files, of course), you can choose between <i>adidas Finale Capitano Grey</i> and <i>adidas Teamgeist Blue</i> 
+in game later. The texture files have to be stored inside the "GDB\balls" folder and the models in "GDB\balls\mdl".</p>
+</p>
+
+<a name="relfolderexample"> </a>
+<div class="note">If you want to use other folders, you have to use relative paths like <b>mysubfolder\tex.png</b>
+for a file "tex.png" inside "GDB\balls\mysubfolder".</div>
+<p>
+When downloading balls, you will recognize that quite a lot of balls share one 3D model. In this case, you need 
+each model file only once. In general, models are independent from the texture size, so a model delivered with a 256x256 
+texture should work with a 512x512 texture as well. If you're unsure, just try it with different models.
+</p>
+
+<h3>3.3 Ball selection</h3>
+<p>
+Start the game just as usual. When you come to Strip Selection, you will see a new text under the mini-kits saying 
+<b>"Ball: game choice"</b> by default. In this case, you will recognize no change when playing as the ball you selected in 
+the options will be used. Now comes the new feature: press <b>B</b> on your keyboard to select the next ball (or <b>V</b> 
+to cycle back). The text will change into <b>"Ball: <i>&lt;name configured in map.txt&gt;</i>"</b> and if everything is
+well-configured, you will play with that ball. To choose a random ball, press <b>R</b> and to reset the ball to game choice 
+press <b>C</b>. Under the text you can see a 3D preview. It doesn't need any configuration or additional files in the GDB
+as it is created from the texture and the model file defined in your map.txt.
+
+<img src="ballsel.jpg" />
+
+If you don't see the text, you have to <a href="#kitinfoscreen">navigate</a> to it. The text at the bottom should
+say "Ball selection" then.
+
+<img src="ballsel2.jpg" />
+</p>
+
+
+<!-- ### LODMIXER ### -->
+
+<h2 id="lodmixer">LOD Mixer Module 6.1.2 (lodmixer.dll)</h2>
+
+<h3>4.1 How to use</h3>
+
+<p>
+LOD Mixer allows to do
+some tweaks to the graphical engine of the game, such as Level-Of-Detail table adjustment, 
+enable the crowd on all cameras, enable automatic aspect ratio correction. You can also
+control some other aspects of Cup/League/ML/Online modes - for example you can set the
+spectator attendence to 3 stars for both home and away teams, which will result in full
+stadiums for every game.<br />
+Run <b>lodcfg.exe</b> to configure the LOD Mixer settings. Here's the screenshot of how that
+looks:
+</p> 
+
+<img src="lodmixer.gif"/>
+
+<div class="NOTE">
+    For complete documentation and a brief explanation of what the "LOD" is, see this file: <b><a href="lodmixer.txt">lodmixer.txt</a></b>
+</div>
+
+<p>
+You can change some of the lodmixer settings also ingame if you choose
+the corresponding page in Strip Selection (<a href="#kitinfoscreen">see instructions here</a>):
+</p>
+
+<img src="lodingame.jpg"/>
+
+<p>
+The controls are quite simple: With the keys <b>[Home]</b> and <b>[End]</b> you choose the setting
+you want to change. With <b>[Ins]</b> and <b>[Del]</b> you can change the value now.
+The configuration is saved automatically and also works for friendly matches now.
+</p>
+
+<!-- ### STADIUM SERVER ### -->
+<h2 id="stadiumserver">Stadium Server Module 6.2.0 (stadium.dll)</h2>
+<h3>5.1 Introduction</h3>
+<p>
+Stadium Server is a plug-in module for Kitserver. It allows to use additional stadiums, which
+are organized inside GDB - similar to how kits, balls, and faces are organized.
+</p>
+
+<h3>5.2 GDB organization</h3>
+
+<div class="note">This section is mainly for the stadium creators, so that they can organize their stadiums
+in the way that stadium server requires. For the user, installing a new stadium would then be
+very easy: it would just mean a simple folder copy.</div>
+
+<p>
+To add new stadiums to the game, you need to organize them in the GDB in specific way.
+The GDB now has a new folder called <b>stadiums</b>, which holds all the extra stadiums:</p>
+
+<img src="gdb.gif" />
+
+<p>Inside the <b>stadiums</b> folder, each stadium has its own folder. 
+For example, you can see 2 stadiums here (the map.txt file will be discussed later):</p>
+
+<img src="stadiums.gif" />
+
+<p>
+<div class="note">
+    IMPORTANT: The name of the folder will be used by Stadium Server as the name of the stadium, during
+    both the matches and in "View Stadiums" mode. 
+</div>
+</p>
+
+<p>
+Inside each stadium folder the directory structure is always the same. Each stadium consists of 69 
+files: 66 files for the stadium itself + 1 adbords textures BIN + 1 information file 
+(<b>info.txt</b> - the year the stadium was built, its capacity and the city are stored in it) + 1 stadium preview image
+(<b>preview.png</b> - 128x64 texture). The 66 stadium files
+are split into 6 folders - one each for the following scenarios of stadium usage: fine day, rainy day,
+snowy day, fine night, rainy night, snowy night. The folders are called: 
+<b>1_day_fine</b>, <b>2_day_rain</b>, <b>3_day_snow</b>, <b>4_night_fine</b>, <b>5_night_rain</b>,
+and <b>6_night_snow</b>. The adboards textures BIN is stored in a folder called <b>adboards_tex</b>.
+</p>
+
+<img src="ramenskoye.gif" />
+
+<p>The <b>info.txt</b> has a very simple structure. You specify the year the stadium was built,
+its capacity and the city were it is like in the example below:</p>
+
+<pre>
+# Stadium info file
+
+built = 2006
+capacity = 60432
+city = London
+
+</pre>
+
+<p>Inside each of the 6 stadium folders, the files have the same fixed names indicating what part
+of the stadium they contain. (It's important that you name the files in each of the 6 folders, EXACTLY as shown the picture,
+because otherwise stadium server won't be able to load the stadium correctly).
+For example, here's the contents of <b>1_day_fine</b> folder:</p>
+
+<img src="dayfine.gif" />
+
+<p>
+Some notes by Gwidon about what each file contains:
+<table>
+    <tr>
+        <th>File</th><th>Comments</th>
+    </tr>
+    <tr>
+        <td>crowd_a0.str</td>
+        <td>away crowd and flags, when there are no away supporters (0-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_a1.str</td>
+        <td>away crowd and flags, when stadium has some small number of away supporters (1-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_a2.str</td>
+        <td>away crowd and flags for good amount of away supporters (2-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_a3.str</td>
+        <td>away crowd and flags for maximum number of away supporters (3-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_h0.str</td>
+        <td>home crowd and flags, when there are no home supporters (0-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_h1.str</td>
+        <td>home crowd and flags, when stadium has some small number of home supporters (1-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_h2.str</td>
+        <td>home crowd and flags for good amount of home supporters (2-star)</td>
+    </tr>
+    <tr>
+        <td>crowd_h3.str</td>
+        <td>home crowd and flags for maximum number of home supporters (3-star)</td>
+    </tr>
+    <tr>
+        <td>stad1_main.bin</td>
+        <td>Main stadium file, with textures and models</td>
+    </tr>
+    <tr>
+        <td>stad2_entrance.bin</td>
+        <td>Entrance scene</td>
+    </tr>
+    <tr>
+        <td>stad3_adboards.bin</td>
+        <td>Adboards structure</td>
+    </tr>
+</table>
+</p>
+
+<p>The <b>adboards_tex</b> folder for now contains a single file - <b>default.bin</b>, which 
+holds adboards textures to be applied to stadium adboards during the game. (In the future, this
+folder might contain other texture BINs, so that we can use different adboards during different
+types of matches... But that's a feature that is not here yet.)</p>
+
+<img src="adbtex.gif" />
+
+<h3>5.4 map.txt</h3>
+
+<p>
+The <b>map.txt</b> in Stadium Server is used slightly differently compared to other modules
+(such as Kitserver or Ballserver, etc.). To use a GDB stadium in the game, you don't necessarily
+need the map.txt file. However, what it allows to do, is to define a "home stadium" for a team.
+Then, whenever the Stadium Server is in the "home team" mode (you can turn it on/off by pressing 
+<b>[7]</b> key), it will determine which team is the home team, and try to load the corresponding
+stadium from GDB. Here's a simple map.txt, with 2 teams having home stadiums associated with 
+them:</p>
+
+<pre>
+# Stadium Server map file
+# --------------------------------------------------------------
+# This config maps team number into its home stadium folder name
+# Format: &lt;team-num&gt;,"&lt;folder name&gt;"
+# Example: 45,"Maracana"
+
+21,"(RUS) Saturn Ramenskoye"
+64,"(ENG) Emirates Stadium, London"
+
+</pre>
+
+<div class="note">IMPORTANT: Double quotes are required - just so that there is no ambiguity about 
+folder name. For IDs for all the teams - see <a href="uni.txt">uni.txt</a> file</div>
+
+<h3>5.5. Modes of operation</h3>
+
+<p>During the Strip Selection screen, you will see a text showing the currently selected 
+stadium (or stadium mode), and 4 new hotkeys will be activated: <b>[7],[8],[9],[0]</b>:
+<p>
+
+<img src="selected.jpg" />
+
+<p>Stadium Server basically has 2 modes of operation, where it will load the stadiums from the
+GDB: "selected stadium" mode and "home team stadium" mode. Using <b>[9]</b> and <b>[0]</b> keys
+you can move back and forth among available GDB stadiums. The <b>[8]</b> randomly picks a 
+stadium from the GDB. Pressing <b>[7]</b> key, you alternate between "game choice" and "home
+team stadium" mode. If "game choice" is selected - the stadium from the AFS is used.</p>
+
+<img src="hometeam.jpg" />
+
+<h3>5.6. "View Stadiums"</h3>
+
+<p>You can view all of your GDB stadiums in the "View Stadiums" mode of the game. To do that, 
+simply press the <b>[1]</b> key. To choose the weather, use the <b>[2]</b> key.
+</p>
+
+<img src="viewstadiums.gif" />
+
+
+<!-- ### ADVANCED CONFIGURATION ### -->
+
+<h2 id="advconfig">Advanced configuration</h2>
+
+<h3>6.1. Master configuration file: kload.cfg</h3>
+
+<p>
+Typically, you wouldn't need to modify that, unless you're running into problems, or
+want to manually enable/disable individual modules. For example, if you wish
+to use the lodmixer, but don't really want the kitserver module, you can 
+do that by modifying the <b>kload.cfg</b> file. Here's how the default config looks:
+</p>
+
+<pre>
+# Loader configuration file
+
+gdb.dir = ".\"
+
+DLL.num = 5
+DLL.0 = "kitserver\zlib1.dll"
+DLL.1 = "kitserver\libpng13.dll"
+DLL.2 = "kitserver\kserv.dll"
+DLL.3 = "kitserver\lodmixer.dll"
+DLL.4 = "kitserver\dxtools.dll"
+
+# DirectX options
+dx.force-SW-TnL = 0
+dx.emulate-HW-TnL = 0
+#dx.fullscreen.width = 1920
+#dx.fullscreen.height = 1200
+</pre>
+
+<p>The top two DLLs - <b>zlib1.dll</b> and <b>libpng13.dll</b> are needed for PNG
+image support. Do not remove those. The bottom 3 are independent modules, which you
+can enable or disable at will. For example, to disable kitserver module (<b>kserv.dll</b>),
+just comment it out with a "#" symbol at the beginning of the line:
+</p>
+
+<pre>
+DLL.num = 5
+DLL.0 = "kitserver\zlib1.dll"
+DLL.1 = "kitserver\libpng13.dll"
+#DLL.2 = "kitserver\kserv.dll"
+DLL.3 = "kitserver\lodmixer.dll"
+DLL.4 = "kitserver\dxtools.dll"
+</pre>
+
+<p>
+The <b>dx.force-SW-TnL</b> and <b>dx.emulate-HW-TnL</b> options provide functionality similar to
+what 3DAnalyzer does with its "Force SW TnL" and "Emulate HW TnL Caps" settings. If your game
+crashes (because of an old graphics card, or some other compatibility issue), and you cannot run
+the game with 3DAnalyzer, try these two options - they might be all you need to get the game
+working again.<br />
+To enable, just change the values from 0 to 1.
+</p>
+
+<p>
+The last two options - <b>dx.fullscreen.width</b> and <b>dx.fullscreen.height</b> - can be used
+to enforce custom resolution in fullscreen mode. <i>Note that those two options are disabled by
+default; to enable, remove the comment sign ('#') at the begining of those two lines, and make 
+sure you specify resolution that your monitor supports.</i>
+</p>
+
+<h2>Credits</h2>
+
+<p>
+Programming: <b>juce</b>, <b>Robbie</b><br />
+Testing: <b>biker_jim_uk, IamCool, mosu</b><br />
+Kits: <b>Spark, kel, qiankun, OPM</b>.<br />
+Balls: <b>DAMned</b><br />
+Ball models: <b>Ariel</b>, <b>Gwidon</b><br />
+Kits, balls, fonts, and numbers were taken from <a href="http://www.wevolution.org">http://www.wevolution.org</a> and
+<a href="http://forums.evo-web.co.uk">http://forums.evo-web.co.uk</a> sites.<br /> and also
+from a PES5 GDB collection by <b>FabioS</b><br />
+Model lists (for mini-kits) in kserv.cfg: <b>Valmir</b><br />
+Stadium Server GDB organization and "home team stadium" idea: <b>Gwidon</b><br />
+Information about stadiums in AFS: <b>nt89</b><br />
+"Wildparkstadion" stadium: <b>nt89</b>, with UEFA Champions League adboards by <b>mIGUEL</b><br />
+"Saturn Ramenskoye" stadium: <b>Asiat</b><br />
+
+<br />
+
+<p>
+Kitserver uses the following open source software:<br />
+<span class="soft">pngdib</span> by Jason Summers 
+<a href="http://entropymine.com/jason/pngdib/">http://entropymine.com/jason/pngdib/</a><br />
+<span class="soft">libpng</span> by Guy Eric Schalnat, Andreas Dilger, Glenn Randers-Pehrson, and others 
+<a href="http://libpng.org/pub/png/libpng.html">http://libpng.org/pub/png/libpng.html</a><br />
+<span class="soft">zlib</span> by Jean-loup Gailly and Mark Adler, and others
+<a href="http://www.zlib.net/">http://www.zlib.net/</a><br />
+</p>
+
+</body>
+</html>

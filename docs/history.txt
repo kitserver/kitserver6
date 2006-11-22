@@ -1,0 +1,47 @@
+Kitserver 6 HISTORY notes
+=========================
+
+2006-10-27
+----------
+v6.0.0: 
+- first version released; lodmixer only.
+- support for LODs, camera-fix, aspect ratio correction
+
+v6.0.1: 
+- added support for No-DVD version of PES6.exe
+
+2006-11-03
+----------
+v6.1.0: 
+- kserv module: support 512x256 8-bit paletted kits
+
+v6.1.1:
+- bug-fix for licensed teams
+
+2006-11-07
+----------
+v6.1.2:
+- kserv fixes: correct placement of mini-kits in online mode
+- lodmixer enhancements: home/away crowd size, and other settings.
+- ballserver
+
+2006-11-08
+----------
+v6.1.3:
+- ballserver: fixed the problem that was causing crashes when
+the ball model filesize in AFS was bigger than the one in GDB.
+- kserv fix: fixed the bug when teams were not getting correct
+GDB kits when playing in "Play again with..." mode.
+
+2006-11-08
+----------
+v6.1.4:
+- ballserver fix: now works with original EXE. (before
+the game wouldn't even start, when run with original exe)
+
+2006-11-12
+----------
+v6.2.0:
+- various fixes for kserv (ML, international challenge hidden teams)
+- stadium server
+

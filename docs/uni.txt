@@ -1,0 +1,274 @@
+Europe A
+--------
+
+  0 Austria
+  1 Belgium
+  2 Bulgaria
+  3 Croatia
+  4 Czech Republic 
+  5 Denmark
+  6 England 
+  7 Finland
+  8 France 
+  9 Germany
+ 10 Greece
+ 11 Hungary
+ 12 Republic of Ireland
+ 13 Italy 
+ 14 Latvia 
+ 15 Netherlands 
+ 16 Northern Ireland
+ 17 Norway
+ 18 Poland
+ 19 Portugal
+
+
+Europe B
+--------
+
+ 20 Romania
+ 21 Russia
+ 22 Scotland
+ 23 Serbia & Montenegro
+ 24 Slovakia
+ 25 Slovenia
+ 26 Spain 
+ 27 Sweden 
+ 28 Switzerland
+ 29 Turkey
+ 30 Ukraine
+ 31 Wales
+ 
+
+Africa
+------
+
+ 32 Angola
+ 33 Cameroon
+ 34 Cote d'Ivoire
+ 35 Ghana
+ 36 Nigeria
+ 37 South Africa
+ 38 Togo
+ 39 Tunisia
+
+
+Americas
+--------
+
+ 40 Costa Rica
+ 41 Mexico
+ 42 Trinidad & Tobago
+ 43 United States
+
+ 44 Argentina 
+ 45 Brazil
+ 46 Chile
+ 47 Columbia 
+ 48 Equador
+ 49 Paraguay
+ 50 Peru
+ 51 Uruguay
+
+
+Asia
+----
+
+ 52 Iran
+ 53 Japan  
+ 54 Saudi Arabia
+ 55 South Korea 
+ 56 Australia 
+
+
+Classics
+--------
+
+ 57 Classic England
+ 58 Classic France
+ 59 Classic Germany
+ 60 Classic Italy
+ 61 Classic Netherlands
+ 62 Classic Argentina
+ 63 Classic Brazil
+
+
+England
+-------
+
+ 64 Arsenal
+ 65 Aston Villa
+ 66 Blackburn
+ 67 Bolton Wanderers
+ 68 Charlton
+ 69 Chelsea
+ 70 Everton
+ 71 Fulham
+ 72 Liverpool
+ 73 Manchester City
+ 74 Manchester United
+ 75 Middlesbrough
+ 76 Newcastle United
+ 77 Portsmouth
+ 78 Reading
+ 79 Sheffield United
+ 80 Tottenham
+ 81 Watford
+ 82 West Ham
+ 83 Wigan
+
+
+France
+------
+
+ 84 AJ Auxerre 
+ 85 Bordeaux
+ 86 Le Mans
+ 87 RC Lens
+ 88 Lille
+ 89 FC Lorient
+ 90 Olympique Lyonnais 
+ 91 Olympique de Marseille
+ 92 AS Monaco
+ 93 AS Nancy-Lorraine
+ 94 FC Nantes
+ 95 OGC Nice
+ 96 Paris Saint-Germain
+ 97 Stade Rennais FC
+ 98 AS Saint-Etienne 
+ 99 CS Sedan
+100 FC Sochaux
+101 Toulouse FC 
+102 ES Troyes AC 
+103 Valenciennes FC
+
+
+Italy
+-----
+
+104 Ascoli
+105 Atalanta 
+106 Cagliari
+107 Catania
+108 Chievo Verona
+109 Empoli
+110 Fiorentina
+111 Inter
+112 Lazio
+113 Livorno
+114 Messina
+115 AC Milan
+116 Palermo
+117 Parma
+118 Reggina
+119 AS Roma
+120 Sampdoria 
+121 Siena
+122 Torino
+123 Udinese
+
+
+Holland
+-------
+
+124 ADO Den Haag
+125 Ajax
+126 AZ
+127 SBV Excelsior
+128 Feyenoord
+129 FC Groningen
+130 SC Heerenveen
+131 Heracles Almelo
+132 NAC Breda 
+133 NEC Nijmegen
+134 PSV Eindhoven
+135 RKC Waalwijk
+136 Roda JC
+137 Sparta Rotterdam
+138 FC Twente 
+139 FC Utrecht
+140 Vitesse
+141 Willem II
+
+
+Spain
+-----
+
+142 Athletic Club
+143 FC Barcelona
+144 R. Betis
+145 RC Celta
+146 RC Deportivo la Coruna
+147 RCD Espanyol
+148 Getafe CF
+149 C. Gimnastic
+150 RC Recreativo de Huelva
+151 Levante UD
+152 C. Atletico Madrid
+153 Real Madrid
+154 RCD Mallorca
+155 CA Osasuna
+156 R. Racing C.
+157 R. Sociedad
+158 Sevilla FC
+159 Valencia CF
+160 Villarreal CF
+161 R. Zaragoza
+
+
+Other clubs A
+-------------
+
+162 Anderlecht
+163 Club Brugge
+164 AC Sparta Praha
+165 FC Copenhagen
+166 Bayern Munchen
+167 Olympiacos Piraeus
+168 Panathinaikos
+169 Juventus
+170 Rosenborg BK
+171 Benfica
+172 FC Porto
+173 Sporting Lisbon
+174 Celtic
+175 Rangers
+176 Djurgardens IF
+177 Besiktas
+178 Fenerbahce
+179 Galatasaray
+180 Dynamo Kiev
+
+
+Other clubs B
+-------------
+
+181 Boca Juniors
+182 River Plate
+183 Sao Paolo FC
+184 PES United 
+185 WE United
+
+
+Other clubc C
+-------------
+
+186 Team A
+187 Team B
+188 Team C
+189 Team D
+190 Team E
+191 Team F
+192 Team G
+193 Team H
+194 Team I
+195 Team J
+196 Team K
+197 Team L
+198 Team M
+199 Team N
+200 Team O
+201 Team P
+202 Team Q
+203 Team R
+
