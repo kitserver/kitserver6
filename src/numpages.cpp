@@ -140,7 +140,7 @@ KEXPORT void HookGetNumPages()
     }
 
     _getnumpages_jmpback = code[C_GETNUMPAGES_JMPBACK];
-    _getnumpages_jmpback = code[C_GETNUMPAGES2_JMPBACK];
+    _getnumpages2_jmpback = code[C_GETNUMPAGES2_JMPBACK];
 
     DWORD addr = code[C_GETNUMPAGES_HOOK];
     DWORD target = (DWORD)GetNumPagesForFileInAFSCaller + 6;
@@ -155,7 +155,7 @@ KEXPORT void HookGetNumPages()
         memcpy(_saved_code, bptr, code[GETNUMPAGES_CMDLEN]);
 
         // hook by setting new target
-        memset(bptr,0x90,code[GETNUMPAGES2_CMDLEN]);
+        memset(bptr,0x90,code[GETNUMPAGES_CMDLEN]);
         bptr[0] = 0xe9;
         DWORD* ptr = (DWORD*)(addr + 1);
         ptr[0] = target - (DWORD)(addr + 5);
