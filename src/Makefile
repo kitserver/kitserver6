@@ -28,12 +28,22 @@ LPLIBPNG=soft\libpng-1.2.8-lib\lib
 LPZLIB=soft\zlib123-dll\lib
 
 all: dlls apps
+	if exist output (rd /S /Q output)
+	mkdir output
+	copy *.dll output
+	copy setup.exe output
+	copy lodcfg.exe output
+	copy keybind.exe output
+	copy soft\zlib123-dll\zlib1.dll output
+	copy soft\libpng-1.2.8-bin\libpng13.dll output
+
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
 dlls: kload.dll kserv.dll bserv.dll stadium.dll lodmixer.dll dxtools.dll
 apps: setup.exe lodcfg.exe keybind.exe afstest.exe afswalk.exe afsexport.exe
 
 release:
 	$(MAKE) EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
+
 diag: diag.exe
 setup: setup.exe
 afstest: afstest.exe
@@ -197,8 +207,10 @@ afsexport.exe: afsexport.obj afsreader.obj crc32.obj alog.obj aconfig.obj
 clean:
 	del /Q /F *.exp *.lib *.obj *.res *.dll *.exe
 	(cd soft\pngdib && $(MAKE) clean)
+	if exist output (rd /S /Q output)
 
 clean-all:
 	del /Q /F *.exp *.lib *.obj *.res *.dll *.exe *.log *~
 	(cd soft\pngdib && $(MAKE) clean-all)
+	if exist output (rd /S /Q output)
 	
