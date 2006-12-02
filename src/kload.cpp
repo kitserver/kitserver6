@@ -384,6 +384,7 @@ DWORD MasterCallFirst(...)
 {
 	DWORD oldEAX, oldEBX, oldECX, oldEDX;
 	DWORD oldEBP, oldEDI, oldESI;
+	int i;
 	__asm {
 		mov oldEAX, eax
 		mov oldEBX, ebx
@@ -397,9 +398,11 @@ DWORD MasterCallFirst(...)
 	
 	DWORD arg;
 	DWORD result=0;
+	bool lastAddress=false;
+	DWORD jmpDest=0;
 
 	DWORD call_site=*(DWORD*)(oldEBP+4)-5;
-	DWORD addr=_hook_manager.getFirstTarget(call_site);
+	DWORD addr=_hook_manager.getFirstTarget(call_site, &lastAddress);
 	
 	if (addr==0) return;
 	
@@ -409,6 +412,11 @@ DWORD MasterCallFirst(...)
 	DWORD numArgs=_hook_manager.getNumArgs(call_site);
 	bool wasJump=_hook_manager.getType(call_site)==HOOKTYPE_JMP;
 	
+	if (wasJump && lastAddress) {
+		result=oldEAX;
+		goto EndOfCallF;
+	};
+	
 	//writing this as inline assembler allows to
 	//give as much parameters as we want and more
 	//important, we can restore all registers
@@ -416,7 +424,7 @@ DWORD MasterCallFirst(...)
 		//push ebp
 	};
 	
-	for (int i=numArgs-1;i>=0;i--) {
+	for (i=numArgs-1;i>=0;i--) {
 		if (wasJump)
 			arg=*((DWORD*)oldEBP+3+i);
 		else
@@ -450,15 +458,18 @@ DWORD MasterCallFirst(...)
 		mov eax, result
 	};
 	
+	EndOfCallF:
+	
 	lastCallSite=before;
 	
 	if (wasJump) {
-		__asm {
-			mov eax, oldEBP1
-			add ebp, 4
-			mov eax, [eax]
-			mov [ebp], eax
-		};
+		if (lastAddress)
+			jmpDest=addr;
+		else
+			jmpDest=_hook_manager.getOriginalTarget(call_site);
+		
+		//change the return address to the destination of our jump
+		*(DWORD*)(oldEBP+4)=jmpDest;
 	};
 	
 	return result;
@@ -469,7 +480,8 @@ KEXPORT DWORD MasterCallNext(...)
 	if (lastCallSite==0) return 0;
 	
 	DWORD oldEAX, oldEBX, oldECX, oldEDX;
-	DWORD oldEBP, oldEDI, oldESI;
+	DWORD oldEBP, oldEDI, oldESI, numArgs;
+	int i;
 	__asm {
 		mov oldEAX, eax
 		mov oldEBX, ebx
@@ -482,17 +494,34 @@ KEXPORT DWORD MasterCallNext(...)
 	
 	DWORD result=0;
 	DWORD arg;
+	bool lastAddress=false;
 	
-	DWORD addr=_hook_manager.getNextTarget(lastCallSite);
+	DWORD addr=_hook_manager.getNextTarget(lastCallSite, &lastAddress);
+	bool wasJump=_hook_manager.getType(lastCallSite)==HOOKTYPE_JMP;
 	if (addr==0) return 0;
 	
-	DWORD numArgs=_hook_manager.getNumArgs(lastCallSite);
+	//Don't call a jump's last address (its original destination)
+	if (wasJump && lastAddress) {
+		result=oldEAX;
+		//restore registers
+		__asm {
+			mov eax, oldEAX
+			mov ebx, oldEBX
+			mov ecx, oldECX
+			mov edx, oldEDX
+			mov edi, oldEDI
+			mov esi, oldESI
+		};
+		goto EndOfCallN;
+	};
+	
+	numArgs=_hook_manager.getNumArgs(lastCallSite);
 
 	__asm {
 		//push ebp
 	};
 	
-	for (int i=numArgs-1;i>=0;i--) {
+	for (i=numArgs-1;i>=0;i--) {
 		arg=*((DWORD*)oldEBP+2+i);
 		__asm mov eax, arg
 		__asm push eax
@@ -518,6 +547,8 @@ KEXPORT DWORD MasterCallNext(...)
 		__asm pop eax
 	
 	__asm mov eax, result
+	
+	EndOfCallN:
 	
 	return result;
 }

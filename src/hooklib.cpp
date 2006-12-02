@@ -104,6 +104,7 @@ bool hook_manager::unhook(hook_point& hp)
 
             // get new target
             DWORD new_target = remove_hook_point(hp);
+            //not sure if this should be done...
             if (new_target != 0) {
                 // set new target
                 ptr[0] = new_target - (DWORD)(hp._call_site + 5);
@@ -159,7 +160,7 @@ DWORD hook_manager::remove_hook_point(hook_point& hp)
     return result;
 }
 
-DWORD hook_manager::getFirstTarget(DWORD call_site)
+DWORD hook_manager::getFirstTarget(DWORD call_site, bool* lastAddress)
 {
 	DWORD result=0;
 	EnterCriticalSection(&_cs);
@@ -177,6 +178,12 @@ DWORD hook_manager::getFirstTarget(DWORD call_site)
 		} while (*vit==0);	
 		_currCallPos[call_site]=vit;
 		result=*vit;
+		if (lastAddress!=NULL) {
+			if (vit == v->begin())
+				*lastAddress=true;
+			else
+				*lastAddress=false;
+		};
 		
 		if (getType(call_site)==HOOKTYPE_CALLPTR && vit==v->begin()) {
 			if (IsBadReadPtr((BYTE*)result,4)) {
@@ -195,7 +202,7 @@ DWORD hook_manager::getFirstTarget(DWORD call_site)
 	return result;
 };
 
-DWORD hook_manager::getNextTarget(DWORD call_site)
+DWORD hook_manager::getNextTarget(DWORD call_site, bool* lastAddress)
 {
 	DWORD result=0;
 	EnterCriticalSection(&_cs);
@@ -213,6 +220,12 @@ DWORD hook_manager::getNextTarget(DWORD call_site)
 		} while (*vit==0);
 		_currCallPos[call_site]=vit;
 		result=*vit;
+		if (lastAddress!=NULL) {
+			if (vit == v->begin())
+				*lastAddress=true;
+			else
+				*lastAddress=false;
+		};
 
 		if (getType(call_site)==HOOKTYPE_CALLPTR && vit==v->begin()) {
 			if (IsBadReadPtr((BYTE*)result,4)) {
@@ -227,6 +240,31 @@ DWORD hook_manager::getNextTarget(DWORD call_site)
 		return 0;
 	};
 
+	LeaveCriticalSection(&_cs);
+	return result;
+};
+
+DWORD hook_manager::getOriginalTarget(DWORD call_site)
+{
+	DWORD result=0;
+	EnterCriticalSection(&_cs);
+	
+	map<DWORD,vector<DWORD>*>::iterator it = _hooks.find(call_site);
+	if (it != _hooks.end()) {
+		vector<DWORD>* v = it->second;
+		vector<DWORD>::iterator vit = v->begin();
+		if (vit==v->end()) {
+			_last_error = "Couldn't find the original target!";
+			return 0;
+		};
+		
+		result=*vit;
+			
+	} else {
+		_last_error = "Nothing has been hooked at this call site!";
+		return 0;
+	};
+	
 	LeaveCriticalSection(&_cs);
 	return result;
 };

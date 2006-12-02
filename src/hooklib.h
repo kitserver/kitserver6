@@ -38,8 +38,9 @@ class hook_manager {
         void SetCallHandler(void* addr);
         bool hook(hook_point& hp);
         bool unhook(hook_point& hp);
-        DWORD getFirstTarget(DWORD call_site);
-        DWORD getNextTarget(DWORD call_site);
+        DWORD getFirstTarget(DWORD call_site, bool* lastAddress=NULL);
+        DWORD getNextTarget(DWORD call_site, bool* lastAddress=NULL);
+        DWORD getOriginalTarget(DWORD call_site);
         DWORD getNumArgs(DWORD call_site);
         DWORD getType(DWORD call_site);
         string get_last_error();

@@ -5,6 +5,7 @@
 #include "log.h"
 #include "manage.h"
 #include "hook.h"
+#include "kload.h"
 #include "kload_config.h"
 #include "numpages.h"
 #include "input.h"
@@ -56,7 +57,7 @@ DWORD codeArray[][CODELEN] = {
       0, 0,
       0, 0,
       0, 0, 0,
-      0, 0x40c848,
+      0x5fe506, 0x40c848,
       0, 0, 0,
       0, 0, 0,
       0, 0, 0,
@@ -408,19 +409,9 @@ void HookOthers()
 	};
 
 	// hook ProcessPlayerData
-	if (code[C_PROCESSPLAYERDATA_JMP] != 0)
-	{
-		bptr = (BYTE*)(code[C_PROCESSPLAYERDATA_JMP]);
-		ptr = (DWORD*)(code[C_PROCESSPLAYERDATA_JMP] + 1);
-	
-	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
-	    	bptr[0]=0xe8; //call
-	    	bptr[5]=0xc3; //ret
-	        ptr[0] = (DWORD)NewProcessPlayerData - (DWORD)(code[C_PROCESSPLAYERDATA_JMP] + 5);
-	        bProcessPlayerDataHooked = true;
-	        Log(&k_kload,"Jump to ProcessPlayerData HOOKED at code[C_PROCESSPLAYERDATA_JMP]");
-	    };
-	};
+	bProcessPlayerDataHooked = MasterHookFunction(code[C_PROCESSPLAYERDATA_JMP],
+													0, NewProcessPlayerData);
+	Log(&k_kload,"Jump to ProcessPlayerData HOOKED at code[C_PROCESSPLAYERDATA_JMP]");
 
     // hook num-pages
     HookGetNumPages();
@@ -546,6 +537,11 @@ void UnhookOthers()
 		}
 		
 		ClearLine(&l_GetPlayerInfo);
+		
+		//unhook ProcessPlayerData
+		bProcessPlayerDataHooked=MasterUnhookFunction(code[C_PROCESSPLAYERDATA_JMP], 
+														NewProcessPlayerData);
+		Log(&k_kload,"Jump to ProcessPlayerData UNHOOKED");
 
 	return;
 };
@@ -1015,7 +1011,7 @@ void NewFreeMemory(DWORD addr)
 	return;
 };
 
-void NewProcessPlayerData(DWORD Caller)
+void NewProcessPlayerData()
 {
 	//Log(&k_kload,"NewProcessPlayerData CALLED.");
 	DWORD oldESI;

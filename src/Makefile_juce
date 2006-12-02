@@ -1,9 +1,12 @@
-#We have to find a solution for these paths!
-CC="D:\Microsoft Visual Studio\VC98\Bin\cl"
-LINK="D:\Microsoft Visual Studio\VC98\Bin\link"
-RC="D:\Microsoft Visual Studio\Common\MSDev98\Bin\rc"
-INC=/I "D:\Microsoft Visual Studio\VC98\Include" /I "D:\Microsoft Visual Studio\DXSDK\Include"
-LIB=/LIBPATH:"D:\Microsoft Visual Studio\VC98\Lib" /LIBPATH:"D:\Microsoft Visual Studio\DXSDK\Lib"
+#CC="c:\program files\microsoft visual studio .net 2003\vc7\bin\cl"
+#LINK="c:\program files\microsoft visual studio .net 2003\vc7\bin\link"
+#RC="c:\program files\microsoft visual studio .net 2003\vc7\bin\rc"
+
+CC="c:\program files\microsoft visual studio\vc98\bin\cl"
+LINK="c:\program files\microsoft visual studio\vc98\bin\link"
+RC="c:\program files\microsoft visual studio\common\msdev98\bin\rc"
+INC=/I "c:\program files\microsoft visual studio\vc98\include" /I "c:\juce\dxsdk9\include"
+LIB=/LIBPATH:"c:\program files\microsoft visual studio\vc98\lib" /LIBPATH:"c:\juce\dxsdk9\lib"
 
 CFLAGS=/nologo /GX $(EXTRA_CFLAGS)
 LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
@@ -11,12 +14,20 @@ LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
 LIBS=$(LIB) user32.lib gdi32.lib advapi32.lib libcpmt.lib
 LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
 
+#CC=cl
+#RC=rc
+#CFLAGS=/nologo /GX $(EXTRA_CFLAGS)
+#LINK=link
+#LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
+#LIBS=user32.lib gdi32.lib advapi32.lib libcpmt.lib
+#LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
+
 INCPNGDIB=soft\pngdib
 LPPNGDIB=soft\pngdib 
 LPLIBPNG=soft\libpng-1.2.8-lib\lib
 LPZLIB=soft\zlib123-dll\lib
 
-all: dlls #apps
+all: dlls apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy *.dll output

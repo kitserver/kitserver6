@@ -139,7 +139,7 @@ DWORD NewGetPlayerInfo();
 KEXPORT DWORD GetPlayerInfo(DWORD PlayerNumber,DWORD Mode);
 void NewFileFromAFS(DWORD dummy, DWORD infoBlock);
 void NewFreeMemory(DWORD addr);
-void NewProcessPlayerData(DWORD Caller);
+void NewProcessPlayerData();
 
 BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
   LPDWORD lpNumberOfBytesRead,
