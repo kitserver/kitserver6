@@ -120,6 +120,18 @@ BOOL g_display2Dkits = FALSE;
 BOOL g_lastDisplay2Dkits = FALSE;
 bool g_kit_loading_enabled = false;
 bool g_edit_mode = false;
+bool g_unidecode_flag = false;
+DWORD g_currentAfsId = false;
+
+typedef struct _TextureBinding {
+    IDirect3DTexture8* srcTexture;
+    IDirect3DTexture8* repTexture;
+    UINT levels;
+} TextureBinding;
+
+map<DWORD,DWORD> _texture_to_id;
+map<DWORD,DWORD> _source_to_id;
+vector<TextureBinding> _textureBindings;
 
 // textures for strip-selection
 IDirect3DTexture8* g_home_shirt_tex = NULL;
@@ -252,7 +264,7 @@ DWORD* g_AFS_id = NULL;
 MEMITEMINFO* g_AFS_memItemInfo = NULL;
 
 #define DATALEN 21
-#define CODELEN 18
+#define CODELEN 20
 
 // data array names
 enum {
@@ -292,6 +304,7 @@ enum {
     C_RESETFLAG2_CS,
     C_WRITEKITINFO_CS, C_WRITEKITINFO_CS2, C_WRITEKITINFO_CS3, 
     C_WRITEKITINFO_CS4, C_WRITEKITINFO,
+    C_PROCESSKIT_CS, C_PROCESSKIT,
 };
 
 DWORD codeArray[][CODELEN] = {
@@ -307,6 +320,7 @@ DWORD codeArray[][CODELEN] = {
         0x9c15a7,
         0x6b2487, 0x966e15, 0x966e62, 
         0x80843e, 0x865380,
+        0x8b1a59, 0x8d1a60,
     },
 };
 
@@ -1149,6 +1163,7 @@ DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal);
 DWORD kservSetFlag();
 DWORD kservResetFlag();
 DWORD kservResetFlag2();
+DWORD kservProcessKit(DWORD dest, DWORD src);
 void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* savedTeamInfo);
 void clearTeamKitInfo();
 void setTeamKitInfo();
@@ -3176,7 +3191,8 @@ void InitKserv()
 
         // hook BeginUniSelect
 		HookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
-		//HookFunction(hk_D3D_CreateTexture,(DWORD)JuceCreateTexture);
+		HookFunction(hk_D3D_CreateTexture,(DWORD)JuceCreateTexture);
+        LogWithNumber(&k_mydll,"JuceCreateTexture: func=%08x", (DWORD)JuceCreateTexture);
 
         // hook EndUniSelect
 		HookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
@@ -3213,6 +3229,8 @@ void InitKserv()
         MasterHookFunction(code[C_WRITEKITINFO_CS2], 2, kservWriteKitInfo);
         MasterHookFunction(code[C_WRITEKITINFO_CS3], 2, kservWriteKitInfo);
         MasterHookFunction(code[C_WRITEKITINFO_CS4], 2, kservWriteKitInfo);
+
+        MasterHookFunction(code[C_PROCESSKIT_CS], 2, kservProcessKit);
 
         // create font instance
         //g_font = new CD3DFont( _T("Arial"), 10, D3DFONT_BOLD);
@@ -4637,6 +4655,59 @@ void DumpSurface(int count, IDirect3DSurface8* surf)
 	D3DXSaveSurfaceToFile(filename, D3DXIFF_BMP, surf, NULL, NULL);
 }
 
+void DumpTexture(IDirect3DTexture8* const ptexture) 
+{
+    static int count = 0;
+    char buf[BUFLEN];
+    sprintf(buf,"kitserver\\tex%03d.bmp",count++);
+    if (FAILED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, ptexture, NULL))) {
+        LogWithString(&k_mydll, "DumpTexture: failed to save texture to %s", buf);
+    }
+}
+
+void ReplaceTexture(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT levels)
+{
+    LogWithNumber(&k_mydll, "ReplaceTexture: replacing texture with leves count = %d", levels);
+
+    // DEBUG: dump texture before replacement
+    //DumpTexture(srcTexture);
+
+    for (int i=0; i<levels; i++) {
+        IDirect3DSurface8* src = NULL;
+        IDirect3DSurface8* dest = NULL;
+
+        if (SUCCEEDED(srcTexture->GetSurfaceLevel(i, &dest))) {
+            if (SUCCEEDED(repTexture->GetSurfaceLevel(i, &src))) {
+                if (SUCCEEDED(D3DXLoadSurfaceFromSurface(
+                                dest, NULL, NULL,
+                                src, NULL, NULL,
+                                D3DX_FILTER_NONE, 0))) {
+                    LogWithNumber(&k_mydll,"ReplaceTexture: replacing level %d COMPLETE", i);
+
+                } else {
+                    LogWithNumber(&k_mydll,"ReplaceTexture: replacing level %d FAILED", i);
+                }
+                src->Release();
+            }
+            dest->Release();
+        }
+    }
+
+    // release replacement texture, so that we don't leak resources
+    repTexture->Release();
+
+    // DEBUG: dump texture after replacement
+    //DumpTexture(srcTexture);
+}
+
+DWORD VtableSet(void* self, int index, DWORD value)
+{
+    DWORD* vtab = (DWORD*)(*(DWORD*)self);
+    DWORD currValue = vtab[index];
+    vtab[index] = value;
+    return currValue;
+}
+
 /**
  * Tracker for IDirect3DDevice8::CreateTexture method.
  */
@@ -4644,15 +4715,119 @@ HRESULT STDMETHODCALLTYPE JuceCreateTexture(IDirect3DDevice8* self, UINT width, 
 UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, 
 DWORD src, bool* IsProcessed)
 {
-	int i;
-	HRESULT res = S_OK;
-
-	if ((width == 512 && height == 256 /*&& g_follows*/) ||
-		(width == 256 && height == 128 && levels == 2)) {
-		LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
-	}
-
+	HRESULT res = D3D_OK;
     *IsProcessed = false;
+    if (!g_kit_loading_enabled) return res; // safety check
+
+    if (_textureBindings.size()>0) {
+        for (vector<TextureBinding>::iterator it = _textureBindings.begin();
+                it != _textureBindings.end();
+                it++) {
+            ReplaceTexture(it->srcTexture, it->repTexture, it->levels);
+        }
+        _textureBindings.clear();
+    }
+
+    // process 256x128 2-level texture
+    if (width == 256 && height == 128) {
+        if (levels == 2 && g_unidecode_flag) {
+            LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
+            LogWithNumber(&k_mydll,"JuceCreateTexture: src = %08x", src);
+
+            BOOL needsMask;
+            char filename[BUFLEN] = {0};
+            DWORD texType = FindImageFileForId(g_currentAfsId, "", filename, &needsMask);
+            if (texType != TEXTYPE_NONE) {
+                // replacement texture file exists
+                // step 1: get some information about it
+                D3DXIMAGE_INFO imageInfo;
+                D3DXGetImageInfoFromFile(filename, &imageInfo);
+
+                // step 2: create the texture that was requested, but change
+                // the dimensions of it according to the replacement texture.
+                // Also create the replacement texture for later usage.
+                IDirect3DTexture8* pRepTexture;
+                DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
+                if (SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename, 
+                                imageInfo.Width/2, imageInfo.Height/2,
+                                levels, usage, imageInfo.Format, pool,
+                                D3DX_DEFAULT, D3DX_DEFAULT,
+                                0, NULL, NULL, &pRepTexture))) {
+
+                    VtableSet(self, VTAB_CREATETEXTURE, prevValue);
+                    res = OrgCreateTexture(self, imageInfo.Width/2, imageInfo.Height/2,
+                            levels,usage,format,pool,ppTexture);
+                    *IsProcessed = true;
+
+                    TextureBinding textureBinding;
+                    textureBinding.srcTexture = *ppTexture;
+                    textureBinding.repTexture = pRepTexture;
+                    textureBinding.levels = 2;
+                    _textureBindings.push_back(textureBinding);
+                    return res;
+
+                } else {
+                    LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename);
+                }
+            } else {
+                LogWithNumber(&k_mydll, "JuceCreateTexture: Image file not found for id = %d", g_currentAfsId);
+            }
+        }
+    }
+
+    // process 512x256 1-level texture
+    if (width == 512 && height == 256) {
+        g_unidecode_flag = false;
+
+        map<DWORD,DWORD>::iterator mit = _source_to_id.find(src);
+        if (mit != _source_to_id.end()) {
+            LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
+            LogWithNumber(&k_mydll,"JuceCreateTexture: (found entry): src = %08x", mit->first);
+            LogWithNumber(&k_mydll,"JuceCreateTexture: AFS id = %d", mit->second);
+
+            BOOL needsMask;
+            char filename[BUFLEN] = {0};
+            DWORD texType = FindImageFileForId(mit->second, "", filename, &needsMask);
+            if (texType != TEXTYPE_NONE) {
+                // replacement texture file exists
+                // step 1: get some information about it
+                D3DXIMAGE_INFO imageInfo;
+                D3DXGetImageInfoFromFile(filename, &imageInfo);
+
+                // step 2: create the texture that was requested, but change
+                // the dimensions of it according to the replacement texture.
+                // Also create the replacement texture for later usage.
+                IDirect3DTexture8* pRepTexture;
+                DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
+                if (SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename, 
+                                imageInfo.Width, imageInfo.Height,
+                                levels, usage, imageInfo.Format, pool,
+                                D3DX_DEFAULT, D3DX_DEFAULT,
+                                0, NULL, NULL, &pRepTexture))) {
+
+                    VtableSet(self, VTAB_CREATETEXTURE, prevValue);
+                    res = OrgCreateTexture(self, imageInfo.Width, imageInfo.Height,
+                            levels,usage,format,pool,ppTexture);
+                    *IsProcessed = true;
+
+                    TextureBinding textureBinding;
+                    textureBinding.srcTexture = *ppTexture;
+                    textureBinding.repTexture = pRepTexture;
+                    textureBinding.levels = 1;
+                    _textureBindings.push_back(textureBinding);
+                    return res;
+
+                } else {
+                    LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename);
+                }
+            } else {
+                LogWithNumber(&k_mydll, "JuceCreateTexture: Image file not found for id = %d", mit->second);
+            }
+        }
+    }
+
 	return res;
 }
 
@@ -6169,6 +6344,30 @@ DWORD kservResetFlag2()
     return result;
 }
 
+DWORD kservProcessKit(DWORD dest, DWORD src)
+{
+	Log(&k_mydll,"kservProcessKit: processing kit");
+    LogWithNumber(&k_mydll, "kservProcessKit: destination buffer: %08x", dest);
+    LogWithNumber(&k_mydll, "kservProcessKit: source buffer: %08x", src);
+
+    // call original
+    DWORD result = MasterCallNext(dest,src);
+    LogWithNumber(&k_mydll, "kservProcessKit: kit buffer addresses stored here: %08x", result);
+
+    map<DWORD,DWORD>::iterator it = _texture_to_id.find(src - 0x10);
+    if (it != _texture_to_id.end()) {
+        _source_to_id[dest] = it->second;
+        LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, it->second);
+    } else {
+        map<DWORD,DWORD>::iterator sit = _texture_to_id.find(src - 0x20);
+        if (sit != _texture_to_id.end()) {
+            _source_to_id[dest] = sit->second;
+            LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, sit->second);
+        }
+    }
+    return result;
+}
+
 void setTeamKitInfo()
 {
     // overwrite kit information
@@ -6474,6 +6673,9 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 {
 	Log(&k_mydll,"JuceUniDecode: CALLED.");
 	LogWithNumber(&k_mydll,"JuceUniDecode: addr = %08x", addr);
+	LogWithNumber(&k_mydll,"JuceUniDecode: result = %08x", result);
+
+    g_unidecode_flag = true;
 
 	TEXIMGPACKHEADER* orgKit = (TEXIMGPACKHEADER*)result;
 	// save decoded uniforms as BMPs
@@ -6492,6 +6694,9 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 
 	MEMITEMINFO* memItemInfo = FindMemItemInfoByAddress(addr);
 	if (memItemInfo != NULL) {
+        // remember current id
+        g_currentAfsId = memItemInfo->id;
+
         LogWithNumber(&k_mydll,"JuceUniDecode: Loading id = %d", memItemInfo->id);
         if (memItemInfo->id == data[TRAINING_KIT]) {
             return;
@@ -6510,6 +6715,10 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
         // flag to apply mask
         BOOL needsMask = FALSE;
         DWORD texType = FindImageFileForId(memItemInfo->id, "", filename, &needsMask);
+        if (texType != TEXTYPE_NONE) {
+            _texture_to_id[result] = memItemInfo->id;
+            return;
+        }
 
         BITMAPINFO* tex = NULL;
         DWORD texSize = 0;
