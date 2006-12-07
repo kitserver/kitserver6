@@ -1,8 +1,5 @@
-#Same as in main makefile
-CC="D:\Microsoft Visual Studio\VC98\Bin\cl"
-LINK="D:\Microsoft Visual Studio\VC98\Bin\link"
-INC=/I "D:\Microsoft Visual Studio\VC98\Include" /I "D:\Microsoft Visual Studio\DXSDK\Include" /I "..\libpng-1.2.8-lib\include"
-LIB=/LIBPATH:"D:\Microsoft Visual Studio\VC98\Lib" /LIBPATH:"D:\Microsoft Visual Studio\DXSDK\Lib"
+!INCLUDE "..\..\makePaths.txt"
+INC=$(INC) /I "..\libpng-1.2.8-lib\include"
 
 CFLAGS=/nologo /GX $(EXTRA_CFLAGS)
 LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
