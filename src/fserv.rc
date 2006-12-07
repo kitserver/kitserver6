@@ -17,11 +17,11 @@ BEGIN
 	BEGIN
 		BLOCK "040904b0"
 		BEGIN
-			VALUE "FileDescription", "KitServer 6 Module\0"
+			VALUE "FileDescription", "FaceServer 6 Module\0"
 			VALUE "FileVersion", "6.3.0\0"
-			VALUE "LegalCopyright", "Copyright © 2005,2006 Juce\0"
-			VALUE "Comments", "Add-on component for PES6 \
-selection of kits/numbers/fonts for players and goalkeepers.\0"
+			VALUE "LegalCopyright", "Copyright © 2005,2006 Robbie\0"
+			VALUE "Comments", "Add-on component for PES6:\
+makes it possible to assign as much real faces as you want to the players.\0"
 		END
 	END
 	BLOCK "VarFileInfo"

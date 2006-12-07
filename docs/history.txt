@@ -54,3 +54,8 @@ v6.2.1:
 - ball server fixes to eliminate crashes, when 512x512 ball textures
 are installed in the AFS.
 
+2006-12-??
+----------
+v6.3.0:
+- HD kits
+- face server

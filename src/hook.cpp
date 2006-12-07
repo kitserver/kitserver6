@@ -56,7 +56,7 @@ DWORD codeArray[][CODELEN] = {
       0x6d3b60, 0x6b8099,
       0, 0,
       0, 0,
-      0, 0, 0,
+      0x65b668, 0x876f20, 0x45bc5c,
       0x5fe506, 0x40c848,
       0, 0, 0,
       0, 0, 0,
@@ -1022,7 +1022,7 @@ void NewProcessPlayerData()
 	DWORD addr=**(DWORD**)(oldESI+4);
 	DWORD *FaceID=(DWORD*)(addr+0x40);
 	(*FaceID)&=0xFFFF;
-	
+
 	PROCESSPLAYERDATA NextCall=NULL;
 	for (int i=0;i<(l_ProcessPlayerData.num);i++)
 	if (l_ProcessPlayerData.addr[i]!=0) {
@@ -1422,7 +1422,7 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 		src=*(DWORD*)(oldEBP+0x74);
 		if (src!=0 && !IsBadReadPtr((LPVOID)src,4)) {
 			src=*(DWORD*)(src+0x18);
-			TRACE2(&k_kload,"src = %x",src);
+			//TRACE2(&k_kload,"src = %x",src);
 		} else
 			src=0;
 	};

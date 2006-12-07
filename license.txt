@@ -1,4 +1,4 @@
-Copyright (c) 2003-2006, Juce, Robbie Pes
+Copyright (c) 2003-2006, Juce, Robbie
 
 All rights reserved.
 

@@ -4716,7 +4716,7 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 DWORD src, bool* IsProcessed)
 {
 	HRESULT res = D3D_OK;
-    *IsProcessed = false;
+
     if (!g_kit_loading_enabled) return res; // safety check
 
     if (_textureBindings.size()>0) {
@@ -4727,6 +4727,8 @@ DWORD src, bool* IsProcessed)
         }
         _textureBindings.clear();
     }
+    
+    if (*IsProcessed) return res;
 
     // process 256x128 2-level texture
     if (width == 256 && height == 128) {

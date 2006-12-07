@@ -1,9 +1,5 @@
-#We have to find a solution for these paths!
-CC="D:\Microsoft Visual Studio\VC98\Bin\cl"
-LINK="D:\Microsoft Visual Studio\VC98\Bin\link"
-RC="D:\Microsoft Visual Studio\Common\MSDev98\Bin\rc"
-INC=/I "D:\Microsoft Visual Studio\VC98\Include" /I "D:\Microsoft Visual Studio\DXSDK\Include"
-LIB=/LIBPATH:"D:\Microsoft Visual Studio\VC98\Lib" /LIBPATH:"D:\Microsoft Visual Studio\DXSDK\Lib"
+#Now supports our local paths!
+!INCLUDE "makePaths.txt"
 
 CFLAGS=/nologo /GX $(EXTRA_CFLAGS)
 LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
@@ -16,7 +12,7 @@ LPPNGDIB=soft\pngdib
 LPLIBPNG=soft\libpng-1.2.8-lib\lib
 LPZLIB=soft\zlib123-dll\lib
 
-all: dlls #apps
+all: dlls apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy *.dll output
@@ -25,9 +21,23 @@ all: dlls #apps
 	copy keybind.exe output
 	copy soft\zlib123-dll\zlib1.dll output
 	copy soft\libpng-1.2.8-bin\libpng13.dll output
+	
+all_dlls: dlls
+	if exist output (rd /S /Q output)
+	mkdir output
+	copy *.dll output
+	copy soft\zlib123-dll\zlib1.dll output
+	copy soft\libpng-1.2.8-bin\libpng13.dll output
+	
+all_apps: apps
+	if exist output (rd /S /Q output)
+	mkdir output
+	copy setup.exe output
+	copy lodcfg.exe output
+	copy keybind.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll stadium.dll lodmixer.dll dxtools.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll
 apps: setup.exe lodcfg.exe keybind.exe afstest.exe afswalk.exe afsexport.exe
 
 release:
@@ -103,13 +113,13 @@ bserv_preview.obj: bserv_preview.cpp bserv.h
 bserv_preview.res: 
 	$(RC) -r -fo bserv_preview.res bserv_preview.rc
 	
-#fserv.lib: fserv.obj
-#fserv.dll: fserv.lib fserv.res
-#	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj kload.lib fserv.res $(LIBS)
-#fserv.obj: fserv.cpp fserv.h
-#
-#fserv.res: 
-#	$(RC) -r -fo fserv.res fserv.rc
+fserv.lib: fserv.obj
+fserv.dll: fserv.lib fserv.res
+	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj kload.lib fserv.res $(LIBS)
+fserv.obj: fserv.cpp fserv.h
+
+fserv.res: 
+	$(RC) -r -fo fserv.res fserv.rc
 
 #bootserv.lib: bootserv.obj
 #bootserv.dll: bootserv.lib bootserv.res

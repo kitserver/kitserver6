@@ -356,6 +356,7 @@ void bservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRea
                 DWORD fsize = GetFileSize(hfile,NULL);
                 ReadFile(hfile,lpBuffer,fsize,&NBW,NULL);
                 CloseHandle(hfile);
+                TRACE(&k_bserv,"Model was replaced!");
             };
             
 			g_afsId = 0xffffffff;
