@@ -4760,16 +4760,18 @@ DWORD src, bool* IsProcessed)
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     res = OrgCreateTexture(self, imageInfo.Width/2, imageInfo.Height/2,
                             levels,usage,format,pool,ppTexture);
-                    *IsProcessed = true;
 
                     TextureBinding textureBinding;
                     textureBinding.srcTexture = *ppTexture;
                     textureBinding.repTexture = pRepTexture;
                     textureBinding.levels = 2;
                     _textureBindings.push_back(textureBinding);
+
+                    *IsProcessed = true;
                     return res;
 
                 } else {
+                    VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename);
                 }
             } else {
@@ -4812,13 +4814,14 @@ DWORD src, bool* IsProcessed)
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     res = OrgCreateTexture(self, imageInfo.Width, imageInfo.Height,
                             levels,usage,format,pool,ppTexture);
-                    *IsProcessed = true;
 
                     TextureBinding textureBinding;
                     textureBinding.srcTexture = *ppTexture;
                     textureBinding.repTexture = pRepTexture;
                     textureBinding.levels = 1;
                     _textureBindings.push_back(textureBinding);
+
+                    *IsProcessed = true;
                     return res;
 
                 } else {

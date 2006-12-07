@@ -1282,6 +1282,13 @@ void FreeBallTexture()
 	return;
 };
 
+DWORD VtableSet(void* self, int index, DWORD value)
+{
+    DWORD* vtab = (DWORD*)(*(DWORD*)self);
+    DWORD currValue = vtab[index];
+    vtab[index] = value;
+    return currValue;
+}
 
 HRESULT STDMETHODCALLTYPE bservCreateTexture(IDirect3DDevice8* self, UINT width, UINT height,UINT levels,
 DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, DWORD src, bool* IsProcessed)
@@ -1308,10 +1315,13 @@ DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, DWOR
 	if (src!=0 && src==gdbBallAddr) {
 		Log(&k_bserv,"bservCreateTexture called for ball texture.");
 		
+        DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
         if (FAILED(CreateBallTexture(self,width,height,levels,usage,format,&g_gdbBallTexture))) {
+            Log(&k_bserv,"bservCreateTexture: CreateBallTexture FAILED.");
             *IsProcessed = false;
             return res;
         }
+        VtableSet(self, VTAB_CREATETEXTURE, prevValue);
 
 		res = OrgCreateTexture(self, ballTextureRect.right, ballTextureRect.bottom,
 				levels,usage,format,pool,ppTexture);
@@ -1326,24 +1336,23 @@ DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, DWOR
 
 void bservUnlockRect(IDirect3DTexture8* self,UINT Level)
 {
-	//LogWithTwoNumbers(&k_bserv,"bservUnlockRect: Processing texture %x, level %d",(DWORD)self,Level);
-	
 	if (g_gdbBallTexture==NULL || g_lastBallTex==NULL)
 		return;
 		
     IDirect3DSurface8* src = NULL;
     IDirect3DSurface8* dest = NULL;
 
+	//LogWithTwoNumbers(&k_bserv,"bservUnlockRect: Processing texture %x, level %d",(DWORD)self,Level);
     if (SUCCEEDED(g_lastBallTex->GetSurfaceLevel(0, &dest))) {
         if (SUCCEEDED(g_gdbBallTexture->GetSurfaceLevel(0, &src))) {
             if (SUCCEEDED(D3DXLoadSurfaceFromSurface(
                             dest, NULL, NULL,
                             src, NULL, NULL,
                             D3DX_FILTER_NONE, 0))) {
-                TRACE(&k_bserv,"Replacing ball texture COMPLETE");
+                Log(&k_bserv,"Replacing ball texture COMPLETE");
 
             } else {
-                TRACE(&k_bserv,"Replacing ball texture FAILED");
+                Log(&k_bserv,"Replacing ball texture FAILED");
             }
             src->Release();
         }
