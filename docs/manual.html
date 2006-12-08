@@ -861,15 +861,6 @@ go back to edit mode and look at the top. When you select a player with a new fa
 is displayed. Don't worry about the fact that the face is not shown when you edit a player.
 This just shows that it is not saved in your optionfile. In the game you will see it properly.<br /></p>
 <p>
-You will probably recognize that the new faces are selectable now in edit mode. They are added after
-the standard ones. However you shouldn't assign them here for two reasons. First this would be saved
-into your optionfile and might cause problems if you disable Faceserver or if you insert new faces.
-Second the saved face number is limited to 512. If you configure the new faces using map.txt, you won't
-have these problems. Maybe I will build a feature in future versions that adds the player to map.txt when
-you select a new face for him, but I wonder if this would be more comfortable as you would still need to
-copy the file to your GDB and tell Faceserver to load it. So at the moment you can use it to check the
-inserted faces only.<br /></p>
-<p>
 The way to assign new hair to a player is very similar: Find out the player's id, copy the hair
 file to <b>GDB\hair</b> and open <b>GDB\hair\map.txt</b>. The format is exactly the same as for faces,
 so look above how to insert a line for the player. Save the file and start the game. If you did
