@@ -6722,12 +6722,12 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
         DWORD texType = FindImageFileForId(memItemInfo->id, "", filename, &needsMask);
         if (texType != TEXTYPE_NONE) {
             _texture_to_id[result] = memItemInfo->id;
-            return;
         }
 
         BITMAPINFO* tex = NULL;
         DWORD texSize = 0;
 
+        /*
         switch (texType) {
             case TEXTYPE_PNG:
                 LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
@@ -6772,6 +6772,7 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 
         DoMipMap(memItemInfo->id, (TEXIMGPACKHEADER*)result, 0, "-mip1", MaskKitTextureMip1);
         DoMipMap(memItemInfo->id, (TEXIMGPACKHEADER*)result, 1, "-mip2", MaskKitTextureMip2);
+        */
 
         // if goalkeeper, extra steps needed:
         if (IsGK(memItemInfo->id)) {
