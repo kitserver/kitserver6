@@ -5947,6 +5947,10 @@ void clearTeamKitInfo()
     licensed_ids[0] = g_licensed_ordinals[0];
     licensed_ids[1] = g_licensed_ordinals[1];
 
+    // clear out texture maps
+    _texture_to_id.clear();
+    _source_to_id.clear();
+
 	if (g_teamKitInfo.size() == 0) {
 		return;
 	}
@@ -6362,14 +6366,25 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
     map<DWORD,DWORD>::iterator it = _texture_to_id.find(src - 0x10);
     if (it != _texture_to_id.end()) {
         _source_to_id[dest] = it->second;
+        _texture_to_id.erase(it);
         LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, it->second);
+
     } else {
         map<DWORD,DWORD>::iterator sit = _texture_to_id.find(src - 0x20);
         if (sit != _texture_to_id.end()) {
             _source_to_id[dest] = sit->second;
+            _texture_to_id.erase(sit);
             LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, sit->second);
+
+        } else {
+            // nothing found. Make sure that we remove this dest key from _source_to_id, 
+            // if it exists in there
+            map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
+            if (dit != _source_to_id.end()) {
+                _source_to_id.erase(dit);
+            }
         }
-    }
+    } 
     return result;
 }
 
@@ -6697,6 +6712,7 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 	//ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)addr;
 	//DumpData((BYTE*)result, header->dwDecSize);
 
+    g_currentAfsId = 0;
 	MEMITEMINFO* memItemInfo = FindMemItemInfoByAddress(addr);
 	if (memItemInfo != NULL) {
         // remember current id
@@ -6721,6 +6737,7 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
         BOOL needsMask = FALSE;
         DWORD texType = FindImageFileForId(memItemInfo->id, "", filename, &needsMask);
         if (texType != TEXTYPE_NONE) {
+            LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
             _texture_to_id[result] = memItemInfo->id;
         }
 
