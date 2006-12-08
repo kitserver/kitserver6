@@ -813,7 +813,7 @@ void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, 
 		sprintf(tmp,"Player ID: %d",lastPlayerNumber);
 		strcpy(lastPlayerNumberString,tmp);
 	};
-	KDrawText(450,4,color,16,lastPlayerNumberString);
+	KDrawText(450,2,color,12,lastPlayerNumberString);
 	
 	if (hasChanged) {
 		if (lastFaceID==0xffffffff || g_Faces[lastFaceID]==NULL) {
@@ -832,10 +832,10 @@ void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, 
 	};
 	hasChanged=false;
 	if (lastWasFromGDB)
-		KDrawText(450,34,color,16,lastFaceFileString);
+		KDrawText(450,22,color,12,lastFaceFileString);
 		
 	if (lastHairWasFromGDB)
-		KDrawText(450,64,color,16,lastHairFileString);
+		KDrawText(450,42,color,12,lastHairFileString);
 
 	return;
 };
