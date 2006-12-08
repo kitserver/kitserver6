@@ -5,6 +5,7 @@
         img { display:block;margin:10px 0 10px 0;border:1px solid #000; }
         table td img {border:0}
         div.note { background-color:#fdc;color:#800;padding:5px; }
+        p.devnote { font-weight:bold;font-style:italic;color:#666; }
         table {padding:10px 0 10px 0}
         table td {padding:5px;border:1px solid #000}
         table th {padding:5px;border:1px solid #000;background-color:#ccc}
@@ -37,11 +38,12 @@
 Version history: <a href="history.txt">history.txt</a>
 </div>
 <div>
-November 21, 2006<br />
-Module Versions: <a href="#kitserver">Kserv 6.2.1</a>, 
-<a href="#ballserver">Ballserver 6.2.1</a>,
+December 7, 2006<br />
+Module Versions: <a href="#kitserver">Kserv 6.3.0</a>, 
+<a href="#ballserver">Ballserver 6.2.2</a>,
 <a href="#lodmixer">LOD Mixer 6.2.1</a>,
-<a href="#stadiumserver">Stadium Server 6.2.1</a>
+<a href="#stadiumserver">Stadium Server 6.2.1</a>,
+<a href="#faceserver">Faceserver 6.3.0</a>
 </div>
 
 
@@ -51,7 +53,7 @@ Module Versions: <a href="#kitserver">Kserv 6.2.1</a>,
 <p>
 Kitserver 6 is an add-on program for Pro Evolution Soccer 6.
 It is a loader and manager for various modules.
-Kserv Module 6.2.1 provides the alternative way of managing players and goalkeeper kits
+Kserv Module 6.3.0 provides the alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
 Also, you are not restricted to just 1st and 2nd kit for each team - you can have as many as you like.
@@ -78,6 +80,12 @@ LOD Mixer Module 6.2.1 allows to make some tweaks to the graphics engine of the 
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
+</p>
+
+<p>
+Faceserver Module 6.3.0 controls players faces and hair. You can assign a face BIN and a hair BIN
+to any player, so potentially every single player in the game can have his own face/hair! (If you
+have a big hard drive of course).
 </p>
 
 <h3>1.2 Installation</h3>
@@ -181,7 +189,7 @@ Here is the list of actions and default bindings for keyboard and gamepad:<br />
     </tr>
     <tr>
         <td><a name="ac_next_val">Next value</a></td>
-        <td><img src="cross.gif" /></td>
+        <td><img src="circle.gif" /></td>
         <td>Del (Num Del)</td>
     </tr>
     <tr>
@@ -201,7 +209,7 @@ Here is the list of actions and default bindings for keyboard and gamepad:<br />
     </tr>
     <tr>
         <td><a name="ac_action2">Action 2</a></td>
-        <td><img src="cross.gif"/></td>
+        <td><img src="circle.gif"/></td>
         <td>Tab</td>
     </tr>
     <tr>
@@ -230,7 +238,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kitserver">Kserv Module 6.2.1 (kserv.dll)</h2>
+<h2 id="kitserver">Kserv Module 6.3.0 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -300,12 +308,28 @@ either ".png" or ".bmp" extensions.</b></div>
 <p>
 <table>
     <tr><th>Reserved PNG file name</th><th>Reserved BMP file name</th><th>Meaning</th></tr>
-    <tr><td>all.png</td><td>all.bmp</td><td>512x256 kit texture (Must be 8-bit with palette. Alpha transparency
-            is supported in both PNG and BMP, although alpha-bytes in BMP-palettes are not really
-            a standard feature of BMP-format.)</td></tr>
+    <tr><td>all.png</td><td>all.bmp</td><td>kit texture of arbitrary dimensions. The game uses
+            512x256 8-bit palletted textures with 32-bit palette entries (24bit color + 8bit
+            alpha transparency). This format is supported by kitserver, however it is not the
+            only one. You can also use TrueColor images (32bit RGBA) of other dimensions, such
+            as for example 512x512, 1024x512, 1024x2048, and so for. 
+    </td></tr>
     <tr><td>font.png</td><td>font.bmp</td><td>256x64 image with font for displaying player names on the back
             of the shirt</td></tr>
 </table>
+</p>
+
+<p>
+When choosing the dimensions for your kits, be aware that the
+kitserver will attempt to create the textures of the same size as that of the images,
+so make sure you video card supports such textures. Going beyond 1024 pixels in either
+dimension may severly affect overall performance of the game, and also visually it's
+hardly going to make much difference, so choose the dimensions wisely.
+</p>
+<p class="devnote">
+IMPORTANT NOTE TO KITMAKERS: transparency is no longer supported for BMP kits.
+It is however fully supported for PNG kits, both "simple transparency" 
+(8-bit paletted with alpha) and per-pixel transparency in TrueColor RGBA images.
 </p>
 
 <h4>2.2. config.txt</h4>
@@ -507,7 +531,7 @@ number of available pages.
 
 <!-- ### BALLSERVER ### -->
 
-<h2 id="ballserver">Ballserver Module 6.2.1 (bserv.dll)</h2>
+<h2 id="ballserver">Ballserver Module 6.2.2 (bserv.dll)</h2>
 
 <h3>3.1 Quick summary of the features</h3>
 
