@@ -163,6 +163,7 @@ dxtools.res:
 #	rc -r -fo savegames.res savegames.rc
 
 setupgui.obj: setupgui.cpp setupgui.h
+setup.obj: setup.cpp setup.h setupgui.h
 setup.exe: setup.obj detect.obj setupgui.obj imageutil.obj
 	$(LINK) $(LFLAGS) /out:setup.exe setup.obj detect.obj setupgui.obj imageutil.obj $(LIBS)
 setup.obj: setup.cpp setup.h setupgui.h
