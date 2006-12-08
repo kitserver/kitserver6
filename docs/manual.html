@@ -829,11 +829,62 @@ the <a class="ac" href="#ac_switch2">Switch 2</a> action.
 in "View Stadiums" mode. Gamepad doesn't work.</div>
 
 
+<!-- ### FACESERVER ### -->
+
+<h2 id="faceserver">FaceServer Module 6.3.0 (fserv.dll)</h2>
+
+<h3>6.1 Introduction</h3>
+<p>
+Faceserver is similar to Kitserver and Ballserver, making it possible to load as
+much extra faces and extra hair from the GDB as you want. Faceserver makes use
+of unique ids, which are assigned to each player. As these aren't saved with replays 
+and a team you can export from the master league, it can't work in these situations. 
+A new module to fix this is under development, but not finished yet.</p>
+
+<h3>6.2 How to use</h3>
+<p>Go to <b>Edit Mode</b> to see how the faces look, and to find out the ID
+numbers for the players that you want to insert faces/hair for.
+</p>
+
+<img src="faceseditmode.jpg" />
+
+<p>Shown on screenshot, the face and hair for Fabien Barthez were made by Mystiq. 
+Notice at the very top of the screen, the text that says <b>Player ID:</b>. Every player
+will have a unique id shown there. To add a face to a player, remember the id and go to your <b>GDB\faces</b> folder. Copy the face there (extract
+it before to a bin file if you downloaded a zip file!) and open the <b>map.txt</b> with
+notepad. Add a new line after the sample, using the format given in the comment in the upper
+part (the player's id followed by the filename in double quotes). The filename is relative to
+"GDB\faces", so you can use subfolders (for facepacks or the different teams, or what you like).
+In the Ballserver manual you find an <a href="#relfolderexample"> example</a> for that.
+That's it. When play the game now, the player will have the face you assigned. To check this,
+go back to edit mode and look at the top. When you select a player with a new face, the filename
+is displayed. Don't worry about the fact that the face is not shown when you edit a player.
+This just shows that it is not saved in your optionfile. In the game you will see it properly.<br /></p>
+<p>
+You will probably recognize that the new faces are selectable now in edit mode. They are added after
+the standard ones. However you shouldn't assign them here for two reasons. First this would be saved
+into your optionfile and might cause problems if you disable Faceserver or if you insert new faces.
+Second the saved face number is limited to 512. If you configure the new faces using map.txt, you won't
+have these problems. Maybe I will build a feature in future versions that adds the player to map.txt when
+you select a new face for him, but I wonder if this would be more comfortable as you would still need to
+copy the file to your GDB and tell Faceserver to load it. So at the moment you can use it to check the
+inserted faces only.<br /></p>
+<p>
+The way to assign new hair to a player is very similar: Find out the player's id, copy the hair
+file to <b>GDB\hair</b> and open <b>GDB\hair\map.txt</b>. The format is exactly the same as for faces,
+so look above how to insert a line for the player. Save the file and start the game. If you did
+everything right, you will see it in edit mode at the same place as the face filename.
+</p>
+<div class="note">Most crashes are caused by corrupted files or wrong map files. In case of a crash
+please check first if this is the reason before posting in the forums.
+</div>
+
+
 <!-- ### ADVANCED CONFIGURATION ### -->
 
 <h2 id="advconfig">Advanced configuration</h2>
 
-<h3>6.1. Master configuration file: kload.cfg</h3>
+<h3>7.1. Master configuration file: kload.cfg</h3>
 
 <p>
 Typically, you wouldn't need to modify that, unless you're running into problems, or
@@ -847,12 +898,15 @@ do that by modifying the <b>kload.cfg</b> file. Here's how the default config lo
 
 gdb.dir = ".\"
 
-DLL.num = 5
+DLL.num = 8
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
 DLL.2 = "kitserver\kserv.dll"
-DLL.3 = "kitserver\lodmixer.dll"
-DLL.4 = "kitserver\dxtools.dll"
+DLL.3 = "kitserver\bserv.dll"
+DLL.4 = "kitserver\lodmixer.dll"
+DLL.5 = "kitserver\dxtools.dll"
+DLL.6 = "kitserver\stadium.dll"
+DLL.7 = "kitserver\fserv.dll"
 
 # DirectX options
 dx.force-SW-TnL = 0
@@ -868,12 +922,16 @@ just comment it out with a "#" symbol at the beginning of the line:
 </p>
 
 <pre>
-DLL.num = 5
+DLL.num = 8
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
 #DLL.2 = "kitserver\kserv.dll"
-DLL.3 = "kitserver\lodmixer.dll"
-DLL.4 = "kitserver\dxtools.dll"
+DLL.3 = "kitserver\bserv.dll"
+DLL.4 = "kitserver\lodmixer.dll"
+DLL.5 = "kitserver\dxtools.dll"
+DLL.6 = "kitserver\stadium.dll"
+DLL.7 = "kitserver\fserv.dll"
+
 </pre>
 
 <p>
@@ -896,10 +954,11 @@ sure you specify resolution that your monitor supports.</i>
 
 <p>
 Programming: <b>juce</b>, <b>Robbie</b><br />
-Testing: <b>biker_jim_uk, IamCool, mosu</b><br />
-Kits: <b>Spark, kel, qiankun, OPM</b>.<br />
+Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun</b><br />
+Kits: <b>Spark, kel, qiankun, OPM, Simonhibsey</b>.<br />
 Balls: <b>DAMned</b><br />
 Ball models: <b>Ariel</b>, <b>Gwidon</b><br />
+Faces/Hair: <b>Mystiq</b><br />
 Kits, balls, fonts, and numbers were taken from <a href="http://www.wevolution.org">http://www.wevolution.org</a> and
 <a href="http://forums.evo-web.co.uk">http://forums.evo-web.co.uk</a> sites.<br /> and also
 from a PES5 GDB collection by <b>FabioS</b><br />
