@@ -1173,6 +1173,7 @@ void JuceReadFile(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 HRESULT STDMETHODCALLTYPE JuceCreateTexture(IDirect3DDevice8* self, UINT width, UINT height,
 UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, 
 DWORD src, bool* IsProcessed);
+void kservUnlockRect(IDirect3DTexture8* self,UINT Level);
 HRESULT STDMETHODCALLTYPE JuceSetTexture(IDirect3DDevice8* self, DWORD stage, 
 IDirect3DBaseTexture8* pTexture);
 HRESULT STDMETHODCALLTYPE JuceSetTextureStageState(IDirect3DDevice8* self, DWORD Stage,
@@ -3192,6 +3193,8 @@ void InitKserv()
         // hook BeginUniSelect
 		HookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
 		HookFunction(hk_D3D_CreateTexture,(DWORD)JuceCreateTexture);
+		HookFunction(hk_D3D_UnlockRect,(DWORD)kservUnlockRect);
+
         LogWithNumber(&k_mydll,"JuceCreateTexture: func=%08x", (DWORD)JuceCreateTexture);
 
         // hook EndUniSelect
@@ -3307,6 +3310,9 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 
 		/* uninstall keyboard hook */
 		UninstallKeyboardHook();
+
+        UnhookFunction(hk_D3D_CreateTexture, (DWORD)JuceCreateTexture);
+        UnhookFunction(hk_D3D_UnlockRect, (DWORD)kservUnlockRect);
 
 		/* restore original pointers */
 		RestoreDeviceMethods();
@@ -4665,40 +4671,43 @@ void DumpTexture(IDirect3DTexture8* const ptexture)
     }
 }
 
+void ReplaceTextureLevel(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT level)
+{
+    IDirect3DSurface8* src = NULL;
+    IDirect3DSurface8* dest = NULL;
+
+    if (SUCCEEDED(srcTexture->GetSurfaceLevel(level, &dest))) {
+        if (SUCCEEDED(repTexture->GetSurfaceLevel(level, &src))) {
+            if (SUCCEEDED(D3DXLoadSurfaceFromSurface(
+                            dest, NULL, NULL,
+                            src, NULL, NULL,
+                            D3DX_FILTER_NONE, 0))) {
+                LogWithNumber(&k_mydll,"ReplaceTextureLevel: replacing level %d COMPLETE", level);
+
+            } else {
+                LogWithNumber(&k_mydll,"ReplaceTextureLevel: replacing level %d FAILED", level);
+            }
+            src->Release();
+        }
+        dest->Release();
+    }
+}
+
 void ReplaceTexture(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT levels)
 {
-    LogWithNumber(&k_mydll, "ReplaceTexture: replacing texture with leves count = %d", levels);
+    LogWithNumber(&k_mydll, "ReplaceTexture: replacing texture with levels count = %d", levels);
 
     // DEBUG: dump texture before replacement
     //DumpTexture(srcTexture);
 
     for (int i=0; i<levels; i++) {
-        IDirect3DSurface8* src = NULL;
-        IDirect3DSurface8* dest = NULL;
-
-        if (SUCCEEDED(srcTexture->GetSurfaceLevel(i, &dest))) {
-            if (SUCCEEDED(repTexture->GetSurfaceLevel(i, &src))) {
-                if (SUCCEEDED(D3DXLoadSurfaceFromSurface(
-                                dest, NULL, NULL,
-                                src, NULL, NULL,
-                                D3DX_FILTER_NONE, 0))) {
-                    LogWithNumber(&k_mydll,"ReplaceTexture: replacing level %d COMPLETE", i);
-
-                } else {
-                    LogWithNumber(&k_mydll,"ReplaceTexture: replacing level %d FAILED", i);
-                }
-                src->Release();
-            }
-            dest->Release();
-        }
+        ReplaceTextureLevel(srcTexture, repTexture, i);
     }
-
-    // release replacement texture, so that we don't leak resources
-    repTexture->Release();
 
     // DEBUG: dump texture after replacement
     //DumpTexture(srcTexture);
 }
+
 
 DWORD VtableSet(void* self, int index, DWORD value)
 {
@@ -4708,6 +4717,30 @@ DWORD VtableSet(void* self, int index, DWORD value)
     return currValue;
 }
 
+void kservUnlockRect(IDirect3DTexture8* self,UINT Level) 
+{
+    vector<TextureBinding>::iterator texit = NULL;
+    if (_textureBindings.size()>0) {
+        for (vector<TextureBinding>::iterator it = _textureBindings.begin();
+                it != _textureBindings.end();
+                it++) {
+            if (it->srcTexture == self) {
+                ReplaceTextureLevel(it->srcTexture, it->repTexture, Level);
+
+                if (Level == it->levels - 1) {
+                    // release replacement texture, so that we don't leak resources
+                    it->repTexture->Release();
+                    // also mark it for deletion from the bindings vector
+                    texit = it;
+                }
+                break;
+            }
+        }
+        // remove that binding from the vector
+        if (texit) _textureBindings.erase(texit);
+    }
+}
+    
 /**
  * Tracker for IDirect3DDevice8::CreateTexture method.
  */
@@ -4719,6 +4752,7 @@ DWORD src, bool* IsProcessed)
 
     if (!g_kit_loading_enabled) return res; // safety check
 
+    /*
     if (_textureBindings.size()>0) {
         for (vector<TextureBinding>::iterator it = _textureBindings.begin();
                 it != _textureBindings.end();
@@ -4727,6 +4761,7 @@ DWORD src, bool* IsProcessed)
         }
         _textureBindings.clear();
     }
+    */
     
     if (*IsProcessed) return res;
 
@@ -5948,8 +5983,8 @@ void clearTeamKitInfo()
     licensed_ids[1] = g_licensed_ordinals[1];
 
     // clear out texture maps
-    _texture_to_id.clear();
-    _source_to_id.clear();
+    //_texture_to_id.clear();
+    //_source_to_id.clear();
 
 	if (g_teamKitInfo.size() == 0) {
 		return;
