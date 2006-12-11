@@ -6,30 +6,12 @@
 
 KSERV_CONFIG g_config;
 
-// Simple AFS-reader exporter.
-// Exports a file from AFS by id
-void main(int argc, char* argv[])
+void ExportFile(char* afsFileName, int id)
 {
-	char afsFileName[1024];
-	ZeroMemory(afsFileName, 1024);
-
-	if (argc < 2)
-	{
-		printf("Usage: %s <file-id> [<afs-file>]\n", argv[0]);
-		return;
-	}
-
-	// if specific filename not specified, assume default AFS
-	if (argc > 2)
-		lstrcpy(afsFileName, argv[2]);
-	else
-		lstrcpy(afsFileName, "0_text.afs");
-
 	AFSITEMINFO itemInfo;
 	ZeroMemory(&itemInfo, sizeof(AFSITEMINFO));
 	DWORD base = 0;
-	
-	int id = atoi(argv[1]);
+
 	DWORD result = GetItemInfoById(afsFileName, id, &itemInfo, &base);
 	if (result != AFS_OK)
 	{
@@ -54,4 +36,40 @@ void main(int argc, char* argv[])
 	fclose(f);
 
 	printf("File exported as %s\n", szFileName);
+}
+
+// Simple AFS-reader exporter.
+// Exports a file from AFS by id
+void main(int argc, char* argv[])
+{
+	char afsFileName[1024];
+	ZeroMemory(afsFileName, 1024);
+
+	if (argc < 2)
+	{
+		printf("Usage: %s <file-id(s)> [<afs-file>]\n", argv[0]);
+		return;
+	}
+
+	// if specific filename not specified, assume default AFS
+	if (argc > 2)
+		lstrcpy(afsFileName, argv[2]);
+	else
+		lstrcpy(afsFileName, "0_text.afs");
+
+    char* splitter = strchr(argv[1], '-');
+    if (!splitter) {
+        // single file
+        int id = atoi(argv[1]);
+        ExportFile(afsFileName, id);
+
+    } else {
+        // range of files
+        int last = atoi(splitter+1);
+        splitter[0] = '\0';
+        int first = atoi(argv[1]);
+        for (int id=first; id<=last; id++) {
+            ExportFile(afsFileName, id);
+        }
+    }
 }
