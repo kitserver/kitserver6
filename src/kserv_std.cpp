@@ -196,6 +196,9 @@ DWORD* g_socksMaskMip1 = NULL;
 DWORD* g_socksMaskMip2 = NULL;
 DWORD* g_testMask = NULL;
 
+WORD _last_homeId = 0;
+WORD _last_awayId = 0;
+
 bool g_shirtChange[] = {false,false};
 
 char* WHICH_TEAM[] = { "HOME", "AWAY" };
@@ -1167,6 +1170,7 @@ DWORD kservProcessKit(DWORD dest, DWORD src);
 void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* savedTeamInfo);
 void clearTeamKitInfo();
 void setTeamKitInfo();
+void ClearTextureMaps();
 
 void JuceReadFile(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 
@@ -6357,6 +6361,9 @@ DWORD kservSetFlag()
     clearTeamKitInfo();
     g_kit_loading_enabled = false;
 
+    // clear texture replacement maps
+    ClearTextureMaps();
+
     // call original
     DWORD result = MasterCallNext();
     return result;
@@ -6369,6 +6376,9 @@ DWORD kservResetFlag()
     clearTeamKitInfo();
     g_kit_loading_enabled = false;
     g_edit_mode = false;
+
+    // clear texture replacement maps
+    ClearTextureMaps();
 
     // call original
     DWORD result = MasterCallNext();
@@ -6383,9 +6393,19 @@ DWORD kservResetFlag2()
     g_kit_loading_enabled = false;
     g_edit_mode = false;
 
+    // clear texture replacement maps
+    ClearTextureMaps();
+
     // call original
     DWORD result = MasterCallNext();
     return result;
+}
+
+void ClearTextureMaps()
+{
+    Log(&k_mydll, "ClearTextureMaps() CALLED");
+    _texture_to_id.clear();
+    _source_to_id.clear();
 }
 
 DWORD kservProcessKit(DWORD dest, DWORD src)
@@ -6678,6 +6698,9 @@ void JuceClear2Dkits()
     SafeRelease(&g_away_shorts_tex);
     SafeRelease(&g_away_socks_tex);
 
+    // clear texture replacement maps
+    ClearTextureMaps();
+
     // unhook Present method
 	UnhookFunction(hk_D3D_Present,(DWORD)JucePresent);
     Log(&k_mydll,"Present unhooked.");
@@ -6731,6 +6754,16 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 	LogWithNumber(&k_mydll,"JuceUniDecode: result = %08x", result);
 
     g_unidecode_flag = true;
+
+    // if new set of teams, clear the texture replacement maps
+    // so that we're for sure not going to use wrong kits.
+    WORD homeId = GetTeamId(HOME);
+    WORD awayId = GetTeamId(AWAY);
+    if (homeId != _last_homeId || awayId != _last_awayId) {
+        ClearTextureMaps();
+    }
+    _last_homeId = homeId;
+    _last_awayId = awayId;
 
 	TEXIMGPACKHEADER* orgKit = (TEXIMGPACKHEADER*)result;
 	// save decoded uniforms as BMPs
