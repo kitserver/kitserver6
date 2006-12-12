@@ -54,6 +54,8 @@ std::map<DWORD,DWORD> g_PlayersAddr;
 std::map<DWORD,DWORD> g_PlayersAddr2;
 std::map<DWORD,DWORD> g_SpecialFaceHair;
 std::map<DWORD,DWORD> g_EditorAddresses;
+std::map<DWORD,bool>  g_FaceExists;
+std::map<DWORD,bool>  g_HairExists;
 std::map<DWORD,DWORD>::iterator g_PlayersIterator;
 
 BYTE isInEditPlayerMode=0, isInEditPlayerList=0;
@@ -62,6 +64,7 @@ DWORD lastHairID=0xffffffff, lastGDBHairID=0xffffffff, lastGDBHairRes=0;
 bool lastWasFromGDB=false, lastHairWasFromGDB=false, hasChanged=true;
 char lastPlayerNumberString[BUFLEN],lastFaceFileString[BUFLEN];
 char lastHairFileString[BUFLEN];
+char tmpFilename[BUFLEN]; //crashes if this is defined locally in the functions
 
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
@@ -231,6 +234,8 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		g_PlayersAddr2.clear();
 		g_SpecialFaceHair.clear();
 		g_EditorAddresses.clear();
+		g_FaceExists.clear();
+		g_HairExists.clear();
 		
 		Log(&k_fserv,"Detaching done.");
 	};
@@ -397,7 +402,7 @@ void GetGDBFaces()
 void AddPlayerFace(DWORD PlayerNumber,char* sfile)
 {
 	LogWithNumberAndString(&k_fserv,"Player # %d gets face %s",PlayerNumber,sfile);
-	
+	/* Leave out this check, this is done later
 	char tmpFilename[BUFLEN];
 	strcpy(tmpFilename,GetPESInfo()->gdbDir);
 	strcat(tmpFilename,"GDB\\faces\\");
@@ -405,7 +410,7 @@ void AddPlayerFace(DWORD PlayerNumber,char* sfile)
 	if (!FileExists(tmpFilename)) {
 		Log(&k_fserv,"File doesn't exist, line is ignored!");
 		return;
-	};
+	};*/
 	
 	DWORD newId=GetIDForFaceName(sfile);
 	if (newId==0xFFFFFFFF) {
@@ -414,6 +419,7 @@ void AddPlayerFace(DWORD PlayerNumber,char* sfile)
 		ZeroMemory(g_Faces[newId],strlen(sfile));
 		strcpy(g_Faces[newId],sfile);
 		numFaces++;
+		g_FaceExists[newId]=false;
 	};
 	LogWithNumber(&k_fserv,"Assigned face id is %d",newId);
 	g_Players[PlayerNumber]=newId;
@@ -483,14 +489,14 @@ void AddPlayerHair(DWORD PlayerNumber,char* sfile,BYTE transp)
 {
 	LogWithNumberAndString(&k_fserv,"Player # %d gets hair %s",PlayerNumber,sfile);
 	
-	char tmpFilename[BUFLEN];
+	/*char tmpFilename[BUFLEN];
 	strcpy(tmpFilename,GetPESInfo()->gdbDir);
 	strcat(tmpFilename,"GDB\\hair\\");
 	strcat(tmpFilename,sfile);
 	if (!FileExists(tmpFilename)) {
 		Log(&k_fserv,"File doesn't exist, line is ignored!");
 		return;
-	};
+	};*/
 	
 	DWORD newId=GetIDForHairName(sfile);
 	if (newId==0xFFFFFFFF) {
@@ -498,6 +504,7 @@ void AddPlayerHair(DWORD PlayerNumber,char* sfile,BYTE transp)
 		g_Hair[newId]=new char[strlen(sfile)+1];
 		strcpy(g_Hair[newId],sfile);
 		numHair++;
+		g_HairExists[newId]=false;
 	};
 	LogWithNumber(&k_fserv,"Assigned hair id is %d",newId);
 	g_PlayersHair[PlayerNumber]=newId;
@@ -694,6 +701,25 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 	
 	
 	g_PlayersIterator=g_Players.find(usedPlayerNumber);
+
+	//If no face is assigned to this player, nothing wrong can happen later
+	if (g_PlayersIterator == g_Players.end()) goto ValidFile;
+	//check if file exists now
+	if (g_FaceExists[g_PlayersIterator->second]) goto ValidFile;
+	if (g_Faces[g_PlayersIterator->second]==NULL) goto NoProcessing;
+
+	strcpy(tmpFilename,GetPESInfo()->gdbDir);
+	strcat(tmpFilename,"GDB\\faces\\");
+	strcat(tmpFilename,g_Faces[g_PlayersIterator->second]);
+	if (!FileExists(tmpFilename)) {
+		g_FaceExists[g_PlayersIterator->second]=true;
+		g_Faces[g_PlayersIterator->second]=NULL;
+		MessageBox(0,"WrongFace","",0);
+		goto NoProcessing;
+	};
+
+	ValidFile:
+
 	if (isInEditPlayerMode==0) {
 		TRACE2X(&k_fserv,"addr for player # %d is %.8x",usedPlayerNumber,addr);
 		if (g_PlayersIterator != g_Players.end()) {
@@ -725,6 +751,8 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 			lastWasFromGDB=true;
 		};
 	};
+	
+	NoProcessing:
 
 	hasChanged=true;
 	
@@ -755,6 +783,24 @@ DWORD CalcHairFile(BYTE Caller)
 	if (usedPlayerNumber != 0) {
 		TRACE2(&k_fserv,"CalcHairFile for %d",usedPlayerNumber);
 		g_PlayersIterator=g_PlayersHair.find(usedPlayerNumber);
+
+		if (g_PlayersIterator == g_PlayersHair.end()) goto ValidFile;
+		//check if file exists now
+		if (g_HairExists[g_PlayersIterator->second]) goto ValidFile;
+		if (g_Hair[g_PlayersIterator->second]==NULL) goto NoProcessing;
+	
+		strcpy(tmpFilename,GetPESInfo()->gdbDir);
+		strcat(tmpFilename,"GDB\\hair\\");
+		strcat(tmpFilename,g_Hair[g_PlayersIterator->second]);
+		if (!FileExists(tmpFilename)) {
+			g_HairExists[g_PlayersIterator->second]=true;
+			g_Hair[g_PlayersIterator->second]=NULL;
+			MessageBox(0,"WrongHair","",0);
+			goto NoProcessing;
+		};
+	
+		ValidFile:
+
 		if (isInEditPlayerMode==0) {
 			if (g_PlayersIterator != g_PlayersHair.end()) {
 				TRACE2(&k_fserv,"Found player in map, assigning hair id %d",g_PlayersIterator->second);
@@ -782,6 +828,10 @@ DWORD CalcHairFile(BYTE Caller)
 			FaceID=g_SpecialFaceHair[usedPlayerNumber];
 			hadSpecialFace=true;
 		};
+		
+		NoProcessing:
+		//dummy for compiling
+		true;
 	};
 
 	if (fromGDB) {
