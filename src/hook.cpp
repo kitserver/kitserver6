@@ -56,7 +56,7 @@ DWORD codeArray[][CODELEN] = {
       0x6d3b60, 0x6b8099,
       0, 0,
       0, 0,
-      0/*0x65b668*/, 0x876f20, 0x45bc5c,
+      0x65b668, 0x876f20, 0x45bc5c,
       0x5fe506, 0x40c848,
       0, 0, 0,
       0, 0, 0,
@@ -417,7 +417,7 @@ void HookOthers()
 	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
 	    	bptr[0]=0xe8; //call
 	    	bptr[5]=0xc3; //ret
-	        ptr[0] = (DWORD)NewFileFromAFS - (DWORD)(code[C_FILEFROMAFS] + 5);
+            ptr[0] = (DWORD)NewFileFromAFS - (DWORD)(code[C_FILEFROMAFS] + 5);
 	        bFileFromAFSHooked = true;
 	        Log(&k_kload,"FileFromAFS HOOKED at code[C_FILEFROMAFS]");
 	    };
@@ -1008,7 +1008,7 @@ KEXPORT DWORD GetPlayerInfo(DWORD PlayerNumber,DWORD Mode)
 	return oGetPlayerInfo();
 };
 
-void NewFileFromAFS(DWORD dummy, DWORD infoBlock)
+void NewFileFromAFS(DWORD retAddr, DWORD infoBlock)
 {
 	//Log(&k_kload,"NewFileFromAFS CALLED.");
 	FILEFROMAFS NextCall=NULL;

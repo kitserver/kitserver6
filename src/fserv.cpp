@@ -146,6 +146,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		int v=GetPESInfo()->GameVersion;
 		switch (v) {
 			case gvPES6PC:
+			//case gvPES6PC110:
 				goto GameVersIsOK;
 				break;
 		};
@@ -609,8 +610,10 @@ DWORD fservNewFileFromAFS()
 
 void fservAfterFileFromAFS(INFOBLOCK* infoBlock)
 {
+    LogWithNumber(&k_fserv, "fservAfterFileFromAFS: infoBlock = %08x", (DWORD)infoBlock);
 	if (isReplacing) {
 		replacePESbuffer=infoBlock->src;
+        LogWithNumber(&k_fserv, "fservAfterFileFromAFS: replacePESbuffer = %08x", (DWORD)infoBlock->src);
 		//infoBlock->FileID=replaceOrgFileID;
 	};
 };

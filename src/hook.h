@@ -137,7 +137,7 @@ DWORD NewEndUniSelect();
 DWORD NewSetLodMixerData(DWORD dummy);
 DWORD NewGetPlayerInfo();
 KEXPORT DWORD GetPlayerInfo(DWORD PlayerNumber,DWORD Mode);
-void NewFileFromAFS(DWORD dummy, DWORD infoBlock);
+void NewFileFromAFS(DWORD retAddr, DWORD infoBlock);
 void NewFreeMemory(DWORD addr);
 void NewProcessPlayerData();
 
