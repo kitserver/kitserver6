@@ -25,6 +25,6 @@ typedef struct _PESINFO {
 	double stretchY;
 } PESINFO;
 
-enum {gvPES6PC};
+enum {gvPES6PC,gvPES6PC110};
 
 #endif

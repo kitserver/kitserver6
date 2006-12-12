@@ -8,15 +8,20 @@
 
 #define BUFLEN 4096
 
-#define CODELEN 3
+#define CODELEN 1
 enum {
-    C_GETFILEFROMAFS_CS, C_SETBALLNAME_CS, C_PAGE_LEN_HOOK,
+    C_SETBALLNAME_CS,
 };
 
 static DWORD codeArray[][CODELEN] = {
 	// PES6
-	{0x473a012, 0x7834b8, 0x661b24
-     },
+	{
+        0x7834b8,
+    },
+	// PES6 1.10
+	{
+        0x783688,
+    },
 };
 
 #define DATALEN 3
@@ -28,7 +33,11 @@ static DWORD dataArray[][DATALEN] = {
 	// PES6
 	{
 	 0x3b5cbc0, 49, 38
-     },
+    },
+	// PES6 1.10
+	{
+	 0x3b5dbc0, 49, 38
+    },
 };
 
 

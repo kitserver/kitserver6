@@ -56,28 +56,50 @@ DWORD codeArray[][CODELEN] = {
       0x6d3b60, 0x6b8099,
       0, 0,
       0, 0,
-      0x65b668, 0x876f20, 0x45bc5c,
+      0/*0x65b668*/, 0x876f20, 0x45bc5c,
       0x5fe506, 0x40c848,
       0, 0, 0,
       0, 0, 0,
       0, 0, 0,
-      0x865240, 0x804cdf,
+      0x865240, 0x804cda,
       0x9cd4f2,
-      },
+    },
+    // PES6 1.10
+	{ 0x8cd5f0, 0x8b1a63, 0,
+	  0x8cd580, 0x65b216,
+	  0, 0,
+	  0x44c064, 0, 0, 
+	  0, 0,
+	  0, 0,
+	  0, 0, 
+	  0, 0,
+      0x9d0040, 0x9d091c,
+      0x9ed5f0, 0x9cfeb7,
+      0x6d3cc0, 0x6b81b9,
+      0, 0,
+      0, 0,
+      0/*0x65b85b*/, 0x877060, 0x45bc9c,
+      0x5fe566, 0x40c898,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0x865370, 0x804e5a,
+      0x9cd682,
+    },
 };
-//969238 - edit mode CS
-//9696e1
-
-//C_SETFILEPOINTER_CS for PES 5 Demo 2 is 0x72d6a6
 
 // data addresses
 
-#define DATALEN 1
-enum { INPUT_TABLE, };
+#define DATALEN 2
+enum { INPUT_TABLE, STACK_SHIFT };
 DWORD dataArray[][DATALEN] = {
     //PES6
     {
-        0x3a71254,
+        0x3a71254, 0,
+    },
+    //PES6 1.10
+    {
+        0x3a72254, 0x2c,
     },
 };
 
@@ -85,6 +107,13 @@ DWORD dataArray[][DATALEN] = {
 
 DWORD gpiArray[][GPILEN] = {
 	//PES6
+	{
+		0,0,0,0,0,
+		0,0,0,0,0,
+		0,0,0,0,0,
+		0,0,0,0
+	},
+	//PES6 1.10
 	{
 		0,0,0,0,0,
 		0,0,0,0,0,
@@ -1197,6 +1226,7 @@ HRESULT STDMETHODCALLTYPE NewCreateDevice(IDirect3D8* self, UINT Adapter,
 		{
             vtable[VTAB_CREATETEXTURE] = (DWORD)NewCreateTexture;
 			Log(&k_kload,"CreateTexture hooked.");
+            LogWithNumber(&k_kload, "NewCreateTexture = %08x", (DWORD)NewCreateTexture);
 		}
     }
 
@@ -1418,8 +1448,8 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 	
 	__asm mov oldEBP, ebp
 
-	if (*(DWORD*)(oldEBP+4)==code[C_CALL050]+3) {
-		src=*(DWORD*)(oldEBP+0x74);
+	if (*(DWORD*)(oldEBP+4+data[STACK_SHIFT])==code[C_CALL050]+3) {
+		src=*(DWORD*)(oldEBP+0x74+data[STACK_SHIFT]);
 		if (src!=0 && !IsBadReadPtr((LPVOID)src,4)) {
 			src=*(DWORD*)(src+0x18);
 			//TRACE2(&k_kload,"src = %x",src);

@@ -195,6 +195,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		
 		switch (GetPESInfo()->GameVersion) {
             case gvPES6PC: //support for PES6 PC
+            case gvPES6PC110: //support for PES6 PC 1.10
 				goto GameVersIsOK;
 				break;
 		};
@@ -310,7 +311,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 void InitBserv()
 {
     Log(&k_bserv, "InitBserv called.");
-	//MasterHookFunction(code[C_GETFILEFROMAFS_CS], 2, bservGetFileFromAFS);
 	MasterHookFunction(code[C_SETBALLNAME_CS], 7, SetBallName);
 	
 	HookFunction(hk_D3D_Create,(DWORD)InitBserv);

@@ -3,6 +3,7 @@
 #include "numpages.h"
 #include "manage.h"
 #include "log.h"
+#include "kload.h"
 #include <vector>
 
 using namespace std;
@@ -13,21 +14,41 @@ extern PESINFO g_pesinfo;
 
 /////////////////////////////////////////////////////////////
 
+#define CODELEN 6
 enum {
     C_GETNUMPAGES_HOOK, C_GETNUMPAGES_JMPBACK, GETNUMPAGES_CMDLEN,
     C_GETNUMPAGES2_HOOK, C_GETNUMPAGES2_JMPBACK, GETNUMPAGES2_CMDLEN,
 };
-static DWORD code[] = {
-    0x661b24, 0x661b2b, 7,
-    0x661b4f, 0x661b57, 8,
+static DWORD codeArray[][CODELEN] = {
+    // PES6
+    {
+        0x661b24, 0x661b2b, 7,
+        0x661b4f, 0x661b57, 8,
+    },
+    // PES6 1.10
+    {
+        0x460fdb9, 0x460fdc0, 7,
+        0x460fde4, 0x460fdec, 8,
+    },
 };
 
+#define DATALEN 1
 enum {
     AFS_NUMPAGES_TABLES
 };
-static DWORD data[] = {
-    0x3b5cbc0,
+static DWORD dataArray[][DATALEN] = {
+    // PES6
+    {
+        0x3b5cbc0,
+    },
+    // PES6 1.10
+    {
+        0x3b5dbc0,
+    },
 };
+
+static DWORD code[CODELEN];
+static DWORD data[DATALEN];
 
 typedef DWORD (*getnumpages_callback_t)(DWORD fileId, DWORD afsId, DWORD* retval);
 vector<getnumpages_callback_t> _getnumpages_vec;
@@ -128,6 +149,14 @@ KEXPORT void InitGetNumPages()
 {
     InitializeCriticalSection(&_gnp_cs);
     _getnumpages_vec.clear();
+
+    // Determine the game version
+    int v = GetPESInfo()->GameVersion;
+    if (v != -1)
+    {
+        memcpy(code, codeArray[v], sizeof(code));
+        memcpy(data, dataArray[v], sizeof(data));
+    }
 }
 
 KEXPORT void HookGetNumPages()

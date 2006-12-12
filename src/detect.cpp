@@ -7,12 +7,15 @@
 
 char* GAME[] = { 
 	"PES6 PC",
+	"PES6 PC 1.10",
 };
 char* GAME_GUID[] = {
     "{20418978-752D-491c-AF1E-A2EDE086E000}",
+    "{20418978-752D-491c-AF1E-A2EDE086E000}",
 };
 DWORD GAME_GUID_OFFSETS[] = { 
-    0x77dca8,
+    0x77dca8, 
+    0x77eca8,
 };
 
 // Returns the game version id
