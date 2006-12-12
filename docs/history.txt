@@ -68,7 +68,8 @@ to defaults during close-ups on replays and cut-scenes)
 
 2006-12-11
 ----------
-v6.3.2:
+v6.3.2: [non-public release]
+v6.3.3:
 - bug-fix for kserv.dll (fixes the problem with wrong kits
 showing up for non-GDB teams)
 
