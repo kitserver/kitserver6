@@ -7,11 +7,6 @@
 #include "numpages.h"
 #include "input.h"
 
-//0x5052a0
-//0x5c73b6: call 858950
-//0x524522: call 89a209
-//0x5245ce: call 89a209
-
 #include <map>
 #include <string>
 
@@ -112,7 +107,6 @@ hook_point g_hp_WriteCapacity;
 
 #define CODELEN 16
 enum {
-    C_GETFILEFROMAFS_CS, C_GETFILEFROMAFS, C_READFILE_CS,
     C_GETSTRING, C_GETSTRING_CS,
     C_GETSTRING2, C_GETSTRING2_CS,
     C_WRITENUM, C_WRITENUM_CS1, C_WRITENUM_CS2,
@@ -121,13 +115,21 @@ enum {
 };
 static DWORD codeArray[][CODELEN] = {
 	// PES6
-	{0, 0, 0, 
+    {
      0x9e71a0, 0x9f26cf,
      0x78cc70, 0x7836a3,
      0x41be25, 0x9f2717, 0x9f27c8,
      0x9f33f8, 0x9f2a40, 0x9f2ec9, 0x9f2ecf,
      0x9c4061, 0x866fe0,
-     },
+    },
+    // PES6 1.10
+    {
+     0x9e7320, 0x9f282f,
+     0x79cec0, 0x783873,
+     0x41be75, 0x9f2877, 0x9f2928,
+     0x9f3558, 0x9f2ba0, 0x9f3029, 0x9f302f,
+     0x9c41f1, 0x867110,
+    },
 };
 
 #define DATALEN 19
@@ -149,7 +151,16 @@ static DWORD dataArray[][DATALEN] = {
      0x1131fec, 61, 0x3be6d94,
      0x3a7ce20,
      0x3a7f2ac, 0x3a7f454,
-     },
+    },
+	// PES6 1.10
+	{66, 38, 6941, 7611, 4, 
+     6915, 25, 6923,
+     0x3b5dbc0,
+     0x3be1940, 0x1132fd4, 0x1132fd8, 8001,
+     0x1132fec, 61, 0x3be7d94,
+     0x3a7de20,
+     0x3a802ac, 0x3a80454,
+    },
 };
 
 static DWORD* g_pageLenTable = NULL;
@@ -537,6 +548,16 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		
 		hInst=hInstance;
         InitializeCriticalSection(&g_cs);
+
+        //check game version
+		switch (GetPESInfo()->GameVersion) {
+            case gvPES6PC: //support for PES6 PC
+            case gvPES6PC110: //support for PES6 PC 1.10
+				break;
+            default:
+                Log(&k_stadium,"Your game version is currently not supported!");
+                return false;
+		}
 
 		RegisterKModule(&k_stadium);
 		
