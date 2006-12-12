@@ -1448,6 +1448,10 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 	
 	__asm mov oldEBP, ebp
 
+    // "STACK_SHIFT" is needed in case of PES6 PC 1.10, because
+    // it appears that the calls to CreateTexture is done via some sort of proxy
+    // dll (d3dw.dll), so we have to account for extra space occupied on the stack
+    
 	if (*(DWORD*)(oldEBP+4+data[STACK_SHIFT])==code[C_CALL050]+3) {
 		src=*(DWORD*)(oldEBP+0x74+data[STACK_SHIFT]);
 		if (src!=0 && !IsBadReadPtr((LPVOID)src,4)) {

@@ -72,7 +72,16 @@ DWORD dataArray[][DATALEN] = {
      0xd3bc88, 0x3be0940, 0,
      0, 0, 0, 0, 0, 0, 0,
      0, 0, 0, 0, 0, 0, 0,
-     0xf84064, 0xf84090},
+     0xf84064, 0xf84090,
+    },
+    // PES6 1.10
+	{0x964260, 
+     0x8afc70, 0x8afd30, 0x8afdf0, 0x8afeb0, 0x8aff50, 
+     0xd3cd68, 0x3be1940, 0,
+     0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0,
+     0xf85064, 0xf85090
+    },
 };
 
 DWORD data[DATALEN];
@@ -104,7 +113,17 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		Log(&k_lodmixer,"Attaching dll...");
 		
 		hInst=hInstance;
-			
+
+        //check game version
+		switch (GetPESInfo()->GameVersion) {
+            case gvPES6PC: //support for PES6 PC
+            case gvPES6PC110: //support for PES6 PC 1.10
+				break;
+            default:
+                Log(&k_lodmixer,"Your game version is currently not supported!");
+                return false;
+		}
+
 		RegisterKModule(&k_lodmixer);
 		
 		HookFunction(hk_D3D_Create,(DWORD)InitLodmixer);
