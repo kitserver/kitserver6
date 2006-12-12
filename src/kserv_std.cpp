@@ -5330,6 +5330,11 @@ WORD GetTeamIdByOrdinalAFS(WORD ord)
 
 BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOOL* pNeedsMask)
 {
+    // sanity check
+    if (id < data[FIRST_ID]) {
+        return FALSE;
+    }
+
     WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
     int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
 
@@ -6753,6 +6758,7 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 	LogWithNumber(&k_mydll,"JuceUniDecode: addr = %08x", addr);
 	LogWithNumber(&k_mydll,"JuceUniDecode: result = %08x", result);
 
+    g_currentAfsId = 0;
     g_unidecode_flag = true;
 
     // if new set of teams, clear the texture replacement maps
@@ -6780,7 +6786,6 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 	//ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)addr;
 	//DumpData((BYTE*)result, header->dwDecSize);
 
-    g_currentAfsId = 0;
 	MEMITEMINFO* memItemInfo = FindMemItemInfoByAddress(addr);
 	if (memItemInfo != NULL) {
         // remember current id
