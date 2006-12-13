@@ -99,6 +99,7 @@ DWORD fservEditCopyPlayerData(DWORD playerNumber, DWORD p2);
 DWORD fservEditCopyPlayerData2(DWORD playerNumber);
 DWORD fservEditCopyPlayerData3(DWORD p1);
 DWORD fservEditCopyPlayerData4(DWORD slot, DWORD editorAddress, DWORD p3);
+DWORD fservMyTeamCPD(DWORD playerNumber);
 BYTE fservGetHairTransp(DWORD addr);
 DWORD ResolvePlayerID(DWORD playerID);
 
@@ -219,6 +220,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA2],fservEditCopyPlayerData2);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA3],fservEditCopyPlayerData3);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA4],fservEditCopyPlayerData4);
+		MasterUnhookFunction(fIDs[C_MYTEAM_CPD_CS],fservMyTeamCPD);
 			
 		for (j=0;j<numFaces;j++)
 			if (g_Faces[j] != NULL)
@@ -345,6 +347,7 @@ void InitFserv()
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA2],1,fservEditCopyPlayerData2);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA3],1,fservEditCopyPlayerData3);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA4],3,fservEditCopyPlayerData4);
+	MasterHookFunction(fIDs[C_MYTEAM_CPD_CS],1,fservMyTeamCPD);
 	
 	Log(&k_fserv, "hooking done");
 	
@@ -982,6 +985,13 @@ DWORD fservEditCopyPlayerData4(DWORD slot, DWORD editorAddress, DWORD p3)
 	g_PlayersAddr[addr]=g_EditorAddresses[editorAddress] & 0xffff;
 	
 	return MasterCallNext(slot, editorAddress, p3);
+};
+
+DWORD fservMyTeamCPD(DWORD playerNumber)
+{
+	DWORD res=MasterCallNext(playerNumber);
+	g_PlayersAddr[fIDs[PLAYERDATA_BASE]]=playerNumber & 0xffff;
+	return res;
 };
 
 BYTE fservGetHairTransp(DWORD addr)
