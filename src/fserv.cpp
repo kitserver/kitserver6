@@ -710,11 +710,12 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 	strcat(tmpFilename,"GDB\\faces\\");
 	strcat(tmpFilename,g_Faces[g_PlayersIterator->second]);
 	if (!FileExists(tmpFilename)) {
-		g_FaceExists[g_PlayersIterator->second]=true;
 		g_Faces[g_PlayersIterator->second]=NULL;
-		MessageBox(0,"WrongFace","",0);
 		goto NoProcessing;
 	};
+	
+	//No, it was no good idea to execute this command when the file was NOT found!!!
+	g_FaceExists[g_PlayersIterator->second]=true;
 
 	ValidFile:
 
@@ -791,11 +792,11 @@ DWORD CalcHairFile(BYTE Caller)
 		strcat(tmpFilename,"GDB\\hair\\");
 		strcat(tmpFilename,g_Hair[g_PlayersIterator->second]);
 		if (!FileExists(tmpFilename)) {
-			g_HairExists[g_PlayersIterator->second]=true;
 			g_Hair[g_PlayersIterator->second]=NULL;
-			MessageBox(0,"WrongHair","",0);
 			goto NoProcessing;
 		};
+		
+		g_HairExists[g_PlayersIterator->second]=true;
 	
 		ValidFile:
 
