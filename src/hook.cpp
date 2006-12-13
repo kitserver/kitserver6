@@ -15,7 +15,7 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
 
-#define CODELEN 45
+#define CODELEN 46
 
 enum {
 	C_UNIDECODE, C_UNIDECODE_CS,C_UNIDECODE_CS2,
@@ -38,6 +38,7 @@ enum {
     C_UNISPLIT_CS6, C_UNISPLIT_CS7, C_UNISPLIT_CS8,
     C_GETTEAMINFO, C_GETTEAMINFO_CS,
     C_CLEANINPUTTABLE_HOOK,
+    C_FILEFROMAFS_JUMPHACK,
 };
 
 // Code addresses.
@@ -63,6 +64,7 @@ DWORD codeArray[][CODELEN] = {
       0, 0, 0,
       0x865240, 0x804cda,
       0x9cd4f2,
+      0
     },
     // PES6 1.10
 	{ 0x8cd5f0, 0x8b1a63, 0,
@@ -78,13 +80,14 @@ DWORD codeArray[][CODELEN] = {
       0x6d3cc0, 0x6b81b9,
       0, 0,
       0, 0,
-      0x65b85b, 0x877060, 0x45bc9c,
+      0x65b8a7, 0x877060, 0x45bc9c,
       0x5fe566, 0x40c898,
       0, 0, 0,
       0, 0, 0,
       0, 0, 0,
       0x865370, 0x804e5a,
       0x9cd682,
+      0x65b85b,
     },
 };
 
@@ -101,6 +104,13 @@ DWORD dataArray[][DATALEN] = {
     {
         0x3a72254, 0x2c,
     },
+};
+
+BYTE _shortJumpHack[][2] = {
+    //PES6
+    {0,0},
+    //PES6 1.10
+    {0xeb,0x4a},
 };
 
 #define GPILEN 19
@@ -196,6 +206,7 @@ bool bSetLodMixerDataHooked = false;
 bool bGetPlayerInfoHooked = false;
 bool bGetPlayerInfoJmpHooked = false;
 bool bFileFromAFSHooked = false;
+bool bFileFromAFSJumpHackHooked = false;
 bool bFreeMemoryHooked = false;
 bool bProcessPlayerDataHooked = false;
 bool bUniSplitHooked = false;
@@ -421,6 +432,19 @@ void HookOthers()
 	        bFileFromAFSHooked = true;
 	        Log(&k_kload,"FileFromAFS HOOKED at code[C_FILEFROMAFS]");
 	    };
+
+        // install short jump hack, if needed
+        // (we need this when the correct location doesn't have enough
+        // space to fit a hook instruction, so we need to jump to a different
+        // place instead)
+        if (code[C_FILEFROMAFS_JUMPHACK] != 0) {
+            bptr = (BYTE*)(code[C_FILEFROMAFS_JUMPHACK]);
+            if (VirtualProtect(bptr, 2, newProtection, &protection)) {
+                memcpy(bptr, _shortJumpHack[GetPESInfo()->GameVersion], 2);
+                bFileFromAFSJumpHackHooked = true;
+                Log(&k_kload,"FileFromAFS Short-Jump-Hack installed.");
+            }
+        }
 	};
 
 	// hook jmp to FreeMemory
