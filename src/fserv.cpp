@@ -24,6 +24,7 @@ bool bEditCopyPlayerDataHooked=false;
 COPYPLAYERDATA orgCopyPlayerData=NULL;
 GETHAIRTRANSP orgGetHairTransp=NULL;
 EDITCOPYPLAYERDATA orgEditCopyPlayerData=NULL;
+RANDSEL_PLAYERS randSelPlayersAddr=NULL;
 
 BYTE* replaceData=NULL;
 DWORD replacePESbuffer=0;
@@ -32,6 +33,7 @@ bool isReplacing=false;
 DWORD replaceOrgFileID=0;
 
 DWORD StartsStdFaces[4];
+WORD* randSelIDs=NULL;
 
 std::map<DWORD,LPVOID> g_Buffers;
 std::map<DWORD,LPVOID>::iterator g_BuffersIterator;
@@ -98,6 +100,7 @@ DWORD fservEditCopyPlayerData2(DWORD playerNumber);
 DWORD fservEditCopyPlayerData3(DWORD p1);
 DWORD fservEditCopyPlayerData4(DWORD slot, DWORD editorAddress, DWORD p3);
 BYTE fservGetHairTransp(DWORD addr);
+DWORD ResolvePlayerID(DWORD playerID);
 
 void fservConnectAddrToId(DWORD addr, DWORD id);
 
@@ -167,6 +170,8 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		orgCopyPlayerData=(COPYPLAYERDATA)fIDs[C_COPYPLAYERDATA];
 		orgEditCopyPlayerData=(EDITCOPYPLAYERDATA)fIDs[C_EDITCOPYPLAYERDATA];
 		orgGetHairTransp=(GETHAIRTRANSP)fIDs[C_GETHAIRTRANSP];
+		randSelPlayersAddr=(RANDSEL_PLAYERS)fIDs[C_RANDSEL_PLAYERS];
+		randSelIDs=(WORD*)fIDs[RANDSEL_IDS];
 		
 		HookFunction(hk_D3D_Create,(DWORD)InitFserv);
 		
@@ -255,6 +260,14 @@ void InitFserv()
 	
 	for (int i=0;i<4;i++) {
 		StartsStdFaces[i]=fIDs[STARTW+i];
+	};
+	
+	//No need to do this later, and kits are loaded at this time as well
+	if (!Inited) {
+		GetGDBFaces();
+		GetGDBHair();
+		
+		Inited=true;
 	};
 
 	Log(&k_fserv, "hooking various functions");
@@ -667,13 +680,6 @@ void fservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRea
 
 void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 {
-	if (!Inited) {
-		GetGDBFaces();
-		GetGDBHair();
-		
-		Inited=true;
-	};
-	
 	DWORD addr=**(DWORD**)(ESI+4);
 	BYTE *Skincolor=(BYTE*)(addr+0x31);
 	BYTE *Faceset=(BYTE*)(addr+0x33);
@@ -691,6 +697,8 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 
 	if (isInEditPlayerMode!=0)
 		usedPlayerNumber=editedPlayerNumber;
+		
+	usedPlayerNumber=ResolvePlayerID(usedPlayerNumber);
 	
 	lastPlayerNumber=usedPlayerNumber;
 	
@@ -1004,3 +1012,15 @@ void fservConnectAddrToId(DWORD addr, DWORD id)
 	return;
 };
                                                                       
+DWORD ResolvePlayerID(DWORD playerID)
+{
+	DWORD team, teamID, teamAddr;
+	if (playerID>=randSelIDs[RANDSEL_PLID1] && playerID<randSelIDs[RANDSEL_PLID1]+0x40) {
+		//Random Selection Mode
+		team=(playerID<randSelIDs[RANDSEL_PLID2])?0:1;
+		teamID=randSelIDs[RANDSEL_TEAM1+team];
+		teamAddr=randSelPlayersAddr(teamID)+0x10f4;
+		return ((WORD*)teamAddr)[playerID-randSelIDs[RANDSEL_PLID1+team]];
+	};
+	return playerID;
+};
