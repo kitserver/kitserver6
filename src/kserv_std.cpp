@@ -4787,21 +4787,9 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 DWORD src, bool* IsProcessed)
 {
 	HRESULT res = D3D_OK;
+    if (*IsProcessed) return res; // already handled by some other module
 
-    if (!g_kit_loading_enabled) return res; // safety check
-
-    /*
-    if (_textureBindings.size()>0) {
-        for (vector<TextureBinding>::iterator it = _textureBindings.begin();
-                it != _textureBindings.end();
-                it++) {
-            ReplaceTexture(it->srcTexture, it->repTexture, it->levels);
-        }
-        _textureBindings.clear();
-    }
-    */
-    
-    if (*IsProcessed) return res;
+    if (g_edit_mode) return res; // safety check
 
     // process 256x128 2-level texture
     if (width == 256 && height == 128) {
@@ -6024,10 +6012,6 @@ void clearTeamKitInfo()
     WORD* licensed_ids = (WORD*)data[LICENSED_LIST];
     licensed_ids[0] = g_licensed_ordinals[0];
     licensed_ids[1] = g_licensed_ordinals[1];
-
-    // clear out texture maps
-    //_texture_to_id.clear();
-    //_source_to_id.clear();
 
 	if (g_teamKitInfo.size() == 0) {
 		return;
