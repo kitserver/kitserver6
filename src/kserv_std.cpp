@@ -43,7 +43,6 @@
 #define IS_CUSTOM_TEAM(id) (id == 0xffff) 
 
 #define MAX_ITERATIONS 1000
-
 #define MAP_FIND(map,key) (((*(map)).count(key)>0) ? (*(map))[key] : NULL)
 
 KMOD k_mydll={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
@@ -65,6 +64,7 @@ CRITICAL_SECTION g_cs;
 //bool g_fontInitialized = false;
 //CD3DFont* g_font = NULL;
 
+bool g_licensed[256];
 WORD g_licensed_ordinals[] = {
     4,6,8,13,15,26,27,0x2c,0x35,0x37,0x38,
     0x40,0x4a,
@@ -118,10 +118,14 @@ DWORD g_frame_count = 0;
 BOOL g_dumpTexturesMode = FALSE;
 BOOL g_display2Dkits = FALSE;
 BOOL g_lastDisplay2Dkits = FALSE;
-bool g_kit_loading_enabled = false;
-bool g_edit_mode = false;
 bool g_unidecode_flag = false;
 DWORD g_currentAfsId = false;
+BYTE _saved_instruction[5] = {0,0,0,0,0};
+
+// EDIT MODE flags
+bool g_edit_mode = false;
+bool g_edit_player_mode = false;
+bool g_edit_team = false;
 
 typedef struct _TextureBinding {
     IDirect3DTexture8* srcTexture;
@@ -266,8 +270,8 @@ WORD g_last_away = 0xff;
 DWORD* g_AFS_id = NULL;
 MEMITEMINFO* g_AFS_memItemInfo = NULL;
 
-#define DATALEN 21
-#define CODELEN 20
+#define DATALEN 26
+#define CODELEN 25
 
 // data array names
 enum {
@@ -277,9 +281,11 @@ enum {
     NATIONAL_TEAMS_ADDR, CLUB_TEAMS_ADDR, 
 	ML_HOME_AREA, ML_AWAY_AREA,
     STRIPS_CONTROL, TEAM_STRIPS_HOME, TEAM_STRIPS_AWAY,
-    LICENSED_LIST,
+    NUM_LICENSED, LICENSED_LIST_ADDR,
     SAVED_TEAM_HOME, SAVED_TEAM_AWAY,
     TRAINING_KIT, OFFLINE_FLAG,
+    IS_EDIT_MODE,IS_EDIT_PLAYER_SELECT_TEAM_MODE,IS_EDIT_PLAYER_MODE,
+    IS_EDIT_TEAM,
 };
 
 // Data addresses.
@@ -290,9 +296,10 @@ DWORD dataArray[][DATALEN] = {
       0, 5473, 6831, 
       0x113200c, 0x1132010, 0x1131fe4, 0x1131fe8,
       0x3a71338, 0x3a7133c, 0x3a7134c,
-      0xd42e20,
+      0xd42f20, 0xd42f24,
       0x1131fd4, 0x1131fd8,
       6793, 0x3be6320,
+      0x1108488, 0x1108530, 0x1108534, 0x11084a0,
     },
     // PES6 1.10
     { 0x3be1940, 0x3be7078, 0,
@@ -300,9 +307,10 @@ DWORD dataArray[][DATALEN] = {
       0, 5473, 6831, 
       0x113300c, 0x1133010, 0x1132fe4, 0x1132fe8,
       0x3a72338, 0x3a7233c, 0x3a7234c,
-      0xd43f00,
+      0xd44000, 0xd44004,
       0x1132fd4, 0x1132fd8,
       6793, 0x3be7320,
+      0x1109488, 0x1109530, 0x1109534, 0x11094a0,
     }
 };
 
@@ -318,6 +326,9 @@ enum {
     C_WRITEKITINFO_CS, C_WRITEKITINFO_CS2, C_WRITEKITINFO_CS3, 
     C_WRITEKITINFO_CS4, C_WRITEKITINFO,
     C_PROCESSKIT_CS, C_PROCESSKIT,
+    C_READLICENSED_HOOK, C_SETEDITTEAMFLAG_HOOK,
+    C_ONEDITMODESAVE_CS,
+    C_SETEDITMISC_CS, C_CLEAREDITMISC_CS,
 };
 
 DWORD codeArray[][CODELEN] = {
@@ -334,6 +345,9 @@ DWORD codeArray[][CODELEN] = {
         0x6b2487, 0x966e15, 0x966e62, 
         0x80843e, 0x865380,
         0x8b1a59, 0x8d1a60,
+        0x8b1f00, 0x806e66,
+        0xb1ac4d,
+        0x806e73, 0x806f26, //0x806e73,
     },
     // PES6 1.10
     {
@@ -348,6 +362,9 @@ DWORD codeArray[][CODELEN] = {
         0x6b25a7, 0x966f95, 0x966fe2, 
         0x8085ae, 0x8654b0,
         0x8b1b39, 0x8d1b50,
+        0, 0,
+        0,
+        0, 0,
     },
 };
 
@@ -1191,10 +1208,16 @@ DWORD kservSetFlag();
 DWORD kservResetFlag();
 DWORD kservResetFlag2();
 DWORD kservProcessKit(DWORD dest, DWORD src);
+DWORD kservOnEditModeSave();
+DWORD kservSetEditMiscFlag(DWORD p0);
+DWORD kservClearEditMiscFlag(DWORD p0);
 void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* savedTeamInfo);
 void clearTeamKitInfo();
 void setTeamKitInfo();
+void setTeamKitInfo(WORD teamId);
 void ClearTextureMaps();
+void HookSearchForLicensedTeamOrdinal();
+void UnhookSearchForLicensedTeamOrdinal();
 
 void JuceReadFile(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 
@@ -1289,8 +1312,11 @@ BOOL FileExists(char* filename);
 BYTE GetTeamStrips(int which);
 void GetTeamStrips(BYTE* strips);
 WORD GetTeamIdByOrdinalAFS(WORD teamId);
+DWORD GetOrdinalByTeamId(WORD id);
 KITPACKINFO* GetKitPackInfo(int which);
 KITPACKINFO* GetKitPackInfoById(WORD id, int which);
+void FindOrdinalForLicensedTeamCaller();
+DWORD FindOrdinalForLicensedTeam(DWORD teamId, DWORD currentOrdinal);
 
 typedef string (*CYCLEPROC)(WORD teamId, string key);
 
@@ -1312,6 +1338,61 @@ PALETTEENTRY g_away_socks_pal[0x100];
 //////////////////////////////////////////////////////////////
 // FUNCTIONS /////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////
+
+void FindOrdinalForLicensedTeamCaller()
+{
+    __asm {
+        push eax
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ecx
+        push eax
+        call FindOrdinalForLicensedTeam
+        add esp,8
+        mov ebx,eax
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop eax
+        retn
+    }
+}
+
+DWORD FindOrdinalForLicensedTeam(DWORD teamId, DWORD currentOrdinal)
+{
+    // quick check for non-edit mode
+    if (!g_edit_mode) { return g_licensed_ordinals[currentOrdinal]; }
+
+    WORD* licensed_teams = *(WORD**)data[LICENSED_LIST_ADDR];
+
+    if (!g_licensed[teamId]) {
+        // check the GDB
+        if (teamId != 0xffff) {
+            KitCollection* col = MAP_FIND(gdb->uni,teamId);
+            if (col) {
+                Log(&k_mydll, "FindOrdinalForLicensedTeam: found team in GDB. Returning teamId");
+                licensed_teams[0] = teamId;
+                if (g_edit_mode) {
+                    // force new team id into slot
+                    WORD* teams = (WORD*)data[TEAM_IDS];
+                    teams[HOME] = teamId;
+                }
+                return teamId;
+            }
+        }
+    }
+    // not found, let the normal logic resume
+    if (g_edit_mode) { 
+        licensed_teams[0] = g_licensed_ordinals[0]; 
+        // force new team id into slot
+        WORD* teams = (WORD*)data[TEAM_IDS];
+        teams[HOME] = teamId;
+    }
+    return g_licensed_ordinals[currentOrdinal];
+}
 
 // Calls IUnknown::Release() on an instance
 void SafeRelease(LPVOID ppObj)
@@ -3184,6 +3265,53 @@ void DrawKitLabel()
 	return;
 };
 
+void UnhookSearchForLicensedTeamOrdinal()
+{
+    if (code[C_READLICENSED_HOOK] && _saved_instruction[0]!=0) {
+        DWORD addr = code[C_READLICENSED_HOOK];
+
+        // put back saved code
+        BYTE* bptr = (BYTE*)addr;
+        DWORD protection = 0;
+        DWORD newProtection = PAGE_EXECUTE_READWRITE;
+        if (VirtualProtect(bptr, 8, newProtection, &protection)) {
+            memcpy(bptr, _saved_instruction, 5);
+            memset(_saved_instruction, 0, 5);
+            // restore ids
+            WORD* list = *(WORD**)data[LICENSED_LIST_ADDR];
+            list[0] = g_licensed_ordinals[0];
+            Log(&k_mydll,"UnhookSearchForLicensedTeamOrdinal DONE at code[C_READLICENSED_HOOK]");
+        }
+    }
+}
+
+void HookSearchForLicensedTeamOrdinal()
+{
+    if (code[C_READLICENSED_HOOK] && _saved_instruction[0]==0) {
+        DWORD addr = code[C_READLICENSED_HOOK];
+        DWORD target = (DWORD)FindOrdinalForLicensedTeamCaller + 6;
+
+        // put a call instruction
+        BYTE* bptr = (BYTE*)addr;
+        DWORD protection = 0;
+        DWORD newProtection = PAGE_EXECUTE_READWRITE;
+        if (VirtualProtect(bptr, 8, newProtection, &protection)) {
+            memcpy(_saved_instruction, bptr, 5);
+            bptr[0] = 0xe8;
+            DWORD* ptr = (DWORD*)(addr + 1);
+            ptr[0] = target - (DWORD)(addr + 5);
+            Log(&k_mydll,"HookSearchForLicensedTeamOrdinal DONE at code[C_READLICENSED_HOOK]");
+        }
+
+        /*
+        Log(&k_mydll,"HookSearchForLicensedTeamOrdinal: forcing kitinfo saves");
+        for (int teamId=0; teamId<256; teamId++) {
+            setTeamKitInfo(teamId);
+        }
+        */
+    }
+}
+
 /************
  * This function initializes kitserver.
  ************/
@@ -3262,6 +3390,17 @@ void InitKserv()
         MasterHookFunction(code[C_WRITEKITINFO_CS4], 2, kservWriteKitInfo);
 
         MasterHookFunction(code[C_PROCESSKIT_CS], 2, kservProcessKit);
+        MasterHookFunction(code[C_ONEDITMODESAVE_CS], 0, kservOnEditModeSave);
+        MasterHookFunction(code[C_SETEDITMISC_CS], 1, kservSetEditMiscFlag);
+        MasterHookFunction(code[C_CLEAREDITMISC_CS], 1, kservClearEditMiscFlag);
+
+        // initialize map for fast lookup of licensed teams
+        DWORD n = *(DWORD*)data[NUM_LICENSED];
+        WORD* list = *(WORD**)data[LICENSED_LIST_ADDR];
+        memset(g_licensed, 0, sizeof(bool)*256);
+        for (int i=0; i<n; i++) {
+            g_licensed[list[i]] = true;
+        }
 
         // create font instance
         //g_font = new CD3DFont( _T("Arial"), 10, D3DFONT_BOLD);
@@ -4778,6 +4917,10 @@ void kservUnlockRect(IDirect3DTexture8* self,UINT Level)
         if (texit) _textureBindings.erase(texit);
     }
 }
+
+bool kitsDisabled() {
+    return (g_edit_mode && !g_edit_player_mode) || (g_edit_team && !g_edit_player_mode);
+}
     
 /**
  * Tracker for IDirect3DDevice8::CreateTexture method.
@@ -4789,13 +4932,29 @@ DWORD src, bool* IsProcessed)
 	HRESULT res = D3D_OK;
     if (*IsProcessed) return res; // already handled by some other module
 
-    if (g_edit_mode) return res; // safety check
+    // In edit mode, only replace textures in "Edit Player" mode
+    if (kitsDisabled()) {
+        return res; 
+    }
 
     // process 256x128 2-level texture
     if (width == 256 && height == 128) {
         if (levels == 2 && g_unidecode_flag) {
             LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
             LogWithNumber(&k_mydll,"JuceCreateTexture: src = %08x", src);
+
+            if (g_edit_mode) {
+                // check if the team is in GDB
+                WORD teamId = GetTeamId(HOME);
+                LogWithNumber(&k_mydll,"JuceCreateTexture: teamId = %d", teamId);
+                if (teamId != 0xffff) {
+                    KitCollection* col = MAP_FIND(gdb->uni,teamId);
+                    if (!col) {
+                        // reset id, and erase from the map
+                        g_currentAfsId = 0;
+                    }
+                }
+            }
 
             BOOL needsMask;
             char filename[BUFLEN] = {0};
@@ -4850,6 +5009,20 @@ DWORD src, bool* IsProcessed)
             LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
             LogWithNumber(&k_mydll,"JuceCreateTexture: (found entry): src = %08x", mit->first);
             LogWithNumber(&k_mydll,"JuceCreateTexture: AFS id = %d", mit->second);
+
+            if (g_edit_mode) {
+                // check if the team is in GDB
+                WORD teamId = GetTeamId(HOME);
+                LogWithNumber(&k_mydll,"JuceCreateTexture: teamId = %d", teamId);
+                if (teamId != 0xffff) {
+                    KitCollection* col = MAP_FIND(gdb->uni,teamId);
+                    if (!col) {
+                        // reset id, and erase from the map
+                        mit->second = 0;
+                        _source_to_id.erase(mit);
+                    }
+                }
+            }
 
             BOOL needsMask;
             char filename[BUFLEN] = {0};
@@ -4991,12 +5164,25 @@ MEMITEMINFO* FindMemItemInfoByAddress(DWORD address)
     return memItemInfo;
 }
 
+// deletes item id, based on address.
+void EraseMemItemInfoByAddress(DWORD address)
+{
+    EnterCriticalSection(&g_cs);
+    map<DWORD,MEMITEMINFO*>::iterator it = g_AFS_addressMap.find(address);
+    if (it != g_AFS_addressMap.end()) {
+        g_AFS_addressMap.erase(it);
+        TRACE2(&k_mydll,"EraseMemItemInfoByAddress: erased %08x", address);
+    }
+    LeaveCriticalSection(&g_cs);
+}
+
 /**
  * Monitors the file pointer.
  */
 void JuceReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
   LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
 {
+    TRACE(&k_mydll,"JuceReadFile: CALLED");
 	// get current file pointer
 	DWORD dwOffset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);  
 
@@ -5011,7 +5197,10 @@ void JuceReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
         TRACE2(&k_mydll,"JuceReadFile: memItemInfo->id = %d", memItemInfo->id);
         TRACE2(&k_mydll,"JuceReadFile: memItemInfo->afsItemInfo.dwOffset = %08x", memItemInfo->afsItemInfo.dwOffset);
         TRACE2(&k_mydll,"JuceReadFile: lpBuffer = %08x", (DWORD)lpBuffer);
-	}
+	} else {
+        // remove the buffer from the map
+        //EraseMemItemInfoByAddress((DWORD)lpBuffer);
+    }
 
 	return;
 }
@@ -5028,7 +5217,10 @@ void JuceReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 void JuceUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD zero, DWORD* size2, DWORD result)
 {
     TRACE(&k_mydll,"JuceUnpack: CALLED.");
-    if (!g_kit_loading_enabled) return;
+    if (kitsDisabled()) {
+        return;
+    }
+
 	/*
 	TRACE2(&k_mydll,"JuceUnpack: addr1 = %08x", addr1);
 	TRACE2(&k_mydll,"JuceUnpack: addr2 = %08x", addr2);
@@ -5346,8 +5538,18 @@ string GetKitFolderKeyByTeamId(WORD teamId, int fileType)
 WORD GetTeamIdByOrdinalAFS(WORD ord)
 {
     //return g_licensed_ordinals[ord];
-    WORD* list = (WORD*)data[LICENSED_LIST];
+    WORD* list = *(WORD**)data[LICENSED_LIST_ADDR];
     return list[ord];
+}
+
+DWORD GetOrdinalByTeamId(WORD id)
+{
+    DWORD n = *(DWORD*)data[NUM_LICENSED];
+    WORD* list = *(WORD**)data[LICENSED_LIST_ADDR];
+    for (int i=0; i<n; i++) {
+        if (list[i]==id) return i;
+    }
+    return 0xffffffff;
 }
 
 BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOOL* pNeedsMask)
@@ -6009,7 +6211,7 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
 
 void clearTeamKitInfo()
 {
-    WORD* licensed_ids = (WORD*)data[LICENSED_LIST];
+    WORD* licensed_ids = *(WORD**)data[LICENSED_LIST_ADDR];
     licensed_ids[0] = g_licensed_ordinals[0];
     licensed_ids[1] = g_licensed_ordinals[1];
 
@@ -6040,9 +6242,6 @@ void clearTeamKitInfo()
 
 	// clear the hash-map
 	g_teamKitInfo.clear();
-
-    // disable kit loading
-    g_kit_loading_enabled = false;
 }
 
 /**
@@ -6377,12 +6576,96 @@ DWORD JuceReadTeamInfoOnMLSave()
     return result;
 }
 
+DWORD kservOnEditModeSave()
+{
+	Log(&k_mydll,"kservOnEditModeSave: restoring kitinfo edits");
+
+    clearTeamKitInfo();
+
+    // call original
+    DWORD result = MasterCallNext();
+    return result;
+}
+
+DWORD kservSetEditMiscFlag(DWORD p0)
+{
+	Log(&k_mydll,"kservSetEditMiscFlag: CALLED");
+
+    // check for Edit Mode
+    if (!g_edit_mode && 1 == *(BYTE*)data[IS_EDIT_MODE]) {
+        Log(&k_mydll, "kservSetEditMiscFlag: Entering EDIT MODE");
+        g_edit_mode = 1;
+
+        // clearing kit team info
+        clearTeamKitInfo();
+    }
+
+    // check for Edit Player/Select Team
+    if (!g_edit_player_mode && 1 == *(BYTE*)data[IS_EDIT_PLAYER_SELECT_TEAM_MODE]) {
+        Log(&k_mydll, "kservSetEditMiscFlag: Entering Edit Player/Select Team");
+        g_edit_player_mode = 1;
+
+        // clearing kit team info
+        clearTeamKitInfo();
+
+        HookSearchForLicensedTeamOrdinal();
+    }
+
+    if (!g_edit_team && 1 == *(BYTE*)data[IS_EDIT_TEAM]) {
+        Log(&k_mydll, "kservSetEditMiscFlag: Entering Edit Team");
+        // clearing kit team info
+        clearTeamKitInfo();
+        g_edit_team = 1;
+    }
+
+    // call original
+    DWORD result = MasterCallNext(p0);
+    return result;
+}
+
+DWORD kservClearEditMiscFlag(DWORD p0)
+{
+	Log(&k_mydll,"kservClearEditMiscFlag: CALLED");
+
+    // check for Edit Mode
+    if (g_edit_mode && 0 == *(BYTE*)data[IS_EDIT_MODE]) {
+        Log(&k_mydll, "kservClearEditMiscFlag: Leaving EDIT MODE");
+        g_edit_mode = 0;
+
+        // clearing kit team info
+        clearTeamKitInfo();
+    }
+
+    // check for Edit Player/Select Team
+    if (g_edit_player_mode 
+            && 0 == *(BYTE*)data[IS_EDIT_PLAYER_SELECT_TEAM_MODE]
+            && 0 == *(BYTE*)data[IS_EDIT_PLAYER_MODE]) {
+        Log(&k_mydll, "kservClearEditMiscFlag: Leaving Edit Player/Select Team");
+        g_edit_player_mode = 0;
+
+        // clearing kit team info
+        clearTeamKitInfo();
+
+        UnhookSearchForLicensedTeamOrdinal();
+    }
+
+    if (g_edit_team && 0 == *(BYTE*)data[IS_EDIT_TEAM]) {
+        Log(&k_mydll, "kservSetEditMiscFlag: Leaving Edit Team");
+        // clearing kit team info
+        clearTeamKitInfo();
+        g_edit_team = 0;
+    }
+
+    // call original
+    DWORD result = MasterCallNext(p0);
+    return result;
+}
+
 DWORD kservSetFlag()
 {
 	Log(&k_mydll,"kservSetFlag: restoring kitinfo edits");
 
     clearTeamKitInfo();
-    g_kit_loading_enabled = false;
 
     // clear texture replacement maps
     ClearTextureMaps();
@@ -6397,8 +6680,6 @@ DWORD kservResetFlag()
 	Log(&k_mydll,"kservResetFlag: restoring kitinfo edits");
 
     clearTeamKitInfo();
-    g_kit_loading_enabled = false;
-    g_edit_mode = false;
 
     // clear texture replacement maps
     ClearTextureMaps();
@@ -6413,8 +6694,6 @@ DWORD kservResetFlag2()
 	Log(&k_mydll,"kservResetFlag2: restoring kitinfo edits");
 
     clearTeamKitInfo();
-    g_kit_loading_enabled = false;
-    g_edit_mode = false;
 
     // clear texture replacement maps
     ClearTextureMaps();
@@ -6468,6 +6747,11 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
 
 void setTeamKitInfo()
 {
+    setTeamKitInfo(0xffff);
+}
+
+void setTeamKitInfo(WORD teamId)
+{
     // overwrite kit information
     /////////////////////////////////////
     /////////////////////////////////////
@@ -6475,10 +6759,16 @@ void setTeamKitInfo()
 
     WORD home = GetTeamId(HOME);
     WORD away = GetTeamId(AWAY);
+    bool useParam = false;
+    if (g_edit_mode && teamId != 0xffff && home != teamId) { 
+        home = teamId;
+        useParam = true;
+    }
 
     if (TeamDirExists(home))
     {
-        KITPACKINFO* ki = GetKitPackInfo(HOME);
+        KITPACKINFO* ki = (useParam) ?
+            GetKitPackInfoById(teamId,HOME) : GetKitPackInfo(HOME);
 
 		// check if we need to store it in the hash-map
 		if (g_teamKitInfo[(DWORD)ki] == NULL) {
@@ -6495,7 +6785,7 @@ void setTeamKitInfo()
 				Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
 			}
             LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", home);
-		}
+        }
 
         KitCollection* col = MAP_FIND(gdb->uni,home);
         if (col) {
@@ -6527,7 +6817,7 @@ void setTeamKitInfo()
             memset(padding,0,len);
 
             if (!IsLicensed(home)) {
-                WORD* list = (WORD*)data[LICENSED_LIST];
+                WORD* list = *(WORD**)data[LICENSED_LIST_ADDR];
                 list[(away!=4)?0:1] = home;
             }
         }
@@ -6583,97 +6873,28 @@ void setTeamKitInfo()
             memset(padding,0,len);
 
             if (!IsLicensed(away)) {
-                WORD* list = (WORD*)data[LICENSED_LIST];
+                WORD* list = *(WORD**)data[LICENSED_LIST_ADDR];
                 list[(home!=6)?1:0] = away;
             }
         }
     }
-
-    // enable kit loading
-    g_kit_loading_enabled = true;
 }
 
 DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal)
 {
-	//LogWithTwoNumbers(&k_mydll,"kservWriteKitInfo: teamId=%04x, kitOrdinal=%d", teamId & 0xffff, kitOrdinal);
-
     // call original
     DWORD result = MasterCallNext(teamId, kitOrdinal);
 
-    if (g_edit_mode) return result;
+    if (kitsDisabled()) {
+        return result;
+    }
 
     /*
-    teamId &= 0xffff;
-    if (teamId == 0x126) teamId = GetTeamId(HOME);
-    if (teamId == 0x127) teamId = GetTeamId(AWAY);
-
-    if (kitOrdinal==0 && TeamDirExists(teamId))
-    {
-        KITPACKINFO* ki = (KITPACKINFO*)result - 1;
-
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[(DWORD)ki] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = teamId;
-				g_teamKitInfo[(DWORD)ki] = teamKitInfo;
-                size_t len = (teamId < 0x40) ? 0x68 : 0x128;
-                memcpy(&teamKitInfo->editInfo, ki+1, len);
-			} else {
-				Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
-            LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", teamId);
-		}
-
-        KitCollection* col = MAP_FIND(gdb->uni,teamId);
-        if (col) {
-            Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKeyByTeamId(teamId, GA_KIT));
-            Kit* gb = MAP_FIND(col->goalkeepers,GetKitFolderKeyByTeamId(teamId, GB_KIT));
-            Kit* gaShorts = MAP_FIND(col->goalkeepers,GetKitFolderKeyByTeamId(teamId, GA_KIT));
-            Kit* gbShorts = MAP_FIND(col->goalkeepers,GetKitFolderKeyByTeamId(teamId, GB_KIT));
-            Kit* pa = MAP_FIND(col->players,GetKitFolderKeyByTeamId(teamId, PA_SHIRT));
-            Kit* pb = MAP_FIND(col->players,GetKitFolderKeyByTeamId(teamId, PB_SHIRT));
-            Kit* paShorts = MAP_FIND(col->players,GetKitFolderKeyByTeamId(teamId, PA_SHIRT));
-            Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKeyByTeamId(teamId, PB_SHIRT));
-
-            //BOOL editable = kDB->editable[id];
-            BOOL editable = TRUE;
-
-            // set attributes
-            SetKitInfo(ga, &ki->gkHome, editable);
-            SetKitInfo(gb, &ki->gkAway, editable);
-            SetShortsInfo(gaShorts, &ki->gkHome, editable);
-            SetShortsInfo(gbShorts, &ki->gkAway, editable);
-            SetKitInfo(pa, &ki->plHome, editable);
-            SetKitInfo(pb, &ki->plAway, editable);
-            SetShortsInfo(paShorts, &ki->plHome, editable);
-            SetShortsInfo(pbShorts, &ki->plAway, editable);
-
-            // clear out the padding
-            size_t len = (teamId < 0x40) ? 0x68 : 0x128;
-            BYTE* padding = (BYTE*)(ki + 1);
-            memset(padding,0,len);
-
-            if (teamId == GetTeamId(HOME)) {
-                if (!IsLicensed(teamId)) {
-                    WORD* list = (WORD*)data[LICENSED_LIST];
-                    list[(teamId!=4)?0:1] = teamId;
-                }
-            }
-            if (teamId == GetTeamId(AWAY)) {
-                if (!IsLicensed(teamId)) {
-                    WORD* list = (WORD*)data[LICENSED_LIST];
-                    list[(teamId!=6)?1:0] = teamId;
-                }
-            }
-        }
-    }
+	LogWithThreeNumbers(&k_mydll,"kservWriteKitInfo: teamId=%04x, kitOrdinal=%d, result=%08x", 
+            teamId & 0xffff, kitOrdinal, result);
     */
-    setTeamKitInfo();
 
+    setTeamKitInfo(teamId & 0xffff);
     return result;
 }
 
@@ -6682,7 +6903,6 @@ DWORD JuceOnReplayLoad()
 	Log(&k_mydll,"JuceOnReplayLoad: CALLED.");
 
     clearTeamKitInfo();
-    g_kit_loading_enabled = true;
 
     // call original
     DWORD result = MasterCallNext();
@@ -6695,14 +6915,12 @@ DWORD JuceOnReplayLoad()
 
 DWORD JuceGetTeamInfo(DWORD id, DWORD p1)
 {
-	Log(&k_mydll,"JuceGetTeamInfo: restoring kitinfo edits");
-
-    clearTeamKitInfo();
-    g_kit_loading_enabled = false;
-    g_edit_mode = true;
-
     // call original
     DWORD result = MasterCallNext(id, p1);
+
+    // enforce team id
+    WORD* teamIds = (WORD*)data[TEAM_IDS];
+    teamIds[0] = (WORD)id;
     return result;
 }
 
@@ -6753,7 +6971,6 @@ void JuceClear2Dkits()
     typ = PL_TYPE;
 
     clearTeamKitInfo();
-    g_kit_loading_enabled = true;
 
     // set kit info
     setTeamKitInfo();
@@ -6772,9 +6989,9 @@ void JuceClear2Dkits()
  */
 void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 {
-	Log(&k_mydll,"JuceUniDecode: CALLED.");
-	LogWithNumber(&k_mydll,"JuceUniDecode: addr = %08x", addr);
-	LogWithNumber(&k_mydll,"JuceUniDecode: result = %08x", result);
+	TRACE(&k_mydll,"JuceUniDecode: CALLED.");
+	TRACE2(&k_mydll,"JuceUniDecode: addr = %08x", addr);
+	TRACE2(&k_mydll,"JuceUniDecode: result = %08x", result);
 
     g_currentAfsId = 0;
     g_unidecode_flag = true;
@@ -6784,7 +7001,7 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
     WORD homeId = GetTeamId(HOME);
     WORD awayId = GetTeamId(AWAY);
     if (homeId != _last_homeId || awayId != _last_awayId) {
-        ClearTextureMaps();
+        if (!g_edit_mode) ClearTextureMaps();
     }
     _last_homeId = homeId;
     _last_awayId = awayId;
@@ -6792,7 +7009,9 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 	TEXIMGPACKHEADER* orgKit = (TEXIMGPACKHEADER*)result;
 	// save decoded uniforms as BMPs
 	//DumpUniforms(orgKit);
-    if (!g_kit_loading_enabled || g_edit_mode) return;
+    if (kitsDisabled()) {
+        return;
+    }
 
 	/*
 	// save encoded buffer as raw data
