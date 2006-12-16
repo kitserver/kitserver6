@@ -3178,6 +3178,23 @@ void DrawKitLabel()
 	//print label
 	KDrawText((g_bbWidth-size.cx)/2,g_bbHeight*0.77,color,12,display,true);
 
+    // print kit keys
+    char buf[256] = {0};
+    if (g_home_shirt_tex) {
+        string& key1 = GET_HOME_SHIRT_KEY(typ);
+        string key2 = (key1.length()>0) ? key1 : (typ==PL_TYPE)?"pa":"ga";
+        sprintf(buf, "name: %s", key2.c_str());
+        KDrawText(26,638,0xff000000,12,buf);
+        KDrawText(24,636,color,12,buf);
+    }
+    if (g_away_shirt_tex) {
+        string& key3 = GET_AWAY_SHIRT_KEY(typ);
+        string key4 = (key3.length()>0) ? key3 : (typ==PL_TYPE)?"pb":"gb";
+        sprintf(buf, "name: %s", key4.c_str());
+        KDrawText(786,638,0xff000000,12,buf);
+        KDrawText(784,636,color,12,buf);
+    }
+
     // check input
     CheckInput();
 
