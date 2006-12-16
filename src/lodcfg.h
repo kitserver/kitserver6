@@ -6,7 +6,7 @@
 #else
 #define LODCFG_WINDOW_TITLE "LOD Mixer Module for Kitserver 6 (debug build)"
 #endif
-#define CREDITS "Program info: v6.2.1 (11/2006) by Juce."
+#define CREDITS "Program info: v6.3.4 (12/2006) by Juce."
 
 typedef struct _LCM {
     WORD homeTeamId;
