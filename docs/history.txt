@@ -83,10 +83,10 @@ v6.3.4:
 - faceserver: works in random selection mode
 - faceserver: freezing with big facepacks minimized
 
-2006-12-??
+2006-12-17
 ----------
 v6.3.5:
 - more memory reserved, fixes some crashes with HD adboards
 - faceserver: fixed a problem when editing a player's look
 - faceserver: small bugfix when editing the kit in ML
-
+- faceserver: disabled during museum replays
