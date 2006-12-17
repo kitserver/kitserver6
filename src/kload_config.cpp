@@ -88,6 +88,12 @@ BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile)
 			LogWithNumber(&k_kload,"ReadConfig: dx.emulate-HW-TnL = (%d)", value);
 			config->emulateHW_TnL = (value > 0);
 		}
+		else if (stricmp(name, "ReservedMemory")==0)
+		{
+			if (sscanf(pValue, "%d", &value)!=1) continue;
+			LogWithNumber(&k_kload,"ReadConfig: ReservedMemory = (%d)", value);
+			config->newResMem = value;
+		}
 		else if (lstrcmp(name, "DLL.num")==0)
 		{
 			if (sscanf(pValue, "%d", &value)!=1) continue;

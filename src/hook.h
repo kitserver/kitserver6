@@ -120,6 +120,7 @@ bool HookProc(DWORD proc, DWORD proc_cs, DWORD newproc, char* sproc, char* sproc
 bool UnhookProc(bool flag, DWORD proc, DWORD proc_cs, char* sproc, char* sproc_cs);
 bool HookProcAtAddr(DWORD proc, DWORD proc_cs, DWORD newproc, char* sproc, char* sproc_cs);
 bool UnhookProcAtAddr(bool flag, DWORD proc, DWORD proc_cs, char* sproc, char* sproc_cs);
+void FixReservedMemory();
 
 DWORD NewGetClubTeamInfo(DWORD id);
 DWORD NewGetClubTeamInfoML1(DWORD id);

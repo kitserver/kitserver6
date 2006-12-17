@@ -7,7 +7,7 @@
 #define BUFLEN 4096
 
 #define MODID 0
-#define NAMELONG "Module Loader 6.3.4"
+#define NAMELONG "Module Loader 6.3.5"
 #define NAMESHORT "KLOAD"
 #define CONFIG_FILE "kload.cfg"
 
@@ -19,6 +19,7 @@ typedef struct _KLOAD_CONFIG_STRUCT {
 	LPTSTR* dllnames;
 	BOOL forceSW_TnL;
 	BOOL emulateHW_TnL;
+	DWORD newResMem;
 } KLOAD_CONFIG;
 
 BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile);

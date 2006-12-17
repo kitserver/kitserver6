@@ -93,16 +93,16 @@ DWORD codeArray[][CODELEN] = {
 
 // data addresses
 
-#define DATALEN 2
-enum { INPUT_TABLE, STACK_SHIFT };
+#define DATALEN 5
+enum { INPUT_TABLE, STACK_SHIFT, RESMEM1, RESMEM2, RESMEM3 };
 DWORD dataArray[][DATALEN] = {
     //PES6
     {
-        0x3a71254, 0,
+        0x3a71254, 0, 0x8c7b6d, 0x8c7b82, 0x8c7b99,
     },
     //PES6 1.10
     {
-        0x3a72254, 0x2c,
+        0x3a72254, 0x2c, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
     },
 };
 
@@ -1171,6 +1171,7 @@ IDirect3D8* STDMETHODCALLTYPE NewDirect3DCreate8(UINT sdkVersion)
 		g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, hInst, GetCurrentThreadId());
 		LogWithNumber(&k_kload,"Installed keyboard hook: g_hKeyboardHook = %d", (DWORD)g_hKeyboardHook);
 	};
+	FixReservedMemory();
 
 	return result;
 };
@@ -1962,5 +1963,28 @@ void InitAddresses(int v)
 	oFreeMemory = (FREEMEMORY)code[C_FREEMEMORY];
 	UniSplit = (UNISPLIT)code[C_UNISPLIT];
 	
+	return;
+};
+
+void FixReservedMemory()
+{
+	//make PES reserve more memory to avoid problems with HD adboards
+	if (data[RESMEM1]==0 || data[RESMEM2]==0 || data[RESMEM3]==0)
+		return;
+		
+	DWORD oldResMem=*(DWORD*)data[RESMEM1];
+		
+	if (g_config.newResMem <= oldResMem)
+		return;
+	
+	DWORD protection=0, newProtection=PAGE_EXECUTE_READWRITE;
+	if (VirtualProtect((BYTE*)data[RESMEM1], 0xff, newProtection, &protection)) {
+		*(DWORD*)data[RESMEM1]=g_config.newResMem;
+		*(DWORD*)data[RESMEM2]=g_config.newResMem>>2;
+		*(DWORD*)data[RESMEM3]=g_config.newResMem;
+		LogWithNumber(&k_kload,"Increased reserved memory to %d bytes",g_config.newResMem);
+	};
+	
+
 	return;
 };

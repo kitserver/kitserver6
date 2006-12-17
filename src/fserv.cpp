@@ -99,6 +99,7 @@ DWORD fservEditCopyPlayerData(DWORD playerNumber, DWORD p2);
 DWORD fservEditCopyPlayerData2(DWORD playerNumber);
 DWORD fservEditCopyPlayerData3(DWORD p1);
 DWORD fservEditCopyPlayerData4(DWORD slot, DWORD editorAddress, DWORD p3);
+DWORD fservEditUniCopyPlayerData(DWORD playerNumber);
 DWORD fservMyTeamCPD(DWORD playerNumber);
 BYTE fservGetHairTransp(DWORD addr);
 DWORD ResolvePlayerID(DWORD playerID);
@@ -220,6 +221,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA2],fservEditCopyPlayerData2);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA3],fservEditCopyPlayerData3);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA4],fservEditCopyPlayerData4);
+		MasterUnhookFunction(fIDs[C_EDITUNI_CPD_CS],fservEditUniCopyPlayerData);
 		MasterUnhookFunction(fIDs[C_MYTEAM_CPD_CS],fservMyTeamCPD);
 			
 		for (j=0;j<numFaces;j++)
@@ -277,7 +279,7 @@ void InitFserv()
 	DWORD protection=0, newProtection=PAGE_EXECUTE_READWRITE;
 	BYTE* bptr=NULL;
 	DWORD* ptr=NULL;
-	
+
 	// make PES read the face id as DWORD value rather than as WORD value
 	if (fIDs[FIX_DWORDFACEID] != 0)
 	{
@@ -313,7 +315,7 @@ void InitFserv()
 	        memset(bptr+5,0x90,10);
 	    };
 	};
-	
+
 	if (fIDs[C_COPYPLAYERDATA_CS] != 0)
 	{
 		bptr = (BYTE*)fIDs[C_COPYPLAYERDATA_CS];
@@ -325,7 +327,7 @@ void InitFserv()
 	    };
 	};
 	
-	/*if (fIDs[C_REPL_COPYPLAYERDATA_CS] != 0)
+	if (fIDs[C_REPL_COPYPLAYERDATA_CS] != 0)
 	{
 		bptr = (BYTE*)fIDs[C_REPL_COPYPLAYERDATA_CS];
 		ptr = (DWORD*)(bptr+1);
@@ -335,7 +337,7 @@ void InitFserv()
 	        ptr[0] = (DWORD)fservReplCopyPlayerData - (DWORD)(fIDs[C_REPL_COPYPLAYERDATA_CS] + 5);
 	        memset(bptr+5,0x90,6);
 	    };
-	};*/
+	};
 	
 	bGetHairTranspHooked=HookProcAtAddr(fIDs[C_GETHAIRTRANSP],fIDs[C_GETHAIRTRANSP_CS],
 		(DWORD)fservGetHairTransp,"C_GETHAIRTRANSP","C_GETHAIRTRANSP_CS");
@@ -347,6 +349,7 @@ void InitFserv()
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA2],1,fservEditCopyPlayerData2);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA3],1,fservEditCopyPlayerData3);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA4],3,fservEditCopyPlayerData4);
+	MasterHookFunction(fIDs[C_EDITUNI_CPD_CS],1,fservEditUniCopyPlayerData);
 	MasterHookFunction(fIDs[C_MYTEAM_CPD_CS],1,fservMyTeamCPD);
 	
 	Log(&k_fserv, "hooking done");
@@ -730,7 +733,8 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 
 	ValidFile:
 
-	if (isInEditPlayerMode==0) {
+	//Different behaviour causes crashes in edit mode when trying to edit settings
+	//if (isInEditPlayerMode==0) {
 		TRACE2X(&k_fserv,"addr for player # %d is %.8x",usedPlayerNumber,addr);
 		if (g_PlayersIterator != g_Players.end()) {
 			TRACE2(&k_fserv,"Found player in map, assigning face id %d",g_PlayersIterator->second);
@@ -746,7 +750,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 			*FaceID=GetNextSpecialAfsFileIdForFace(*FaceID,*Skincolor);
 			lastWasFromGDB=true;
 		};
-		
+	/*	
 	} else {
 		TRACE2X(&k_fserv,"addr for player # %d (EDIT MODE) is %.8x",usedPlayerNumber,addr);
 		if (*Faceset==FACESET_NORMAL && *FaceID>=1000) {
@@ -761,7 +765,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 			lastWasFromGDB=true;
 		};
 	};
-	
+	*/
 	NoProcessing:
 
 	hasChanged=true;
@@ -925,14 +929,14 @@ void fservReplCopyPlayerData()
 	__asm mov oldEDX, edx
 	__asm mov eax, [ebp]
 	__asm mov oldEBP, eax
-	Log(&k_fserv,"fservReplCopyPlayerData");
+	LogWithNumber(&k_fserv,"fservReplCopyPlayerData: 0x%x",oldEDX-0x12c);
 	
 	//replace the functionality of the code we have overwritten
 	ZeroMemory((BYTE*)oldESI,16);
 	
-	team=FIRSTREPLPLAYERID+(((oldEDX-0x128-fIDs[PLAYERDATA_BASE])<32*0x348)?0:32);
+	team=FIRSTREPLPLAYERID+(((oldEDX-0x12c-fIDs[PLAYERDATA_BASE])<32*0x348)?0:32);
 	
-	g_PlayersAddr[oldEDX-0x128]=team+oldEBP;
+	g_PlayersAddr[oldEDX-0x12c]=0; //team+oldEBP;
 	
 	__asm mov eax, oldEAX
 	__asm mov edx, oldEDX
@@ -985,6 +989,15 @@ DWORD fservEditCopyPlayerData4(DWORD slot, DWORD editorAddress, DWORD p3)
 	g_PlayersAddr[addr]=g_EditorAddresses[editorAddress] & 0xffff;
 	
 	return MasterCallNext(slot, editorAddress, p3);
+};
+
+DWORD fservEditUniCopyPlayerData(DWORD playerNumber)
+{
+	DWORD oldEDI;
+	__asm mov oldEDI, edi
+	g_EditorAddresses[oldEDI-0x1f*4]=0;
+	
+	return MasterCallNext(playerNumber);
 };
 
 DWORD fservMyTeamCPD(DWORD playerNumber)
