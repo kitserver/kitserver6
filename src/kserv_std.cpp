@@ -6474,10 +6474,12 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
         } else {
             // nothing found. Make sure that we remove this dest key from _source_to_id, 
             // if it exists in there
+            /*
             map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
             if (dit != _source_to_id.end()) {
                 _source_to_id.erase(dit);
             }
+            */
         }
     } 
     return result;
