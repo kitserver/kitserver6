@@ -44,7 +44,8 @@
 
 #define MAX_ITERATIONS 1000
 
-#define MAP_FIND(map,key) (((*(map)).count(key)>0) ? (*(map))[key] : NULL)
+//#define MAP_FIND(map,key) (((*(map)).count(key)>0) ? (*(map))[key] : NULL)
+#define MAP_FIND(map,key) (((*(map)).find(key) != (*(map)).end()) ? (*(map))[key] : NULL)
 
 KMOD k_mydll={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 
@@ -3183,16 +3184,33 @@ void DrawKitLabel()
     if (g_home_shirt_tex) {
         string& key1 = GET_HOME_SHIRT_KEY(typ);
         string key2 = (key1.length()>0) ? key1 : (typ==PL_TYPE)?"pa":"ga";
-        sprintf(buf, "name: %s", key2.c_str());
+        // check for description attribute
+        KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(HOME)); 
+        if (col) {
+            Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key2):MAP_FIND(col->goalkeepers,key2);
+            if (kit && (kit->attDefined & KITDESCRIPTION)) {
+                key2 = string(kit->description);
+            }
+        }
+        sprintf(buf, "kit: %s", key2.c_str());
         KDrawText(26,638,0xff000000,12,buf);
         KDrawText(24,636,color,12,buf);
     }
     if (g_away_shirt_tex) {
         string& key3 = GET_AWAY_SHIRT_KEY(typ);
         string key4 = (key3.length()>0) ? key3 : (typ==PL_TYPE)?"pb":"gb";
-        sprintf(buf, "name: %s", key4.c_str());
-        KDrawText(786,638,0xff000000,12,buf);
-        KDrawText(784,636,color,12,buf);
+        // check for description attribute
+        KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(AWAY)); 
+        if (col) {
+            Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key4):MAP_FIND(col->goalkeepers,key4);
+            if (kit && (kit->attDefined & KITDESCRIPTION)) {
+                key4 = string(kit->description);
+            }
+        }
+        sprintf(buf, "kit: %s", key4.c_str());
+        KGetTextExtent(buf,12,&size);
+        KDrawText((g_bbWidth-size.cx)/stretchX-24,638,0xff000000,12,buf);
+        KDrawText((g_bbWidth-size.cx)/stretchX-26,636,color,12,buf);
     }
 
     // check input
