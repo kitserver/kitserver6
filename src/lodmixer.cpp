@@ -92,11 +92,11 @@ enum {
 DWORD codeArray[][CODELEN] = {
     // PES6
     {
-        0x6b78af, //0xb0d2ce,
+        0x6b78af,
     },
     // PES6 1.10
     {
-        0,
+        0x6b79cf,
     },
 };
 
