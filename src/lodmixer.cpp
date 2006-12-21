@@ -84,7 +84,24 @@ DWORD dataArray[][DATALEN] = {
     },
 };
 
+#define CODELEN 1
+enum {
+    C_ONSETSUBS_CS,
+};
+
+DWORD codeArray[][CODELEN] = {
+    // PES6
+    {
+        0x6b78af, //0xb0d2ce,
+    },
+    // PES6 1.10
+    {
+        0,
+    },
+};
+
 DWORD data[DATALEN];
+DWORD code[CODELEN];
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
 void InitLodmixer();
@@ -104,6 +121,7 @@ void lodCreateDevice(IDirect3D8* self, UINT Adapter,
     D3DPRESENT_PARAMETERS *p, IDirect3DDevice8** ppReturnedDeviceInterface);
 void correctAspectRatio(UINT width, UINT height);
 void CheckInput();
+DWORD lodOnSetSubs();
 
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -162,6 +180,7 @@ void InitLodmixer()
 {
     Log(&k_lodmixer, "InitLodMixer called.");
 	memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
+	memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
 	
 	// configure LOD-mixer data
 	InitLODMixerData();
@@ -226,8 +245,28 @@ void InitLodmixer()
             addr[1] = 0x90; // nop
         }
     }	
+
+    MasterHookFunction(code[C_ONSETSUBS_CS], 0, lodOnSetSubs);
 	return;
 };
+
+DWORD lodOnSetSubs()
+{
+    DWORD result = MasterCallNext();
+
+    // apply substitutions settings
+	ReadMenuData();
+    LCM* inmem = (LCM*)data[TEAM_IDS];
+    DWORD protection = 0;
+    DWORD newProtection = PAGE_EXECUTE_READWRITE;
+    if (VirtualProtect(inmem, sizeof(LCM), newProtection, &protection)) {
+        if (g_lcm.numSubs != 0xff) {
+            inmem->numSubs = g_lcm.numSubs;
+            LogWithNumber(&k_lodmixer,"lodOnSetSubs: setting numSubs = %d", inmem->numSubs);
+        }
+	}
+    return result;
+}
 
 /**
  * Copies LOD-Mixer settings to proper place in memory.
