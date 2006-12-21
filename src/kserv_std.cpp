@@ -3258,7 +3258,7 @@ void InitKserv()
 		HookFunction(hk_D3D_CreateTexture,(DWORD)JuceCreateTexture);
 		HookFunction(hk_D3D_UnlockRect,(DWORD)kservUnlockRect);
 
-        LogWithNumber(&k_mydll,"JuceCreateTexture: func=%08x", (DWORD)JuceCreateTexture);
+        //LogWithNumber(&k_mydll,"JuceCreateTexture: func=%08x", (DWORD)JuceCreateTexture);
 
         // hook EndUniSelect
 		HookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
@@ -3427,103 +3427,30 @@ BOOL IsEditedKit(int slot)
 
 HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
 {
-    BITMAPINFO* bmInfo;
-    BYTE* srcData;
-    PALETTEENTRY* srcPal;
-    const RECT srcRect = {0, 0, 512, 256};
-    BYTE tmpLine[512];
-    HRESULT result;
-    int i = 0, line = 0;
+    D3DXIMAGE_INFO imageInfo;
+    D3DXGetImageInfoFromFile(name, &imageInfo);
 
-    // initialize ppTex
-    if (ppTex) {
-        *ppTex = NULL;
+    UINT texWidth = imageInfo.Width;
+    UINT texHeight = imageInfo.Height;
+    UINT texLevels = 1;
+    D3DFORMAT texFormat = imageInfo.Format;
+    LogWithTwoNumbers(&k_mydll, 
+            "JuceCreateTextureFromFile: checking texture dimenstions (%d,%d)",
+            texWidth, texHeight);
+    if (SUCCEEDED(D3DXCheckTextureRequirements(
+                    dev, &texWidth, &texHeight,
+                    &texLevels, 0, 
+                    &texFormat, D3DPOOL_MANAGED))) {
+        LogWithTwoNumbers(&k_mydll, 
+                "JuceCreateTextureFromFile: check complete. Using (%d,%d)",
+                texWidth, texHeight);
     }
 
-    DWORD texType = TEXTYPE_NONE; 
-    if (lstrcmpi(name + lstrlen(name)-4, ".png")==0) {
-        if (FileExists(name)) {
-            texType = TEXTYPE_PNG;
-        } else {
-            lstrcpy(name + lstrlen(name)-4, ".bmp");
-            if (FileExists(name)) {
-                texType = TEXTYPE_BMP;
-            }
-        }
-    } else if (lstrcmpi(name + lstrlen(name)-4, ".bmp")==0) {
-        if (FileExists(name)) {
-            texType = TEXTYPE_BMP;
-        } else {
-            lstrcpy(name + lstrlen(name)-4, ".png");
-            if (FileExists(name)) {
-                texType = TEXTYPE_PNG;
-            }
-        }
-    }
+    return D3DXCreateTextureFromFileEx(
+            dev, name, texWidth, texHeight, 1, 0, texFormat, 
+            D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, 
+            pPal, ppTex);
 
-    switch (texType) {
-        case TEXTYPE_PNG:
-            bmInfo = NULL;
-            if (!LoadPNGTexture(&bmInfo, name)) {
-                return E_FAIL;
-            }
-            srcPal = (PALETTEENTRY*)bmInfo->bmiColors;
-            srcData = (BYTE*)bmInfo + sizeof(BITMAPINFOHEADER) + 0x400;
-            // convert RGBQUAD to PALETTENTRY
-            for (i=0; i<256; i++) {
-                BYTE red = bmInfo->bmiColors[i].rgbRed;
-                BYTE blue = bmInfo->bmiColors[i].rgbBlue;
-                bmInfo->bmiColors[i].rgbBlue = red;
-                bmInfo->bmiColors[i].rgbRed = blue;
-            }
-            // reverse lines
-            for (line=0; line<128; line++) {
-                memcpy(tmpLine, srcData + line*512, 512);
-                memcpy(srcData + line*512, srcData + (255-line)*512, 512);
-                memcpy(srcData + (255-line)*512, tmpLine, 512);
-            }
-            if (SUCCEEDED(D3DXCreateTextureFromFile(dev,name,ppTex))) {
-                // copy palette info
-                memcpy(pPal, srcPal, 0x100*sizeof(PALETTEENTRY));
-                FreePNGTexture(bmInfo);
-                return S_OK;
-            } else {
-                Log(&k_mydll,"JuceCreateTextureFromFile: (PNG) D3DXCreateTextureFromFile FAILED.");
-            }
-            FreePNGTexture(bmInfo);
-            break;
-
-        case TEXTYPE_BMP:
-            bmInfo = NULL;
-            if (!LoadTexture(&bmInfo, name)) {
-                return E_FAIL;
-            }
-            srcData = (BYTE*)bmInfo + sizeof(BITMAPINFOHEADER) + 0x400;
-            srcPal = (PALETTEENTRY*)bmInfo->bmiColors;
-            // convert RGBQUAD to PALETTENTRY
-            for (i=0; i<256; i++) {
-                BYTE red = bmInfo->bmiColors[i].rgbRed;
-                BYTE blue = bmInfo->bmiColors[i].rgbBlue;
-                bmInfo->bmiColors[i].rgbBlue = red;
-                bmInfo->bmiColors[i].rgbRed = blue;
-            }
-            // reverse lines
-            for (line=0; line<128; line++) {
-                memcpy(tmpLine, srcData + line*512, 512);
-                memcpy(srcData + line*512, srcData + (255-line)*512, 512);
-                memcpy(srcData + (255-line)*512, tmpLine, 512);
-            }
-            if (SUCCEEDED(D3DXCreateTextureFromFile(dev,name,ppTex))) {
-                // copy palette info
-                memcpy(pPal, srcPal, 0x100*sizeof(PALETTEENTRY));
-                FreeTexture(bmInfo);
-                return S_OK;
-            } else {
-                Log(&k_mydll,"JuceCreateTextureFromFile: (PNG) D3DXCreateTextureFromFile FAILED.");
-            }
-            FreeTexture(bmInfo);
-            break;
-    }
     return E_FAIL;
 }
 
@@ -4739,6 +4666,7 @@ void DumpTexture(IDirect3DTexture8* const ptexture)
     static int count = 0;
     char buf[BUFLEN];
     sprintf(buf,"kitserver\\tex%03d.bmp",count++);
+    //sprintf(buf,"kitserver\\tex-%08x.bmp",(DWORD)ptexture);
     if (FAILED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, ptexture, NULL))) {
         LogWithString(&k_mydll, "DumpTexture: failed to save texture to %s", buf);
     }
@@ -4841,20 +4769,41 @@ DWORD src, bool* IsProcessed)
                 D3DXIMAGE_INFO imageInfo;
                 D3DXGetImageInfoFromFile(filename, &imageInfo);
 
-                // step 2: create the texture that was requested, but change
+                // step 2: check whether the system supports such texture dimensions
+                UINT texWidth = imageInfo.Width/2;
+                UINT texHeight = imageInfo.Height/2;
+                UINT texLevels = levels;
+                D3DFORMAT texFormat = format;
+                LogWithTwoNumbers(&k_mydll, 
+                        "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                        texWidth, texHeight);
+                if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                self, &texWidth, &texHeight,
+                                &texLevels, usage, 
+                                &texFormat, pool))) {
+                    Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                }
+                // ensure minimum size: 256x128
+                texWidth = (texWidth<256)?256:texWidth;
+                texHeight = (texHeight<128)?128:texHeight;
+                LogWithTwoNumbers(&k_mydll, 
+                        "JuceCreateTexture: check complete. Using (%d,%d)",
+                        texWidth, texHeight);
+
+                // step 3: create the texture that was requested, but change
                 // the dimensions of it according to the replacement texture.
                 // Also create the replacement texture for later usage.
                 IDirect3DTexture8* pRepTexture;
                 DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
                                 self, filename, 
-                                imageInfo.Width/2, imageInfo.Height/2,
+                                texWidth, texHeight,
                                 levels, usage, imageInfo.Format, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
 
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
-                    res = OrgCreateTexture(self, imageInfo.Width/2, imageInfo.Height/2,
+                    res = OrgCreateTexture(self, texWidth, texHeight,
                             levels,usage,format,pool,ppTexture);
 
                     TextureBinding textureBinding;
@@ -4895,20 +4844,41 @@ DWORD src, bool* IsProcessed)
                 D3DXIMAGE_INFO imageInfo;
                 D3DXGetImageInfoFromFile(filename, &imageInfo);
 
-                // step 2: create the texture that was requested, but change
+                // step 2: check whether the system supports such texture dimensions
+                UINT texWidth = imageInfo.Width;
+                UINT texHeight = imageInfo.Height;
+                UINT texLevels = levels;
+                D3DFORMAT texFormat = format;
+                LogWithTwoNumbers(&k_mydll, 
+                        "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                        texWidth, texHeight);
+                if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                self, &texWidth, &texHeight,
+                                &texLevels, usage, 
+                                &texFormat, pool))) {
+                    Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                }
+                // ensure minimum size: 512x256
+                texWidth = (texWidth<512)?512:texWidth;
+                texHeight = (texHeight<256)?256:texHeight;
+                LogWithTwoNumbers(&k_mydll, 
+                        "JuceCreateTexture: using (%d,%d)",
+                        texWidth, texHeight);
+
+                // step 3: create the texture that was requested, but change
                 // the dimensions of it according to the replacement texture.
                 // Also create the replacement texture for later usage.
                 IDirect3DTexture8* pRepTexture;
                 DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
                                 self, filename, 
-                                imageInfo.Width, imageInfo.Height,
+                                texWidth, texHeight,
                                 levels, usage, imageInfo.Format, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
 
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
-                    res = OrgCreateTexture(self, imageInfo.Width, imageInfo.Height,
+                    res = OrgCreateTexture(self, texWidth, texHeight,
                             levels,usage,format,pool,ppTexture);
 
                     TextureBinding textureBinding;
