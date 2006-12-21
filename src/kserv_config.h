@@ -7,7 +7,7 @@
 #define BUFLEN 4096
 
 #define MODID 100
-#define NAMELONG "KitServer 6.3.4.2"
+#define NAMELONG "KitServer 6.3.6.0"
 #define NAMESHORT "KSERV"
 #define CONFIG_FILE "kserv.cfg"
 
@@ -24,7 +24,8 @@ public:
         vKeyAwayKit(DEFAULT_VKEY_AWAYKIT),
         vKeyGKHomeKit(DEFAULT_VKEY_GKHOMEKIT),
         vKeyGKAwayKit(DEFAULT_VKEY_GKAWAYKIT),
-        ShowKitInfo(true)
+        ShowKitInfo(true),
+        enable_HD_kits(true)
     {}
 
 	WORD   vKeyHomeKit;
@@ -32,6 +33,7 @@ public:
 	WORD   vKeyGKHomeKit;
 	WORD   vKeyGKAwayKit;
 	bool   ShowKitInfo;
+    bool   enable_HD_kits;
     std::map<int,bool> wideBackModels;
     std::map<int,bool> narrowBackModels;
     std::map<int,bool> squashedWithLogoModels;

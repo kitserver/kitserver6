@@ -1289,6 +1289,7 @@ BOOL BackToStandardStripSelection(BYTE homeStrip, BYTE awayStrip);
 BOOL FileExists(char* filename);
 BYTE GetTeamStrips(int which);
 void GetTeamStrips(BYTE* strips);
+WORD GetTeamId(int which);
 WORD GetTeamIdByOrdinalAFS(WORD teamId);
 KITPACKINFO* GetKitPackInfo(int which);
 KITPACKINFO* GetKitPackInfoById(WORD id, int which);
@@ -1694,7 +1695,6 @@ HRESULT InvalidateDeviceObjects(IDirect3DDevice8* dev)
     Log(&k_mydll,"InvalidateDeviceObjects: DeleteStateBlock(s) done.");
 
     //if (g_font) g_font->InvalidateDeviceObjects();
-
     return S_OK;
 }
 
@@ -3190,11 +3190,11 @@ void DrawKitLabel()
             Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key2):MAP_FIND(col->goalkeepers,key2);
             if (kit && (kit->attDefined & KITDESCRIPTION)) {
                 key2 = string(kit->description);
+                sprintf(buf, "%s", key2.c_str());
+                KDrawText(26,638,0xff000000,12,buf);
+                KDrawText(24,636,color,12,buf);
             }
         }
-        sprintf(buf, "kit: %s", key2.c_str());
-        KDrawText(26,638,0xff000000,12,buf);
-        KDrawText(24,636,color,12,buf);
     }
     if (g_away_shirt_tex) {
         string& key3 = GET_AWAY_SHIRT_KEY(typ);
@@ -3205,12 +3205,12 @@ void DrawKitLabel()
             Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key4):MAP_FIND(col->goalkeepers,key4);
             if (kit && (kit->attDefined & KITDESCRIPTION)) {
                 key4 = string(kit->description);
+                sprintf(buf, "%s", key4.c_str());
+                KGetTextExtent(buf,12,&size);
+                KDrawText((g_bbWidth-size.cx)/stretchX-24,638,0xff000000,12,buf);
+                KDrawText((g_bbWidth-size.cx)/stretchX-26,636,color,12,buf);
             }
         }
-        sprintf(buf, "kit: %s", key4.c_str());
-        KGetTextExtent(buf,12,&size);
-        KDrawText((g_bbWidth-size.cx)/stretchX-24,638,0xff000000,12,buf);
-        KDrawText((g_bbWidth-size.cx)/stretchX-26,636,color,12,buf);
     }
 
     // check input
@@ -3425,33 +3425,45 @@ BOOL IsEditedKit(int slot)
 	return kitSlot->isEdited;
 }
 
+void AdjustTextureDimensions(UINT& texWidth, UINT& texHeight)
+{
+    texWidth = (texWidth>1024)?1024:texWidth;
+    texHeight = (texHeight>1024)?1024:texHeight;
+}
+
 HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
 {
     D3DXIMAGE_INFO imageInfo;
     D3DXGetImageInfoFromFile(name, &imageInfo);
+    if (imageInfo.Width == 0 && imageInfo.Height == 0) {
+        // no image
+        return E_FAIL;
+    }
 
     UINT texWidth = imageInfo.Width;
     UINT texHeight = imageInfo.Height;
     UINT texLevels = 1;
     D3DFORMAT texFormat = imageInfo.Format;
+
+    // make sure textures are not too large
+    AdjustTextureDimensions(texWidth, texHeight);
+    // check if the video card supports it
     LogWithTwoNumbers(&k_mydll, 
             "JuceCreateTextureFromFile: checking texture dimenstions (%d,%d)",
             texWidth, texHeight);
-    if (SUCCEEDED(D3DXCheckTextureRequirements(
-                    dev, &texWidth, &texHeight,
-                    &texLevels, 0, 
-                    &texFormat, D3DPOOL_MANAGED))) {
-        LogWithTwoNumbers(&k_mydll, 
-                "JuceCreateTextureFromFile: check complete. Using (%d,%d)",
-                texWidth, texHeight);
-    }
+    D3DXCheckTextureRequirements(
+            dev, &texWidth, &texHeight,
+            &texLevels, 0, 
+            &texFormat, D3DPOOL_MANAGED
+    );
+    LogWithTwoNumbers(&k_mydll, 
+            "JuceCreateTextureFromFile: check complete. Using (%d,%d)",
+            texWidth, texHeight);
 
     return D3DXCreateTextureFromFileEx(
             dev, name, texWidth, texHeight, 1, 0, texFormat, 
             D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, 
             pPal, ppTex);
-
-    return E_FAIL;
 }
 
 void CreateGDBTextureFromFile(char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
@@ -4774,21 +4786,27 @@ DWORD src, bool* IsProcessed)
                 UINT texHeight = imageInfo.Height/2;
                 UINT texLevels = levels;
                 D3DFORMAT texFormat = format;
-                LogWithTwoNumbers(&k_mydll, 
-                        "JuceCreateTexture: checking texture dimensions: (%d,%d)",
-                        texWidth, texHeight);
-                if (SUCCEEDED(D3DXCheckTextureRequirements(
-                                self, &texWidth, &texHeight,
-                                &texLevels, usage, 
-                                &texFormat, pool))) {
-                    Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                if (g_config.enable_HD_kits) {
+                    LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                            texWidth, texHeight);
+                    if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                    self, &texWidth, &texHeight,
+                                    &texLevels, usage, 
+                                    &texFormat, pool))) {
+                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                    }
+                    // ensure minimum size: 256x128
+                    texWidth = (texWidth<256)?256:texWidth;
+                    texHeight = (texHeight<128)?128:texHeight;
+                    LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: check complete. Using (%d,%d)",
+                            texWidth, texHeight);
+                } else {
+                    texWidth = 256;
+                    texHeight = 128;
+                    Log(&k_mydll, "JuceCreateTexture: using standard-size (256,128) texture");
                 }
-                // ensure minimum size: 256x128
-                texWidth = (texWidth<256)?256:texWidth;
-                texHeight = (texHeight<128)?128:texHeight;
-                LogWithTwoNumbers(&k_mydll, 
-                        "JuceCreateTexture: check complete. Using (%d,%d)",
-                        texWidth, texHeight);
 
                 // step 3: create the texture that was requested, but change
                 // the dimensions of it according to the replacement texture.
@@ -4849,21 +4867,27 @@ DWORD src, bool* IsProcessed)
                 UINT texHeight = imageInfo.Height;
                 UINT texLevels = levels;
                 D3DFORMAT texFormat = format;
-                LogWithTwoNumbers(&k_mydll, 
-                        "JuceCreateTexture: checking texture dimensions: (%d,%d)",
-                        texWidth, texHeight);
-                if (SUCCEEDED(D3DXCheckTextureRequirements(
-                                self, &texWidth, &texHeight,
-                                &texLevels, usage, 
-                                &texFormat, pool))) {
-                    Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                if (g_config.enable_HD_kits) {
+                    LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                            texWidth, texHeight);
+                    if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                    self, &texWidth, &texHeight,
+                                    &texLevels, usage, 
+                                    &texFormat, pool))) {
+                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                    }
+                    // ensure minimum size: 512x256
+                    texWidth = (texWidth<512)?512:texWidth;
+                    texHeight = (texHeight<256)?256:texHeight;
+                    LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: using (%d,%d)",
+                            texWidth, texHeight);
+                } else {
+                    texWidth = 512;
+                    texHeight = 256;
+                    Log(&k_mydll, "JuceCreateTexture: using standard-size (512,256) texture");
                 }
-                // ensure minimum size: 512x256
-                texWidth = (texWidth<512)?512:texWidth;
-                texHeight = (texHeight<256)?256:texHeight;
-                LogWithTwoNumbers(&k_mydll, 
-                        "JuceCreateTexture: using (%d,%d)",
-                        texWidth, texHeight);
 
                 // step 3: create the texture that was requested, but change
                 // the dimensions of it according to the replacement texture.

@@ -145,6 +145,12 @@ BOOL ReadConfig(KSERV_CONFIG* config, char* cfgFile)
 			LogWithNumber(&k_mydll,"ReadConfig: ShowKitInfo = (%d)", value);
 			config->ShowKitInfo = (value > 0);
 		}
+		else if (lstrcmp(name, "HD-kits.enabled")==0)
+		{
+			if (sscanf(pValue, "%d", &value)!=1) continue;
+			LogWithNumber(&k_mydll,"ReadConfig: enable_HD_kits = (%d)", value);
+			config->enable_HD_kits = (value > 0);
+		}
 	}
 	fclose(cfg);
 
