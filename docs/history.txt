@@ -1,77 +1,27 @@
 Kitserver 6 HISTORY notes
 =========================
 
-2006-10-27
+
+2006-12-21
 ----------
-v6.0.0: 
-- first version released; lodmixer only.
-- support for LODs, camera-fix, aspect ratio correction
+v6.3.6:
+- kserv: added safety checks on texture size and automatic resampling in case
+when the videocard doesn't support texture of the same dimensions as the kit image.
+- kserv: new flag in kserv.cfg: to enable/disable HD-kits
+- kserv: another small change to hopefully eliminate "wrong-kit" bug.
+- kserv: added support for "description" attribute in config.txt; labels during
+kit selection now only show the text from that attribute.
+- lodmixer: fixed the substitutions feature, which wasn't working.
 
-v6.0.1: 
-- added support for No-DVD version of PES6.exe
 
-2006-11-03
+2006-12-17
 ----------
-v6.1.0: 
-- kserv module: support 512x256 8-bit paletted kits
+v6.3.5 (Evolution Patch release):
+- more memory reserved, fixes some crashes with HD adboards
+- faceserver: fixed a problem when editing a player's look
+- faceserver: small bugfix when editing the kit in ML
+- faceserver: disabled during museum replays
 
-v6.1.1:
-- bug-fix for licensed teams
-
-2006-11-07
-----------
-v6.1.2:
-- kserv fixes: correct placement of mini-kits in online mode
-- lodmixer enhancements: home/away crowd size, and other settings.
-- ballserver
-
-2006-11-08
-----------
-v6.1.3:
-- ballserver: fixed the problem that was causing crashes when
-the ball model filesize in AFS was bigger than the one in GDB.
-- kserv fix: fixed the bug when teams were not getting correct
-GDB kits when playing in "Play again with..." mode.
-
-2006-11-08
-----------
-v6.1.4:
-- ballserver fix: now works with original EXE. (before
-the game wouldn't even start, when run with original exe)
-
-2006-11-12
-----------
-v6.2.0:
-- various fixes for kserv (ML, international challenge hidden teams)
-- stadium server
-
-2006-11-21
-----------
-v6.2.1:
-- standardized input. Support for keyboard/gamepad
-- utility for changing keyboard bindings
-- bug-fix for kload.dll (should stabilize all modules)
-- ball server fixes to eliminate crashes, when 512x512 ball textures
-are installed in the AFS.
-
-2006-12-08
-----------
-v6.3.0:
-- HD kits
-- face server
-
-2006-12-10
-----------
-v6.3.1:
-- bug-fix for kserv.dll (fixes the problem with kits changing
-to defaults during close-ups on replays and cut-scenes)
-
-2006-12-11
-----------
-v6.3.2: [non-public release]
-v6.3.3:
-- bug-fix for kserv.dll (fixes the problem with wrong kits
-showing up for non-GDB teams)
 
 2006-12-16
 ----------
@@ -83,10 +33,85 @@ v6.3.4:
 - faceserver: works in random selection mode
 - faceserver: freezing with big facepacks minimized
 
-2006-12-17
+
+2006-12-11
 ----------
-v6.3.5:
-- more memory reserved, fixes some crashes with HD adboards
-- faceserver: fixed a problem when editing a player's look
-- faceserver: small bugfix when editing the kit in ML
-- faceserver: disabled during museum replays
+v6.3.2: [non-public release]
+v6.3.3:
+- bug-fix for kserv.dll (fixes the problem with wrong kits
+showing up for non-GDB teams)
+
+
+2006-12-10
+----------
+v6.3.1:
+- bug-fix for kserv.dll (fixes the problem with kits changing
+to defaults during close-ups on replays and cut-scenes)
+
+
+2006-12-08
+----------
+v6.3.0:
+- HD kits
+- face server
+
+
+2006-11-21
+----------
+v6.2.1:
+- standardized input. Support for keyboard/gamepad
+- utility for changing keyboard bindings
+- bug-fix for kload.dll (should stabilize all modules)
+- ball server fixes to eliminate crashes, when 512x512 ball textures
+are installed in the AFS.
+
+
+2006-11-12
+----------
+v6.2.0:
+- various fixes for kserv (ML, international challenge hidden teams)
+- stadium server
+
+
+2006-11-08
+----------
+v6.1.4:
+- ballserver fix: now works with original EXE. (before
+the game wouldn't even start, when run with original exe)
+
+
+2006-11-08
+----------
+v6.1.3:
+- ballserver: fixed the problem that was causing crashes when
+the ball model filesize in AFS was bigger than the one in GDB.
+- kserv fix: fixed the bug when teams were not getting correct
+GDB kits when playing in "Play again with..." mode.
+
+
+2006-11-07
+----------
+v6.1.2:
+- kserv fixes: correct placement of mini-kits in online mode
+- lodmixer enhancements: home/away crowd size, and other settings.
+- ballserver
+
+
+2006-11-03
+----------
+v6.1.1:
+- bug-fix for licensed teams
+
+v6.1.0: 
+- kserv module: support 512x256 8-bit paletted kits
+
+
+2006-10-27
+----------
+v6.0.1: 
+- added support for No-DVD version of PES6.exe
+
+v6.0.0: 
+- first version released; lodmixer only.
+- support for LODs, camera-fix, aspect ratio correction
+

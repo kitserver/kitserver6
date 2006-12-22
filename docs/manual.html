@@ -6,7 +6,7 @@
         table td img {border:0}
         div.note { background-color:#fdc;color:#800;padding:5px; }
         p.devnote { font-weight:bold;font-style:italic;color:#666; }
-        table {padding:10px 0 10px 0}
+        table {padding:10px 0 10px 0;margin-top:5px}
         table td {padding:5px;border:1px solid #000}
         table th {padding:5px;border:1px solid #000;background-color:#ccc}
         span.kitid {color:#080;font-style:italic}
@@ -38,10 +38,10 @@
 Version history: <a href="history.txt">history.txt</a>
 </div>
 <div>
-December 17, 2006<br />
-Module Versions: <a href="#kitserver">Kserv 6.3.4</a>, 
+December 21, 2006<br />
+Module Versions: <a href="#kitserver">Kserv 6.3.6</a>, 
 <a href="#ballserver">Ballserver 6.3.4</a>,
-<a href="#lodmixer">LOD Mixer 6.3.4</a>,
+<a href="#lodmixer">LOD Mixer 6.3.6</a>,
 <a href="#stadiumserver">Stadium Server 6.3.4</a>,
 <a href="#faceserver">Faceserver 6.3.5</a>
 </div>
@@ -53,7 +53,7 @@ Module Versions: <a href="#kitserver">Kserv 6.3.4</a>,
 <p>
 Kitserver 6 is an add-on program for Pro Evolution Soccer 6.
 It is a loader and manager for various modules.
-Kserv Module 6.3.4 provides the alternative way of managing players and goalkeeper kits
+Kserv Module 6.3.6 provides the alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
 Also, you are not restricted to just 1st and 2nd kit for each team - you can have as many as you like.
@@ -76,14 +76,14 @@ and also 512x512 and 1024x1024.
 </p>
 
 <p>
-LOD Mixer Module 6.3.4 allows to make some tweaks to the graphics engine of the game, such
+LOD Mixer Module 6.3.6 allows to make some tweaks to the graphics engine of the game, such
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
 </p>
 
 <p>
-Faceserver Module 6.3.4 controls players faces and hair. You can assign a face BIN and a hair BIN
+Faceserver Module 6.3.5 controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
 </p>
@@ -238,7 +238,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kitserver">Kserv Module 6.3.4 (kserv.dll)</h2>
+<h2 id="kitserver">Kserv Module 6.3.6 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -320,19 +320,30 @@ either ".png" or ".bmp" extensions.</b></div>
 </p>
 
 <p>
-When choosing the dimensions for your kits, be aware that the
+Note to kitmakers and users: when choosing the dimensions for your kits, be aware that the
 kitserver will attempt to create the textures of the same size as that of the images,
 so make sure you video card supports such textures. Going beyond 1024 pixels in either
 dimension may severly affect overall performance of the game, and also visually it's
-hardly going to make much difference, so choose the dimensions wisely.
+hardly going to make much difference, so choose the dimensions wisely. 
 </p>
+
+<p>
+Using "power-of-two" sizes (256,512,1024,and so on) is always beneficial, because the 
+videcard can process them most efficiently. Many new cards support textures of other
+dimensions, but they may work slower, because most GPUs are optimized for power-of-two
+sized textures. Starting with version 6.3.6, kserv module will try to "gracefully degrade" the kit
+quality, if the videocard doesn't support textures of the same dimensions as the kit
+image. The closest supported dimensions will be chosen, and image will be resampled
+on the fly.
+</p>
+
 <p class="devnote">
 IMPORTANT NOTE TO KITMAKERS: transparency is no longer supported for BMP kits.
 It is however fully supported for PNG kits, both "simple transparency" 
 (8-bit paletted with alpha) and per-pixel transparency in TrueColor RGBA images.
 </p>
 
-<h4>2.2. config.txt</h4>
+<h3>2.2. config.txt</h3>
 
 <p>
 This is the attribute configuration file (in previous Kitservers it was called "attrib.cfg").
@@ -426,6 +437,15 @@ type3 - curved.</td>
         <td>color, written in hexadecimal format RRGGBB (red,green,blue)</td>
         <td><nobr>radar.color = 0A5D88</nobr></td>
     </tr>
+	<tr>
+        <td><b>description</b></td>
+        <td>Any notes about the kit. This text will be displayed on
+            kit selection screen, under the mini-kit. Useful when there are
+            several similar kits that have near identical mini-kit rendering
+            but you want to know which one is currently selected.</td>
+        <td>any text in double quotes</td>
+        <td><nobr>description = "All white (WC2006 Final)"</nobr></td>
+    </tr>
 </table>
 
 <p>For examples of <b>shorts.num-pal.<span class="kitid">X</span></b> usage - study the
@@ -450,7 +470,7 @@ For the shirt use blue Adidas numbers. Apply palette file "adidas_white.png",
 which effectively renders white numbers on the shorts.
 </p>
 
-<h3>2.4 Strip Selection and 2.5D kits</h3>
+<h3>2.3 Strip Selection and 2.5D kits</h3>
 
 <p>
 In order to provide a visual reference for currently selected GDB kits (including extra kits), 
@@ -471,9 +491,9 @@ needs to "understand" in order to correctly render the mini-kits. For that, it u
 file <b>kserv.cfg</b>, which contains a map of how kit models relate to the texture templates:
 
 <pre>
-# KitServer configuration file
+# Kserv configuration file
 
-debug = 1
+HD-kits.enabled = 1
 
 # mini-kits model map. 
 # Needed only for correct display of mini-kits, 
@@ -516,6 +536,26 @@ choose the kits the same way as you did for the players.
     on purpose - to avoid crashes in edit mode that had happened in the past with PES5.
     Kitserver activates the GDB kits during matches and replays.
 </div>
+
+<h3>2.4. HD-kits flag</h3>
+
+<p>
+In kserv.cfg, you can enable or disable HD-kits. By default the HD (High Definition) kits are
+enabled, which means that the kserv module will try to use the textures of the same 
+size as the kit images in your GDB. If this makes the game really slow, you can
+set the <b>HD-kits.enabled</b> flag to <b>0</b> to force the kserv module to always use 
+the standard-size textures (regardless of what the kit image dimensions are):
+</p>
+
+<pre>
+# Kserv configuration file
+
+HD-kits.enabled = 0
+
+...
+
+</pre>
+
 
 <a name="kitinfoscreen"> </a>
 <h3>2.5 Information pages</h3>
@@ -609,7 +649,7 @@ say "Ball selection" then.
 
 <!-- ### LODMIXER ### -->
 
-<h2 id="lodmixer">LOD Mixer Module 6.3.4 (lodmixer.dll)</h2>
+<h2 id="lodmixer">LOD Mixer Module 6.3.6 (lodmixer.dll)</h2>
 
 <h3>4.1 How to use</h3>
 
