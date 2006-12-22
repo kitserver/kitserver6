@@ -3427,6 +3427,14 @@ void AdjustTextureDimensions(UINT& texWidth, UINT& texHeight)
 
 HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
 {
+    // initialize the return value to NULL
+    if (ppTex) {
+        *ppTex = NULL;
+    }
+
+    return D3DXCreateTextureFromFile(dev, name, ppTex);
+ 
+    /*
     D3DXIMAGE_INFO imageInfo;
     D3DXGetImageInfoFromFile(name, &imageInfo);
     if (imageInfo.Width == 0 && imageInfo.Height == 0) {
@@ -3434,10 +3442,6 @@ HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTe
         return E_FAIL;
     }
 
-    // initialize the return value to NULL
-    if (ppTex) {
-        *ppTex = NULL;
-    }
     UINT texWidth = imageInfo.Width;
     UINT texHeight = imageInfo.Height;
     UINT texLevels = 1;
@@ -3463,8 +3467,7 @@ HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTe
     return D3DXCreateTextureFromFileEx(
             dev, name, texWidth, texHeight, 1, 0, D3DFMT_UNKNOWN, 
             D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, ppTex);
-
-    //return D3DXCreateTextureFromFile(dev, name, ppTex);
+    */
 }
 
 void CreateGDBTextureFromFile(char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
