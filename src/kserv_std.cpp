@@ -147,8 +147,6 @@ IDirect3DTexture8* g_gloves_left_tex = NULL;
 using namespace std;
 // map of textures for 2Dkits
 map<string,IDirect3DTexture8*> g_kitTextureMap;
-// map of palettes for 2Dkits
-map<string,PALETTEENTRY*> g_kitPaletteMap;
 
 // kit collection iterators
 typedef StringKitMap::iterator KitIterator;
@@ -1983,14 +1981,10 @@ void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirec
         if (*ppTex) {
             // store texture in the texture cache
             g_kitTextureMap[key] = *ppTex;
-            // store palette in the palette cache
-            g_kitPaletteMap[key] = MakePaletteCopy(pPal);
         }
     } else {
         // texture already loaded: get from cache
         *ppTex = g_kitTextureMap[key];
-        // copy palette
-        memcpy(pPal, g_kitPaletteMap[key], 0x100*sizeof(PALETTEENTRY));
     }
 }
 
@@ -6353,15 +6347,6 @@ void JuceSet2Dkits()
 	
     // reset the keys to defaults
     ResetKitKeys(true);
-
-    // clear the kit palette map
-    g_kitPaletteMap.clear();
-    ZeroMemory(g_home_shirt_pal, 0x100*sizeof(PALETTEENTRY));
-    ZeroMemory(g_home_shorts_pal, 0x100*sizeof(PALETTEENTRY));
-    ZeroMemory(g_home_socks_pal, 0x100*sizeof(PALETTEENTRY));
-    ZeroMemory(g_away_shirt_pal, 0x100*sizeof(PALETTEENTRY));
-    ZeroMemory(g_away_shorts_pal, 0x100*sizeof(PALETTEENTRY));
-    ZeroMemory(g_away_socks_pal, 0x100*sizeof(PALETTEENTRY));
 
     g_last_home = GetTeamId(HOME);
     g_last_away = GetTeamId(AWAY);
