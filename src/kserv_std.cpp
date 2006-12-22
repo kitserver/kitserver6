@@ -3440,6 +3440,10 @@ HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTe
         return E_FAIL;
     }
 
+    // initialize the return value to NULL
+    if (ppTex) {
+        *ppTex = NULL;
+    }
     UINT texWidth = imageInfo.Width;
     UINT texHeight = imageInfo.Height;
     UINT texLevels = 1;
@@ -3457,13 +3461,16 @@ HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTe
             &texFormat, D3DPOOL_MANAGED
     );
     LogWithTwoNumbers(&k_mydll, 
-            "JuceCreateTextureFromFile: check complete. Using (%d,%d)",
+            "JuceCreateTextureFromFile: check complete. Trying to use (%d,%d)",
             texWidth, texHeight);
 
+    // make very unassuming call - to avoid problems
+    // that users with older GeForce cards are having
     return D3DXCreateTextureFromFileEx(
-            dev, name, texWidth, texHeight, 1, 0, texFormat, 
-            D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, 
-            pPal, ppTex);
+            dev, name, texWidth, texHeight, 1, 0, D3DFMT_UNKNOWN, 
+            D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, ppTex);
+
+    //return D3DXCreateTextureFromFile(dev, name, ppTex);
 }
 
 void CreateGDBTextureFromFile(char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
@@ -4816,7 +4823,7 @@ DWORD src, bool* IsProcessed)
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
                                 self, filename, 
                                 texWidth, texHeight,
-                                levels, usage, imageInfo.Format, pool,
+                                levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
 
@@ -4897,7 +4904,7 @@ DWORD src, bool* IsProcessed)
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
                                 self, filename, 
                                 texWidth, texHeight,
-                                levels, usage, imageInfo.Format, pool,
+                                levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
 
