@@ -39,7 +39,7 @@ all_apps: apps
 	copy keybind.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll bootserv.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe
 
 release:
@@ -123,13 +123,13 @@ fserv.obj: fserv.cpp fserv.h
 fserv.res: 
 	$(RC) -r -fo fserv.res fserv.rc
 
-#bootserv.lib: bootserv.obj
-#bootserv.dll: bootserv.lib bootserv.res
-#	$(LINK) $(LFLAGS) /out:bootserv.dll /DLL bootserv.obj kload.lib d3dx8.lib bootserv.res $(LIBS)
-#bootserv.obj: bootserv.cpp bootserv.h
-#
-#bootserv.res: 
-#	$(RC) -r -fo bootserv.res bootserv.rc
+bootserv.lib: bootserv.obj
+bootserv.dll: bootserv.lib bootserv.res
+	$(LINK) $(LFLAGS) /out:bootserv.dll /DLL bootserv.obj kload.lib d3dx8.lib bootserv.res $(LIBS)
+bootserv.obj: bootserv.cpp bootserv.h
+
+bootserv.res: 
+	$(RC) -r -fo bootserv.res bootserv.rc
 	
 	
 stadium.lib: stadium.obj crc32.obj afsreader.obj hooklib.obj pngdib.obj
