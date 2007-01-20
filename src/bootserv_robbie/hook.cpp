@@ -15,7 +15,7 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
 
-#define CODELEN 58
+#define CODELEN 60
 
 enum {
 	C_UNIDECODE, C_UNIDECODE_CS,C_UNIDECODE_CS2,
@@ -42,6 +42,7 @@ enum {
     C_PES_GETTEXTURE, C_PES_GETTEXTURE_CS1,
     C_LOD1, C_LOD2, C_LOD3, C_LOD4, C_LOD5,
     C_ONSETLODLEVEL, C_GETLODTEXTURE_CS, C_GETLODTEXTURE_JUMPHACK,
+    C_BEGIN_RENDERPLAYER_CS, C_BEGIN_RENDERPLAYER_JUMPHACK,
 };
 
 // Code addresses.
@@ -71,6 +72,7 @@ DWORD codeArray[][CODELEN] = {
       0x408c20, 0x402723,
       0x8afc35, 0x8afcf4, 0x8afdb4, 0x8afe5e, 0x8afef4,
       0x8ae1b0, 0x883aa6, 0x883a6d,
+      0x8acf93, 0x8acfeb,
     },
     // PES6 1.10
 	{ 0x8cd5f0, 0x8b1a63, 0,
@@ -97,6 +99,7 @@ DWORD codeArray[][CODELEN] = {
       0, 0,  //later!
       0x8afd15, 0x8afdd4, 0x8afe94, 0x8aff3e, 0x8affd4,
       0x8ae310, 0, 0, //later!
+      0, 0,
     },
 };
 
@@ -236,6 +239,8 @@ bool bPesGetTextureHooked = false;
 bool bOnSetLodLevelHooked =false;
 bool bGetLodTextureHooked = false;
 bool bGetLodTextureJumpHackHooked = false;
+bool bBeginRenderPlayerHooked = false;
+bool bBeginRenderPlayerJumpHackHooked = false;
 
 UNIDECODE UniDecode = NULL;
 UNPACK Unpack = NULL;
@@ -286,6 +291,7 @@ CALLLINE l_D3D_UnlockRect={0,NULL};
 CALLLINE l_PesGetTexture={0,NULL};
 CALLLINE l_OnSetLodLevel={0,NULL};
 CALLLINE l_GetLodTexture={0,NULL};
+CALLLINE l_BeginRenderPlayer={0,NULL};
 
 void HookDirect3DCreate8()
 {
@@ -536,6 +542,32 @@ void HookOthers()
             }
         }
 	};
+	
+	// hook BeginRenderPlayer
+	if (code[C_BEGIN_RENDERPLAYER_CS] != 0 && code[C_BEGIN_RENDERPLAYER_JUMPHACK] != 0)
+	{
+		bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_CS]);
+		ptr = (DWORD*)(code[C_BEGIN_RENDERPLAYER_CS] + 1);
+	
+	    if (VirtualProtect(bptr, 9, newProtection, &protection)) {
+	    	bptr[0]=0xe8; //call
+	    	bptr[5]=0x33; //xor ebx, ebx
+	    	bptr[6]=0xdb;
+	    	bptr[7]=0xeb; //jump back
+	    	bptr[8]=code[C_BEGIN_RENDERPLAYER_JUMPHACK] - (code[C_BEGIN_RENDERPLAYER_CS] + 7);
+            ptr[0] = (DWORD)NewBeginRenderPlayer - (DWORD)(code[C_BEGIN_RENDERPLAYER_CS] + 5);
+	        bBeginRenderPlayerHooked = true;
+	        Log(&k_kload,"BeginRenderPlayer HOOKED at code[C_BEGIN_RENDERPLAYER_CS]");
+	    };
+	    
+        bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_JUMPHACK]);
+        if (VirtualProtect(bptr, 2, newProtection, &protection)) {
+            bptr[0]=0xeb;
+            bptr[1]=0x100 + code[C_BEGIN_RENDERPLAYER_CS] - (code[C_BEGIN_RENDERPLAYER_JUMPHACK] + 2);
+            bBeginRenderPlayerJumpHackHooked = true;
+            Log(&k_kload,"BeginRenderPlayer Short-Jump-Hack installed.");
+        }
+	};
 
     // hook num-pages
     HookGetNumPages();
@@ -688,6 +720,7 @@ void UnhookOthers()
 		ClearLine(&l_OnSetLodLevel);
 		
 		ClearLine(&l_GetLodTexture);
+		ClearLine(&l_BeginRenderPlayer);
 		
 	return;
 };
@@ -1858,6 +1891,30 @@ DWORD NewGetLodTexture(DWORD caller, DWORD p1, DWORD res)
 	return res;
 };
 
+void NewBeginRenderPlayer()
+{
+	DWORD oldEAX, oldEDI;
+	
+	__asm {
+		mov oldEAX, edi
+		mov oldEDI, edi
+	};
+	
+	CBEGINRENDERPLAYER NextCall=NULL;
+	for (int i=0;i<(l_BeginRenderPlayer.num);i++)
+	if (l_BeginRenderPlayer.addr[i]!=0) {
+		NextCall=(CBEGINRENDERPLAYER)l_BeginRenderPlayer.addr[i];
+		NextCall(oldEDI);
+	};
+	
+	__asm {
+		mov edi, oldEDI
+		mov eax, oldEAX
+		xor ebx, ebx
+	};
+	return;
+};
+
 void DrawKitSelectInfo()
 {
 	char tmp[BUFLEN];
@@ -1936,13 +1993,55 @@ KEXPORT DWORD getRecordPlayerId(BYTE pos)
 	return id;
 };
 
+KEXPORT IDirect3DTexture8* GetTextureFromColl(DWORD texColl, DWORD which)
+{
+	IDirect3DTexture8* res=NULL;
+	
+	DWORD p1=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x38) + which*4;
+	DWORD p2=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) + which*4;
+	p1=*(DWORD*)p1;
+	p2=*(DWORD*)p2;
+	
+	//sorry for using assembler here, but else ecx is used for the parameter
+	__asm {
+		push p1
+		mov ecx, p2 //doesn't work without this!
+		call orgPesGetTexture
+		mov res, eax
+	};
+	
+	return res;
+};
+
+KEXPORT void SetTextureToColl(DWORD texColl, DWORD which, IDirect3DTexture8* tex)
+{
+	DWORD* p1=*(DWORD**)(texColl+(*(DWORD*)(texColl+0x40))*4+0x38) + which*4;
+	DWORD* p2=*(DWORD**)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) + which*4;
+	
+	TEXTURE_INFO* ti = (TEXTURE_INFO*)HeapAlloc(GetProcessHeap(),
+							HEAP_ZERO_MEMORY, sizeof(TEXTURE_INFO));
+							
+	if (*p2 == 0) return;
+		//if (**(DWORD**)p2 != 0)
+			memcpy((BYTE*)ti, (BYTE*)*p2, sizeof(TEXTURE_INFO));
+	LogWithNumber(&k_kload, "  ---> %x", (DWORD)ti);
+
+	ti->refCount = 0xffff;	//don't want PES to free our memory
+	ti->tex = NULL;//tex;
+	//ti->unknown5 = 1;
+	
+	*p1=(DWORD)ti;
+	*p2=(DWORD)ti;
+	return;
+};
+
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel)
 {
 	IDirect3DTexture8* res=NULL;
 	
 	if (lodLevel>4 || texCollType>3) return NULL;
 	
-	DWORD playerMainColl=*(playerRecord(1)->texMain);
+	DWORD playerMainColl=*(playerRecord(playerPos)->texMain);
 	playerMainColl=*(DWORD*)(playerMainColl+0x10);
 	
 	DWORD texColl=0;
@@ -2017,8 +2116,8 @@ LRESULT CALLBACK KeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 		if (wParam == keyCfg->keyboard.keyInfoPageNext) {
 			for (int j=0;j<5;j++) {
 				for (int i=0;i<9;i++) {
-					//DumpTexture(GetPlayerTexture(0, isTrainingMode()?1:0, i, j));
-					//DumpTexture(GetPlayerTexture(0, 3, i, 2));
+					//DumpTexture(GetPlayerTexture(1, isTrainingMode()?1:0, i, j));
+					//DumpTexture(GetPlayerTexture(1, 3, i, 2));
 				};
 			};
         }
@@ -2227,6 +2326,7 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_PesGetTexture: cl = &l_PesGetTexture; break;
 		case hk_OnSetLodLevel: cl = &l_OnSetLodLevel; break;
 		case hk_GetLodTexture: cl = &l_GetLodTexture; break;
+		case hk_BeginRenderPlayer: cl = &l_BeginRenderPlayer; break;
 	};
 	return cl;
 };

@@ -28,6 +28,29 @@ typedef struct _PLAYER_RECORD {
 	BYTE unknown3[0x240-19];
 } PLAYER_RECORD;
 
+typedef struct _TEXTURE_INFO {
+	DWORD id;
+	WORD refCount;
+	WORD dummy1;	//not used
+	IDirect3DTexture8* tex;
+	DWORD unknown1;
+	DWORD unknown2;
+	BYTE unknown3;
+	BYTE unknown4;
+	BYTE unknown5;	//set to 1
+	BYTE unknown6;
+	DWORD unknown7;
+	DWORD unknown8;
+	DWORD unknown9;	//set to 0->tex is always returned by PesGetTexture
+	DWORD unknown10;
+	DWORD unknown11;
+	BYTE unknown12;
+	BYTE unknown13;
+	WORD dummy2;	//not used
+	DWORD unknown14;
+	DWORD unknown15;
+} TEXTURE_INFO;
+
 #define VTAB_GETDEVICECAPS 13
 #define VTAB_CREATEDEVICE 15
 #define VTAB_RESET 14
@@ -125,6 +148,7 @@ typedef void   (*CPES_GETTEXTURE)(DWORD,DWORD,DWORD,IDirect3DTexture8**);
 typedef DWORD  (*ONSETLODLEVEL)(DWORD,DWORD,DWORD,DWORD);
 typedef void   (*CONSETLODLEVEL)(DWORD,DWORD);
 typedef void   (*CGETLODTEXTURE)(DWORD,DWORD);
+typedef void   (*CBEGINRENDERPLAYER)(DWORD);
 typedef void   (*ALLVOID)();
 
 void HookDirect3DCreate8();
@@ -161,11 +185,14 @@ void NewProcessPlayerData();
 IDirect3DTexture8* STDMETHODCALLTYPE NewPesGetTexture(DWORD p1);
 DWORD NewOnSetLodLevel(DWORD p1, DWORD p2, DWORD p3, DWORD p4);
 DWORD NewGetLodTexture(DWORD caller, DWORD p1, DWORD res);
+void NewBeginRenderPlayer();
 KEXPORT bool isEditMode();
 KEXPORT DWORD editPlayerId();
 KEXPORT bool isTrainingMode();
 KEXPORT PLAYER_RECORD* playerRecord(BYTE pos);
 KEXPORT DWORD getRecordPlayerId(BYTE pos);
+KEXPORT IDirect3DTexture8* GetTextureFromColl(DWORD texColl, DWORD which);
+KEXPORT void SetTextureToColl(DWORD texColl, DWORD which, IDirect3DTexture8* tex);
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel);
 
 BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
@@ -266,6 +293,7 @@ enum HOOKS {
 	hk_PesGetTexture,
 	hk_OnSetLodLevel,
 	hk_GetLodTexture,
+	hk_BeginRenderPlayer,
 };
 
 KEXPORT void HookFunction(HOOKS h,DWORD addr);
