@@ -1,0 +1,830 @@
+<html>
+<head>
+    <title>Kitserver 6 Manual</title>
+    <style>
+        img { display:block;margin:10px 0 10px 0;border:1px solid #000; }
+        table td img {border:0}
+        div.note { background-color:#fdc;color:#800;padding:5px; }
+        p.devnote { font-weight:bold;font-style:italic;color:#666; }
+        table {padding:10px 0 10px 0;margin-top:5px}
+        table td {padding:5px;border:1px solid #000}
+        table th {padding:5px;border:1px solid #000;background-color:#ccc}
+        span.kitid {color:#080;font-style:italic}
+        pre {background-color:#ffd;border-top:1px solid #aa8;border-bottom:1px solid #aa8}
+        h3,h4 {background-color:#dda;display:block;padding:5px;font-family:verdana,arial}
+        h2 {display:block;padding:5px 0 5px 0;font-family:verdana,arial;border-bottom:3px solid #aa8}
+        div,span,p,li {font-family:verdana,arial;}
+        li {margin-bottom:10px;}
+        table {font-family:verdana,arial;}
+        table.shpal td {padding:5px 20px 5px 0;border-bottom:1px solid #000;
+            border-top:none;border-left:none;border-right:none}
+        table.shpal td.top {border-top:1px solid #000}
+        span.soft {font-weight:bold;color:#696;}
+        span.ex {font-weight:bold;color:#669;}
+        a {color:#448;}
+        a:visited {color:#448;}
+        a:hover {color:#448;background-color:#ccf}
+        a:active {color:#448;}
+        tr.newf td {background-color:#efd}
+        span.exclam {font-weight:bold;color:#484;}
+        span.emph {color:#844;}
+        div.hist {color:#888;float:right;}
+        span.buttontext {font-weight:bold;color:#000;background-color:#888}
+        a.ac{font-weight:bold;}
+    </style>
+</head>
+<body>
+<h2>实况足球超级外挂KitServer 6.4安装使用指南</h2>
+<div class="hist">
+版本历史: <a href="history.txt">history.txt</a>
+</div>
+<div>
+2007年1月8日<br />
+外挂模块版本号: <a href="#kserv">Kserv 6.4.0</a>, 
+<a href="#ballserver">Ballserver 6.4.0</a>,
+<a href="#lodmixer">LOD Mixer 6.3.6</a>,
+<a href="#stadiumserver">Stadium Server 6.3.4</a>,
+<a href="#faceserver">Faceserver 6.4.0</a>,
+<a href="#bootserver">Bootserver 6.4.0</a></div>
+
+
+<!-- ### GENERAL ### -->
+
+<h3>1.1 简介</h3>
+<p>
+实况足球超级外挂Kitserver 6 是专门用于职业进化足球6（Pro Evolution Soccer 6）的多模块装载、管理软件。球衣外挂模块<a href="#kserv">Kserv Module 6.4.0</a> 是历史上第一个实现的模块（简而言之这是外挂程序Kitserver的名称的来历）。它提供了一个可供选择的方式在游戏的AFS文件之外来选择和管理球员和门将的球衣（您可按指定方法将PNG或BMP格式的球衣图片放入外部的指定文件夹中，这样就不必受每队只能有两套球衣的限制而随意增加球衣了）</p>
+
+<p>
+注意: 有过早先版本的职业进化足球或胜利十一人系列DIY经历的玩家会知道，每支球队过去都在0_text.afs文件中有球衣存放的位置。但是，在PES6中只有“已授权”球队在0_text.afs文件中才有存放位置，因此我们无法通过编辑AFS文件来为“未授权”球队导入球衣。<br />
+<span class="exclam">通过球衣外挂，使你不再受诸多限制，因此你可以让所有（包括“已授权”和“未授权”!）的球队使用你喜欢的球衣!</span>
+</p>
+
+<p>
+足球外挂<a href="#ballserver">BallServer Module 6.4.0</a> 跟球衣外挂KitServer作用相似, 它使从GDB文件夹选择足球成为可能。当然，还可以根据你的个人喜好存储更多的足球。你可以使用不同分辨率图片的球：256x256以及512x512甚至是1024x1024。</p>
+
+<p>
+显示层次调节器<a href=#lodmixer">LOD Mixer Module 6.3.6</a> 可以调节游戏显示引擎让您得到更清晰的画质，如细节层级调节、观众数量、自动校正画面比率（用以支持宽屏）,连同修改一些在杯赛/联赛/大师联赛/线上模式下本来被游戏锁定的参数，如：一座球场的上座率。</p>
+
+<p>如果你想使用额外的球场，那么请你稍微留意一下<a href="#stadiumserver">Stadium Server 6.3.4</a>。
+只要你的硬盘吃得消，你可以根据喜好在GDB里组织你的球场。使用球场外挂的另一个好处是，可以在联赛/杯赛/线上模式等游戏原本无法任意选择球场的模式中任意选择你的球场。</p>
+
+<p>
+脸型外挂<a href="#faceserver">Faceserver Module 6.4.0</a> 用来管理球员的脸型和发型。你可以为任何球员指派一个脸型BIN文件和一个发型BIN文件，理论上每个球员在游戏中都可以拥有他的脸型/发型!(前提是你有一个大硬盘)。</p>
+
+<p>
+迎合广大玩家的需求，我们开发了球鞋外挂模块<a href="#bootserver">Bootserver Module 6.4.0</a> ，使得每位球员拥有自己的球鞋成为可能。<span class="exclam">通过使用球鞋外挂，你不再受游戏提供的9双鞋的限制了。</span>
+</p>
+
+<h3>1.2 安装</h3>
+
+<p>
+按照惯例：复制所有kitserver文件夹到游戏目录, 目录结构如下：</p>
+
+<img src="install.jpg" />
+
+<p>
+打开kitserver文件夹并运行setup.exe。在下拉列表中选择&quot;PES6.exe&quot;。<img src="setup.gif" />
+
+如果你正确的放置kitserver 文件夹,安装按钮 &quot;Install&quot; 会被激活,只要点击一下就好了。然后回弹出对话框显示“successful”提示安装成功。(如果提示安装失败，请检查游戏是否正在运行正在运行的话请关掉游戏重试或者PES6.exe文件是只读属性请去只读重试)</p>
+
+<p>
+关于怎样单独的打开/关闭各个模块，请查阅本指南末端的<a href="#advconfig"> "高级使用技巧"</a> 。 </p>
+
+<h3>1.3 卸载</h3>
+
+<p>
+打开kitserver文件夹并运行setup.exe。在下拉列表中选择&quot;PES6.exe&quot;。<img src="setup2.gif" />
+
+点击“Remove”按钮。然后会弹出对话框提示卸载成功。如果您愿意就可以安全删除整个Kitserver文件夹了。 (您也可以保留Kitserver文件夹，不会有任何不良影响。而且如果您想重新安装，只需要运行setup.exe，点击“Install”按钮就行了。)</p>
+
+<h3>1.4 实况足球超级外挂Kitserver的操作和快捷键</h3>
+
+<p>
+外挂履行的任一动作都需要用户的触发或启动。从6.2.1版本开始,同时支持键盘和手柄对外挂的操作。外挂不同的模块通过不同的“触发操作”，但模块存在固定的操作设置。值得一提的是，同一个快捷键可以被不同的模块使用，除非它们之间有冲突。</p>
+
+<p>
+下面是键盘/手柄默认对应外挂相关动作和快捷键的列表:<br />
+
+<table>
+    <tr>
+        <th>Kitserver 操作</th>
+        <th>键盘/手柄</th>
+        <th>固定 (仅键盘)</th>
+    </tr>
+    <tr>
+        <td><a name="ac_switch_left">球衣向左翻转</a></td>
+        <td><img src="l1.gif" /></td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td><a name="ac_switch_right">球衣向右翻转</a></td>
+        <td><img src="r1.gif" /></td>
+        <td>2</td>
+    </tr>
+    <tr>
+        <td><a name="ac_reset">复位</a></td>
+        <td><img src="square.gif" /></td>
+        <td>7</td>
+    </tr>
+    <tr>
+        <td><a name="ac_random">随机选择</a></td>
+        <td><img src="circle.gif" /></td>
+        <td>8</td>
+    </tr>
+    <tr>
+        <td><a name="ac_prev">上一步</a></td>
+        <td><img src="l1.gif" /></td>
+        <td>9</td>
+    </tr>
+    <tr>
+        <td><a name="ac_next">下一步</a></td>
+        <td><img src="r1.gif" /></td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td><a name="ac_prev_val">上一个值</a></td>
+        <td><img src="square.gif" /></td>
+        <td>Ins (Num 0)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_next_val">下一个值</a></td>
+        <td><img src="circle.gif" /></td>
+        <td>Del (Num Del)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_info_prev">上一页的信息</a></td>
+        <td>(未设置)</td>
+        <td>PageUp (Num 9)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_info_next">下一页的信息</a></td>
+        <td><span class="buttontext">Select</span></td>
+        <td>PageDn (Num 3)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_action1">操作 1</a></td>
+        <td><img src="square.gif"/></td>
+        <td>(no binding)</td>
+    </tr>
+    <tr>
+        <td><a name="ac_action2">操作 2</a></td>
+        <td><img src="circle.gif"/></td>
+        <td>Tab</td>
+    </tr>
+    <tr>
+        <td><a name="ac_switch1">翻转 1</a></td>
+        <td><img src="l2.gif"/></td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td><a name="ac_switch2">翻转 2</a></td>
+        <td><img src="r2.gif"/></td>
+        <td>2</td>
+    </tr>
+</table>
+</p>
+
+<p>
+<div class="note">
+标准的键盘/手柄的设置是固定的，当然通过keybind.exe程序可以对关键词&quot;Extra&quot;的设置进行重新设置。<br/>
+</div>
+
+<img src="keybind.gif"/>
+</p>
+
+
+
+<!-- ### KITSERVER ### -->
+
+<h2 id="kserv">球衣外挂模块Kserv Module 6.4.0 (kserv.dll)</h2>
+
+<h3>2.1 GDB 文件夹结构</h3>
+<p>
+GDB文件夹中包含的一个名为<strong>uni</strong> 的文件夹，用以储存各个球队的球衣。<strong>Uni</strong>文件夹里有个很重要的文件名为<strong>map.txt</strong>的文件。这个文件是用来指定外挂程序选择对应球队的球衣的。众所都知，每个球队都有一个对应的编号——一个从0到203的整数（不含隐藏的明星队）。所以需要在map.txt中详细说明每支球队的球衣在GDB文件夹中的位置，例如（GDB中不支持中文文件夹名）：
+<pre>
+# This config maps team number into folder name
+# Format: &lt;team-num&gt;,"&lt;folder name&gt;"
+# Example: 21,"Russia"
+
+8,"National\France"
+9,"National\Germany"
+65,"EPL\Aston_Villa"
+74,"EPL\Man Utd"
+76,"EPL\Newcastle"
+</pre>
+</p>
+
+<div class="note">注意: 英文双引号是必需的——以避免文件夹名含糊不清。全部球队的编号请参见<a href="uni.txt">uni.txt</a> 文件</div>
+
+<p>
+请注意，示例GDB文件夹只是一种管理球队和文件夹的方式。我们用“EPL”文件夹来分组全部的英格兰足球超级联赛球队，“National”来分组所有的国家队，依此类推。如果您喜欢单一的文件夹，不要其他的分组的话，只需要修改<strong>map.txt</strong>就行了。不过有map.txt的最大好处就在于建立各分类文件夹后更便于球衣的管理。</p>
+
+<p>
+从上面的map.txt中您可以看到，要找到8号球队对应的球衣，球衣外挂就会调用GDB\uni\National\France，这个文件夹中就存放了8号球队的球衣，在这个文件夹中，您可以建立每件球衣单独的文件夹，如图所示：<img src="france.jpg"/>
+
+对于球员来说，主场球衣存放在文件夹<strong>pa</strong>里面，客场球衣存放在<strong>pb</strong>里面。更多的球衣存放在任意一个以字母“p”开头的文件夹里面就行了。个人认为命名位<strong>px-</strong>很有用，比如<strong>px-third</strong>。对于门将来说，主场球衣存放在文件夹<strong>ga</strong>里面，客场球衣存放在文件夹<strong>gb</strong>里面。更多的门将服需要存放在任意一个以字母“g”开头的文件夹里面。</p>
+
+<div class="note">注意：文件夹名是球衣外挂中的一种代码，对文件夹名有以下限制：①不能有空格；②最好用较短的名字；③可以使用英语、法语或者以拉丁1(iso8859-1)编码的其他文字（不支持中文-_-b）；④如果您想确认球衣外挂可以顺利找到和读取文件夹，最好使用拉丁文、阿拉伯数字、下划线、短横线（减号）。</div>
+
+<p>
+让我们打开其中一个球衣文件夹，以文件夹pa为例：<img src="pa.jpg" />
+
+下面这张表格是关于该文件夹里两个文件的说明：</p>
+
+<div class="note">图片格式支持PNG和BMP格式。因此文件的扩展名应为&quot;.png&quot;或&quot;.bmp&quot;。</b></div>
+
+<p>
+<table>
+    <tr>
+      <th>所存放的PNG文件文件名</th>
+      <th>所存放的BMP文件文件名</th>
+      <th>说明</th>
+    </tr>
+    <tr><td>all.png</td><td>all.bmp</td>
+    <td>支持任意尺寸的球衣。游戏默认使用512x256像素8位调色板与32位调色板(24位颜色和8位透明度透明)。球衣外挂支持这一格式，但非唯一格式。你也可以使用其他尺寸(如512x512,1024x512,1024x2048)的真彩色图片(32位 RGBA)。</td>
+    </tr>
+    <tr><td>font.png</td><td>font.bmp</td>
+    <td>256x64 大小的字体图片用在在球衣后边显示球员名字。</td>
+    </tr>
+</table>
+</p>
+
+<p>
+请球衣制作者和使用者注意了：在决定球衣尺寸的时候，请您记住一点球衣外挂会试图创建跟您所使用的图片相同像素大小的游戏贴图，确保你的显卡能吃的消。任何超过1024像素的材质更多的只会影响游戏的整体性能效果，而在视觉上又不会有多少区别，所以请慎重选择图片像素。</p>
+
+<p>
+使用尺寸为2的幂(256，512，1024等)始终是有益的，因为显卡处理起来更加有效率。一些新款的显卡支持其他尺寸，但跑起来会较慢，因为过多的GPU用于将纹理优化为2的幂了。从6.3.6版本的球衣外挂起模块尝试“友善的降低”球衣品质，如果显卡无法支持球衣图片的纹理。就会选择所能支持的最接近的纹理，使游戏贴图加载更加顺畅。</p>
+
+<p class="devnote">
+球衣制作者请留意：BMP格式的球衣不再支持透明效果。PNG格式的球衣，完全支持“简易透明效果”(8位调色板的透明度)和任一像素的真彩色RGBA图片透明效果。</p>
+
+<h3>2.2. config.txt(配制文件)</h3>
+
+<p>
+这是球衣属性配置文件（在旧版本的球衣外挂中是“attrib.cfg”文件）。和以前一样，是一个单纯的文本文档——您可以用记事本或其他文档编辑器查看和编辑。每个有球衣图片的文件夹里面都应该有个<strong>config.txt</strong>文档。</p>
+
+<p>
+下表是对各项属性的介绍：<br />
+(&quot;shirt.number.location&quot; 是个新的属性——因此有点惹眼) </p>
+
+<table>
+    <tr>
+      <th>属性名称</th>
+      <th>说明</th>
+      <th>参数格式</th>
+      <th>范例</th>
+    </tr>
+    <tr>
+        <td><b>model</b></td>
+        <td>显示球衣的3D-model</td>
+        <td>十进制整数</td>
+        <td><nobr>model = 37</nobr></td>
+    </tr>
+    <tr>
+        <td><b>collar</b></td>
+        <td>是否有衣领</td>
+        <td>yes/no</td>
+        <td><nobr>collar = no</nobr></td>
+    </tr>
+    <tr>
+        <td><b>numbers</b></td>
+        <td>包含球衣号码纹理的256x128 4位/8位调色板的图片的文件名 (和相对路径)</td>
+        <td>用英文双引号引起来</td>
+        <td><nobr>numbers = "..\num-white.png"</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shorts.num-pal.<span class="kitid">X</span></b></td>
+        <td>包含短裤号码纹理的4位/8位调色板的图片的文件名 (和相对路径)。&quot;X&quot;标记的位置用相应的文件夹名(因此,在<strong>pa</strong>文件夹中的config.txt里应该以<strong>shorts.num-pal.pa</strong>来命名该属性)</td>
+        <td>用英文双引号引起来</td>
+        <td><nobr>shorts.num-pal.pa = "..\pal-black.png"</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shirt.number.location</b></td>
+        <td>设置上衣号码的位置(&quot;<strong>off</strong>&quot;则上衣不显示号码)只适用于国家队的球衣。</td>
+        <td>center|topright|off</td>
+        <td><nobr>shirt.number.location = topright</nobr></td>
+    </tr>
+
+    <tr>
+        <td><b>shorts.number.location</b></td>
+        <td>设置短裤号码的位置 (&quot;<strong>off</strong>&quot; 则短裤不显示号码) </td>
+        <td>left|right|both|off</td>
+        <td><nobr>shorts.number.location = left</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.location</b></td>
+        <td>设置球员名字的位置。对类似于博卡青年队这样将球员名字印在球衣下部的球队有用(&quot;<strong>off</strong>&quot; 则球衣不显示球员名字)</td>
+        <td>top|bottom|off</td>
+        <td><nobr>name.location = top</nobr></td>
+    </tr>
+    <tr>
+        <td><b>logo.location</b></td>
+        <td>设置赞助商标的位置(这一属性对商标在后背的球队的球衣不适用，就只能通过球衣制造者在图片上绘制来实现)</td>
+        <td>top|bottom|off</td>
+        <td><nobr>logo.location = off</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.shape</b></td>
+        <td>设置球员名字字母的排列形状。跟编辑模式的相同： <strong>type1</strong> – 直排, <strong>type2</strong> – 略弯, <strong>type3</strong> – 弯状.</td>
+        <td>type1|type2|type3</td>
+        <td><nobr>name.shape = type1</nobr></td>
+    </tr>
+	<tr>
+        <td><b>radar.color</b></td>
+        <td>这一属性将设置游戏中雷达上球队的颜色。选择球队后即使使用默认球衣同样有效PES6通过它解决两队颜色混淆的问题。注意: 这也只是迷你球衣的主色(非2.5D)!</td>
+        <td>颜色, 16进制表示的 RRGGBB (red,green,blue)</td>
+        <td><nobr>radar.color = 0A5D88</nobr></td>
+    </tr>
+	<tr>
+        <td><b>shorts.color</b></td>
+        <td>这一属性设置球员/门将的短裤颜色。游戏中采用的短裤颜色决定球员在比赛中的短裤颜色。</td>
+        <td>颜色, 16进制表示的 RRGGBB (red,green,blue)</td>
+        <td><nobr>shorts.color = 0A5D88</nobr></td>
+    </tr>
+	<tr>
+        <td><b>description</b></td>
+        <td>球衣的文字说明。文字将出现在迷你球衣下部，用区分显示相同迷你球衣的不同球衣(估计有细微差别，衣服多了难分辨哦~嘿嘿)让您正确的选到想要的衣服。</td>
+        <td>文字用双引号引起来</td>
+        <td><nobr>description = "All white (WC2006 Final)"</nobr></td>
+    </tr>
+</table>
+
+<p>这里是<b>shorts.num-pal.<span class="kitid">X</span></b> 的用法——留意以下示例GDB。这是德国队的“pb”文件夹的<strong>config.txt</strong>文件：
+<pre>
+
+collar = no
+logo.location = off
+model = 0
+name.location = top
+name.shape = type3
+numbers = "..\..\adidas_blue.png"
+shirt.number.location = topright
+shorts.num-pal.pb = "..\..\adidas_white.png"
+shorts.number.location = left
+
+</pre>
+
+<p>
+转化成简单的语言如下：<br/>
+上衣使用蓝色Adidas款号码。使用文件&quot;adidas_white.png&quot;, 作为短裤的白色号码。</p>
+
+<h3>2.3 球衣选择和2.5D的迷你球衣</h3>
+
+<p>
+使用了球衣外挂后为了提供足够好的视觉参考，这些个所谓的“2.5D”球衣覆盖在游戏本身KONAMI的迷你球衣上。“2.5D”球衣这个糟糕的名字来源于他们与被用于比赛的真正的球衣质地一起创建的事实。从现在起我改叫它“KONAMI迷你球衣”。下面是使用外挂后的游戏截图：<img src="stripsel-pl.jpg" />
+
+(当球队在GDB里没有挂上球衣时, 初始的KONAMI迷你球衣将会显示)</p>
+
+<p>
+在职业进化足球6(Pro EvolutionSoccer 6)中, KONAMI使用了全新的贴图类型,因此球衣外挂模块必须&quot;明白&quot;以正确的显示迷你球衣。为此，将使用配置文档 kserv.cfg, 里边写有贴图跟模板的关系如下图：
+<pre>
+# Kserv configuration file
+
+HD-kits.enabled = 1
+
+# mini-kits model map. 
+# Needed only for correct display of mini-kits, 
+# but doesn't affect the in-game kits.
+#
+# Note: the map might be incomplete, so feel free to add the model
+# numbers to correct groups, if you notice that a mini-kit for
+# certain model is rendered incorrectly.
+
+mini-kits.narrow-backs = [8]
+mini-kits.wide-backs = [0,9,12,13,51,60,100,101,102,104,105,106]
+mini-kits.squashed-with-logo = [18,19,20,21,49,54,61,68,69,70,74,91,115,116,117,118,124,125,126,127,128,129,132,134,137,138,139,140,146,147,148]
+
+# any other other model is assumed to be "squashed-without-logo"
+# (meaning the new PES6 model with squashed shirt, but no logo
+# in the bottom-right area of the texture.)
+# Some examples: 31,71,84,etc. 
+
+</pre>
+
+<p>
+正如注解所描述的, 这个配置文档并不见得完整。这意味着如果你使用的样式球衣外挂没有正确分类，那么迷你球衣将无法正确显示。找到它,简单修改一下kserv.cfg文件并将样式号码添加到相应的列表里去。</p>
+
+<p>
+你可以像往常一样在主场/客场球衣间切换——通过键盘或手柄(具体设置前边你已设置过)。额外的球衣则通过<a class="ac" href="#ac_switch_left">Switch left kit</a>  - 读取下一套主队的额外球衣, <a class="ac" href="#ac_switch_right">Switch right kit</a>  - 则读取客队的额外球衣。门将球衣也一样。现在球衣选择模式有两种: &quot;球员模式&quot;和&quot;门将模式&quot;。你可以通过<a class="ac" href="#ac_action2">Action 2</a> 快捷键在两者间切换。对于门将, 球衣选择方法跟上边球员的是相同的。</p>
+
+<img src="stripsel-gk.jpg" />
+
+<div class="NOTE">
+    注意：球衣外挂Kitserver在编辑模式是无效的。这么设计的原因——是为了避免在PES5曾出现过的在编辑模式游戏崩掉的问题。因此球衣外挂只在比赛和回放中才会被激活。</div>
+
+<h3>2.4.高清晰度球衣开关</h3>
+
+<p>
+在kserv.cfg文件里，你可以开启或关闭球衣外挂对高清晰度球衣的支持功能。球衣外挂默认状态下是开启支持高清晰度球衣功能的，这意味着球衣外挂模块会试图创建跟您所使用的图片相同像素大小的游戏贴图。如果因此导致游戏拖慢，你可以通过修改<strong>HD-kits.enabled</strong>参数为<strong>0</strong>让球衣外挂强制使用标准的贴图纹理而不管外挂球衣图片的像素如何：</p>
+
+<pre>
+# Kserv configuration file
+
+HD-kits.enabled = 0
+
+...
+
+</pre>
+
+
+<a name="kitinfoscreen"> </a>
+<h3>2.5 信息页面</h3>
+
+<p>
+在屏幕的底部，这里可能会显示外挂模块的相关信息。由于空间有限，这里分页显示。你可以通过<a class="ac" href="#ac_info_prev">Info-page Previous</a> 和<a class="ac" href="#ac_info_next">Info-page Next</a> 动作来翻阅。在上图中，你看到的文字显示&quot;Ball selection&quot;。底部橘黄色的文字显示的是当前页面的名称同时显示当前页码和总页数。</p>
+
+<!-- ### BALLSERVER ### -->
+
+<h2 id="ballserver">Ballserver Module 6.4.0 (bserv.dll)</h2>
+
+<h3>3.1 特点简介</h3>
+
+<p>
+<li><b>足球选择画面是在 &quot;Strip Selection&quot; 画面下的。</b><br />
+一个3D的足球预览将展示可选的足球。(如果存在问题，你可以通过修改bserv.cfg文件中的参数关掉预览功能)</li>
+<li><b>支持不同纹理的足球。</b><br />
+你可以使用256x256，512x512甚至1024x1024 像素的BMP或PNG格式的足球。尺寸都是外挂自动侦测的所以不需要配置。</li>
+</p>
+
+<h3>3.2 GDB 文件夹的配置</h3>
+
+<p>
+足球外挂跟其他外挂如：球衣外挂一样使用相同的GDB文件夹。你会发现有个<strong>map.txt</strong>(跟球衣外挂的类似)用来配置足球的。格式很简单：一行就是一个球，有三个属性。第一个是球在游戏中显示的名称，接下来是球模板文件和贴图文件。<br>
+请看下面的范例：</p>
+
+<pre>
+# This is the configuration file for Ballserver
+# Format: "&lt;name displayed in game&gt;","&lt;model file&gt;","&lt;texture file&gt;"
+# Example: "adidas Finale Capitano Grey","ariel_mdl.bin","adidas_finale_capitano_grey.bmp"
+# Texture paths are relative to GDB\balls\, model paths to GDB\balls\mdl\
+
+# adidas
+"adidas Finale Capitano Grey","ariel_mdl.bin","adidas_finale_capitano_grey.bmp"
+"adidas Teamgeist Blue","gwidon_mdl.bin","adidas_teamgeist_blue.png"
+
+# Nike
+
+# Puma
+
+# This comment makes sure you have pressed the enter key after the last ball
+</pre>
+
+<p>
+别把引号给忘了，他们很重要喔！如果你的map.txt也是像这样的(当然，前提是你也有这些文件)，你可以在adidas Finale Capitano Grey和adidas Teamgeist Blue间选择。贴图文件存放在&quot;GDB\balls&quot;目录下还有就是模板文件放在&quot;GDB\balls\mdl&quot;目录下。</p>
+</p>
+
+<a name="relfolderexample"> </a>
+<div class="note">如果你想使用其他文件夹，请你使用相对路径如mysubfolder\tex.png和&quot;GDB\balls\mysubfolder&quot;目录下的&quot;tex.png&quot;文件。</div>
+<p>
+下载球的时候，你也许会发现有很多球是使用同一个3D模板的。这样，每个模板你只需要一个就够了。事实上，模板跟贴图文件的大小是没有关系的，所以一个模板可以使用256x256贴图也可以使用512x512贴图。如果你对此怀疑，试一下就知道了。</p>
+
+<h3>3.3 选择足球的操作</h3>
+<p>
+像往常那样开始游戏。到球衣选择画面的时候，按相应的按键(前边有设置过的)将外挂翻到第2页，你可以在屏幕下部看到如下内容：<br>
+<img src="ballsel2.jpg" />同时你可以在原先显示迷你球衣位置的下边那地方看到关于足球外挂的相关信息，默认是&quot;<strong>Ball: game choice</strong>&quot;即使用游戏本身设定的足球。<br>
+按<a class="ac" href="#ac_next">Next</a> 和<a class="ac" href="#ac_prev">Previous</a> 可以选择外挂球，这时你会看到相应皮球的3D预览图和皮球文字信息(格式如下：&quot;<strong>Ball: &lt;name configured in map.txt&gt;</strong>&quot; 这些都可以在足球外挂文件夹中的map.txt 文件里修改。)<img src="ballsel.jpg" />
+
+</p>
+
+
+<!-- ### LODMIXER ### -->
+
+<h2 id="lodmixer">显示层次调节器6.3.6 (模块lodmixer.dll)</h2>
+
+<h3>4.1 使用方法</h3>
+
+<p>
+显示层次调节器可以调节游戏的图像引擎，如调节显示效果、开启视角的观众贴图、开启自动修正画面比率。<br>
+你还可以修改杯赛/联赛/大师联赛/线上模式的一些设置如：让球场坐满观众(主客场观众数量都为3星)。<br>
+运行<strong>lodcfg.exe</strong>可以配置显示层次调节器。下面是设置界面的屏幕截图：</p> 
+
+<img src="lodmixer.gif"/>
+
+<div class="NOTE">
+    通过查看<b><a href="lodmixer.txt">lodmixer.txt</a></b>
+文档了解更多关于“LOD”的信息。</div>
+
+<p>
+在球衣选择画面翻到相应的外挂页面，你就可以在游戏中修改一些LOD的设置。 (<a href="#kitinfoscreen">see instructions here</a>):
+</p>
+
+<img src="lodingame.jpg"/>
+
+<p>
+操作很简单：使用<a class="ac" href="#ac_prev">Previous</a> 和<a class="ac" href="#ac_next">Next</a> 快捷键，选择你要修改的设置。<a class="ac" href="#ac_prev_val">Previous value</a> 和<a class="ac" href="#ac_next_val">Next value</a> 动作用来修改相应参数。相关设置会自动储存。</p>
+
+<!-- ### STADIUM SERVER ### -->
+<h2 id="stadiumserver">球场外挂 6.3.4 (球场外挂模块stadium.dll)</h2>
+<h3>5.1 简介</h3>
+<p>
+球场外挂是实况足球超级外挂Kitserver的组件之一。使用它你可以在游戏中使用额外的球场，其组织方式跟球衣、足球、脸型外挂是相类似的都在GDB文件夹里。</p>
+
+<h3>5.2 GDB 文件夹结构</h3>
+
+<div class="note">下面的说明更多是针对外挂球场制作者的，他们可以根据球场外挂的标准来制作球场。而对于外挂使用者来说，再简单不过了，安装新的球场相当容易：相当于简单的复制个文件夹。</div>
+
+<p>
+所有的外挂球场统一存放在名为<strong>stadiums</strong>的文件夹里：</p>
+
+<img src="gdb.gif" />
+
+<p>在<strong>stadiums</strong>文件夹中一座外挂球场对应一个文件夹，如：下面你可以看到两座球场(map.txt文档将稍候说明)：</p>
+
+<img src="stadiums.gif" />
+
+<p>
+<div class="note">
+    注意：文件夹名称将被球场外挂在游戏中作为球场名来使用。</div>
+</p>
+
+<p>
+每个球场文件夹里的目录结构基本相同。每个球场包含69个文件：66个组成球场、1个广告牌贴图文件、1个球场信息文件(<strong>info.txt</strong>包含球场修建日期、能容纳观众数、所处城市等)、1个球场预览图文件(<strong>preview.png</strong>128x64像素)。66个组成球场的主体文件被分在6个文件夹，名为<strong>1_day_fine</strong>, <strong>2_day_rain</strong>, <strong>3_day_snow</strong>, <strong>4_night_fine</strong>, <strong>5_night_rain</strong>, 和 <strong>6_night_snow</strong>分别对应相应的季节天气。广告牌贴图文件存放在名为adboards_tex的文件夹里。</p>
+
+<img src="ramenskoye.gif" />
+
+<p><strong>info.txt</strong>文档内容很简单。只要按照下面的格式就可以了：</p>
+
+<pre>
+# Stadium info file
+
+built = 2006
+capacity = 60432
+city = London
+
+</pre>
+
+<p>那6个文件夹中的文件名都是相同的，每个文件各司其职。(文件名将会影响到球场外挂能否正确显示球场)。<br>
+下面是<strong>1_day_fine</strong>文件夹的内容：</p>
+
+<img src="dayfine.gif" />
+
+<p>
+下面是Gwidon关于每个文件的说明：<table>
+    <tr>
+        <th>File</th><th>Comments</th>
+    </tr>
+    <tr>
+        <td>crowd_a0.str</td>
+        <td>客队观众和现场旗帜 (没有观众的贴图)</td>
+    </tr>
+    <tr>
+        <td>crowd_a1.str</td>
+        <td>观众数量少 (1星)</td>
+    </tr>
+    <tr>
+        <td>crowd_a2.str</td>
+        <td>观众适量 (2星)</td>
+    </tr>
+    <tr>
+        <td>crowd_a3.str</td>
+        <td>客队观众满(3星)</td>
+    </tr>
+    <tr>
+        <td>crowd_h0.str</td>
+        <td>主队观众和现场旗帜 (没有观众的贴图)</td>
+    </tr>
+    <tr>
+        <td>crowd_h1.str</td>
+        <td>观众数量少 (1星)</td>
+    </tr>
+    <tr>
+        <td>crowd_h2.str</td>
+        <td>观众适量 (2星)</td>
+    </tr>
+    <tr>
+        <td>crowd_h3.str</td>
+        <td>主队观众满(3星)</td>
+    </tr>
+    <tr>
+        <td>stad1_main.bin</td>
+        <td>球场主体、包括模型和贴图</td>
+    </tr>
+    <tr>
+        <td>stad2_entrance.bin</td>
+        <td>入场通道</td>
+    </tr>
+    <tr>
+        <td>stad3_adboards.bin</td>
+        <td>广告牌</td>
+    </tr>
+</table>
+</p>
+
+<p><strong>adboards_tex</strong>文件夹里只有一个单一的文件<strong>default.bin</strong>，这是游戏中球场中的广告牌贴图文件。(以后，这个文件夹将包含其他不同的广告，可以在不同的比赛显示不同的广告…但现在还没办法实现)</p>
+
+<img src="adbtex.gif" />
+
+<h3>5.4 map.txt配置文档</h3>
+
+<p>
+球场外挂的<strong>map.txt</strong>文件跟其他外挂(像球衣、足球外挂等)的有稍微不同。如果仅是使用球场，那你大可不必配置这个文件。配置文件的作用只是为球队匹配相应的主场而已。球场外挂中的&quot;home team&quot;选项激活时，外挂将自动侦测到主队并从map.txt读取相关信息进而匹配正确的主场。下面是map.txt文件的示例内容：</p>
+
+<pre>
+# Stadium Server map file
+# --------------------------------------------------------------
+# This config maps team number into its home stadium folder name
+# Format: &lt;team-num&gt;,"&lt;folder name&gt;"
+# Example: 45,"Maracana"
+
+21,"(RUS) Saturn Ramenskoye"
+64,"(ENG) Emirates Stadium, London"
+
+</pre>
+
+<div class="note">注意：双引号很重要的，还有就是文件夹名称要明确。关于球队的IDs请参照<a href="uni.txt">uni.txt</a> 文件。</div>
+
+<h3>5.5. 操作方法</h3>
+
+<p>在球衣选择画面，将外挂翻到球场选择页。你可以使用如下按键: 
+<a class="ac" href="#ac_reset">Reset</a>,
+<a class="ac" href="#ac_random">Random</a>,
+<a class="ac" href="#ac_prev">Previous</a>,
+<a class="ac" href="#ac_next">Next</a>.
+<p>
+
+<img src="selected.jpg" />
+
+<p>球场外挂有两种模式：手动选择模式和主场模式。使用<a class="ac" href="#ac_prev">Previous</a> 和 <a class="ac" href="#ac_next">Next</a> 来选择球场，<a class="ac" href="#ac_random">Random</a>键将随机选择。<a class="ac" href="#ac_reset">Reset</a> 将在&quot;game choice&quot;和&quot;home team stadium&quot;模式间切换。选择&quot;game choice&quot;将从游戏的AFS文件读取球场。<img src="hometeam.jpg" />
+
+</p>
+
+<h3>5.6. &quot;欣赏球场&quot;</h3>
+
+<p>你可以在&quot;欣赏球场&quot;模式里观看外挂球场，<a class="ac" href="#ac_switch1">Switch 1</a> 作为外挂球场观看开启键，<a class="ac" href="#ac_switch2">Switch 2</a> 将控制欣赏球场时的天气。</p>
+
+<img src="viewstadiums.gif" />
+
+<p>
+<div class="note">注意：在“欣赏球场”模式现在外挂只支持键盘的快捷键。手柄的快捷键将在这里无效。</div>
+
+
+<!-- ### FACESERVER ### -->
+
+<h2 id="faceserver">脸型外挂 6.4.0 (脸型外挂模块fserv.dll)</h2>
+
+<h3>6.1 简介</h3>
+<p>
+脸型外挂跟球衣、足球外挂相似，都是从GDB文件夹读取脸型文件和发型文件。脸型外挂使用球员独特的IDs来对球员和脸型进行绑定。现在的脸型外挂还不完美，在大师联赛中的照片模式下还不支持。希望以后能改进。</p>
+
+<h3>6.2 使用方法</h3>
+<p>进入<strong>编辑模式</strong>找到球员的ID。</p>
+
+<img src="faceseditmode.jpg" />
+
+<p>上图显示，Barthez的脸型和发型是Mystiq制作的。请注意屏幕顶端显示的<strong>Player ID</strong>:每个球员都有独有的ID。要为一个球员添加脸型，请先找到他的ID再把你下载的脸型存放到<strong>GDB\faces</strong>目录下。再用记事本编辑<strong>map.txt</strong>文档，按照示例的格式加入新的一行。这样，游戏中该球员就将拥有新的脸型了。当在编辑模式中已显示外挂脸的信息而看到的脸型没变时你不要着急，游戏中它会换上外挂脸的。<br /></p>
+<p>
+添加发型跟上边的很相似：找ID，复制文件过去<strong>GDB\hair</strong>文件夹，修改<strong>GDB\hair\map.txt</strong>文件。按照示例格式。在编辑模式中看到显示信息即表示成功添加。</p>
+<div class="note">很多问题都是损坏的文件或错误的map文件导致的。因此在你上论坛反映情况之前，请先确认是否是上述原因。</div>
+<p>发型的透明度可以作为发型map文件的第三个属性写入如下：</p>
+<pre>
+195, Henry, 128
+</pre>
+<p>参数取值0-255，255为不透明，0为透明，通过尝试找到你最喜欢的合适的参数值。</p>
+
+
+<!-- ### Bootserver ### -->
+
+<h2 id="bootserver">球鞋外挂 6.4.0 (球鞋外挂模块bootserv.dll)</h2>
+
+<h3>7.1. 简介</h3>
+
+<p>跟脸型外挂相似，球鞋外挂也是通过球员的ID来为每个球员指派相应的球鞋。摆脱游戏只有9双鞋的限制。遗憾的是像脸型外挂那样的，在博物馆回放模式还是不能显示。但，即时回放、中场回放、比赛中还是支持的。</p>
+
+<img src="editboot.jpg"/>
+
+<p>跟其他模块一样也是使用<strong>map.txt</strong>文件来配置,找ID，复制文件到<strong>GDB\boots</strong>目录，改写<strong>map.txt</strong>。<br />
+下面是一个map.txt文件示例：</p>
+
+<pre>
+# Bootserver map
+################
+
+185,"adidas_00.png"  # Barthez
+186,"adidas_01.png"  # Thuram
+194,"puma.png"       # Zidane
+195,"adidas_02.png"  # Henry
+217,"Germany\adidas_yellow.png"  # Klose
+1791,"adidas_00.png" # Davids
+</pre>
+
+
+<h3>7.2. &quot;随机球鞋&quot; 设置</h3>
+
+<p>
+球鞋外挂的配置文件里有一项属性<strong>random-boots.enabled</strong>可以激活为没有在<strong>map.txt</strong>中配鞋的球员随机配鞋。可以想像，你收集了很多的球鞋文件，但是你又不可能写那么长的<strong>map.txt</strong>文件，这一功能将为你解决问题。而且这随机是在一场球赛之前的，因此没有配鞋的球员每次的鞋都会不同的。</p>
+
+<p>默认值是关闭该功能(值为<strong>0</strong>)。要激活它，你只需将bootserv.cfg中random-boots.enabled的值改为<strong>1</strong>即可：
+<pre>
+random-boots.enabled = 1
+</pre>
+</p>
+
+<h3>7.3. 球鞋外挂算法的切换</h3>
+
+<p>B球鞋外挂有两种算法。当然，看到这里如果你感到困扰那你大可以跳过去。游戏正常，那你也不必理会这里。但，如果游戏出现拖慢或者球鞋显示的问题，那么请尝试修改<strong>bootserv.cfg</strong>下面的参数<strong>otherVersion</strong>看看是否有帮助。</p>
+
+<pre>
+# bootserver configuration file
+
+random-boots.enabled = 0
+otherVersion = 0
+</pre>
+
+<p>
+将<strong>otherVersion</strong>值改成<strong>1</strong>将会改变球鞋外挂使用的算法.。如果你确定要修改该值，那你应该明确下面两者的不同。</p>
+
+<pre>otherVersion = 0</pre>
+<p>
+这是该设置的默认值。球鞋外挂使用新的算法替换游戏引擎处理的球鞋图形。它的特点在于以后可以对球员身上的其他位置的贴图进行修改，因此我们决定使它成为一个模块(像球衣、脸型、发型等等)。同时你不必对当前的球鞋做任何修改(更多内容请往下阅读)</p>
+
+<pre>otherVersion = 1</pre>
+<p>
+这样将开启球鞋外挂的其他算法。简单而特别的算法但同时也是问题所在，将使你的电脑使用较少的资源，得到顺畅的游戏效果。<span class="emph">为了完全使其生效，你得在“球鞋编辑”模式将Type 1球鞋设置为“可编辑”鞋(最简单的方法是将所有鞋恢复为默认)。</span>
+</p>
+
+
+<!-- ### ADVANCED CONFIGURATION ### -->
+
+<h2 id="advconfig">高级使用技巧</h2>
+
+<h3>8.1. 主配置文件: kload.cfg</h3>
+
+<p>
+通过修改来对各<strong>kload.cfg</strong>个外挂模块进行管理。默认如下：</p>
+
+<pre>
+# Loader configuration file
+
+gdb.dir = ".\"
+ReservedMemory=55000000
+
+DLL.num = 9
+DLL.0 = "kitserver\zlib1.dll"
+DLL.1 = "kitserver\libpng13.dll"
+DLL.2 = "kitserver\kserv.dll"
+DLL.3 = "kitserver\bserv.dll"
+DLL.4 = "kitserver\lodmixer.dll"
+DLL.5 = "kitserver\dxtools.dll"
+DLL.6 = "kitserver\stadium.dll"
+DLL.7 = "kitserver\fserv.dll"
+DLL.8 = "kitserver\bootserv.dll"
+
+# DirectX options
+dx.force-SW-TnL = 0
+dx.emulate-HW-TnL = 0
+#dx.fullscreen.width = 1920
+#dx.fullscreen.height = 1200
+</pre>
+
+<p>最上面的两个文件 - <strong>zlib1.dll</strong>和<strong>libpng13.dll</strong> 用于支持PNG格式的图片的。请别动它们。第三个是独立的组件，你可以随意开启或关闭。如下：要关闭球衣外挂 (<strong>kserv.dll</strong>), 只要在前边加个&quot;#&quot;号就行了：</p>
+
+<pre>
+DLL.num = 9
+DLL.0 = "kitserver\zlib1.dll"
+DLL.1 = "kitserver\libpng13.dll"
+#DLL.2 = "kitserver\kserv.dll"
+DLL.3 = "kitserver\bserv.dll"
+DLL.4 = "kitserver\lodmixer.dll"
+DLL.5 = "kitserver\dxtools.dll"
+DLL.6 = "kitserver\stadium.dll"
+DLL.7 = "kitserver\fserv.dll"
+DLL.8 = "kitserver\bootserv.dll"
+
+</pre>
+
+<p>
+通过<strong>ReservedMemory</strong>这项参数可以增加PES6调用的内存。它能优化使用高画质广告牌、大球场、高分辨率观众等的游戏。如果没有这一行参数，游戏将只能使用默认的40兆内存。任何低于40兆的限制参数都将被忽略。</p>
+
+<p>
+<strong>dx.force-SW-TnL</strong>和<strong>dx.emulate-HW-TnL</strong>两项参数的作用跟3Danalyzer软件中的&quot;Force SW TnL&quot; and &quot;Emulate HW TnL Caps&quot;相似。如果你的游戏无法正常运行(因显卡太旧、或者其他兼容性问题)并且无法使用3Danalyzer运行游戏，那么请尝试这两项设置——也许这正是你运行游戏所需要的喔！<br>
+开启这两项设置，只要把值由0改为1。</p>
+
+<p>最后两个设置——<strong>dx.fullscreen.width</strong>和<strong>dx.fullscreen.height</strong>可以在全屏模式下使用自定义分辨率。默认下这两个设置是关闭的，要开启只要把这两行前边的“#”号拿掉，当然前提是你的显示器支持相应分辨率。
+</p>
+
+<h2>荣誉出品</h2>
+
+<p>
+规划 : <strong>juce </strong>, <strong>Robbie </strong><br>
+测试 : <strong>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun, Seax, pogoss </strong><br>
+球衣 : <strong>Spark, kel, qiankun, OPM, Simonhibsey </strong>. <br>
+足球 : <strong>DAMned </strong><br>
+足球模型 : <strong>Ariel </strong>, <strong>Gwidon </strong><br>
+脸型 / 发型 : <strong>Mystiq </strong>, <strong>Alex </strong><br>
+球鞋 : 由 <strong>Valmir </strong>收集， Puma 作者 Paul81118 。 <br>
+球衣 , 足球 , 字母 , 和背号来自 <a href="http://www.wevolution.org">http://www.wevolution.org </a>和 <a href="http://forums.evo-web.co.uk">http://forums.evo-web.co.uk </a><br>
+以及 PES5 GDB 由 <strong>FabioS </strong>提供 <br>
+<strong>kserv.cfg </strong>文件模型列表 ( 迷你球衣 ): <strong>Valmir </strong>, <strong>sobraghe </strong><br>
+球场外挂 " 选择主队 " 模式创意 : <strong>Gwidon </strong><br>
+原本球场信息 : <strong>nt89 </strong><br>
+"Wildparkstadion" 球场 : <strong>nt89 </strong>, 欧冠广告牌 <strong>mIGUEL </strong><br>
+"Saturn Ramenskoye" 球场 : <strong>Asiat </strong><br>
+球鞋信息 : <strong>Lancaster </strong><br>
+" 随机球鞋 " 创意 : <strong>leshiy87 <br>
+</strong>说明文件汉化 <strong>： </strong><strong>WECN </strong>
+<p>外挂 <strong>Kitserver </strong>使用以下的开源软件 : <br>
+  pngdib by Jason Summers <a href="http://entropymine.com/jason/pngdib/">http://entropymine.com/jason/pngdib/ </a><br>
+  libpng by Guy Eric Schalnat, Andreas Dilger, Glenn Randers-Pehrson, and others <a href="http://libpng.org/pub/png/libpng.html">http://libpng.org/pub/png/libpng.html </a><br>
+  zlib by Jean-loup Gailly and Mark Adler, and others <a href="http://www.zlib.net/">http://www.zlib.net/</a></p>
+</body>
+</html>
