@@ -1,4 +1,3 @@
-!INCLUDE "..\..\makePaths.txt"
 INC=$(INC) /I "..\libpng-1.2.8-lib\include"
 
 CFLAGS=/nologo /GX $(EXTRA_CFLAGS)

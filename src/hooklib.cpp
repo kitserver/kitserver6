@@ -3,6 +3,7 @@
 #include "hooklib.h"
 
 #include <windows.h>
+#include <stdio.h>
 #include <algorithm>
 #include <map>
 #include <vector>

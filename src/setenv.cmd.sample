@@ -1,0 +1,8 @@
+@echo off
+echo Setting kitserver compile environment
+@call "c:\Program Files\Microsoft Visual Studio\VC98\bin\vcvars32.bat"
+set STLPORT=c:\juce\stlport-4.6.2
+set INCLUDE=%STLPORT%\stlport;%INCLUDE%
+set LIB=%STLPORT%\lib;%LIB%
+echo Environment set
+

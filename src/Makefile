@@ -1,10 +1,10 @@
-#Now supports our local paths!
-!INCLUDE "makePaths.txt"
+CC=cl
+LINK=link
+RC=rc
 
-CFLAGS=/nologo /GX $(EXTRA_CFLAGS)
-LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
-#LFLAGS=/NOLOGO
-LIBS=$(LIB) user32.lib gdi32.lib advapi32.lib libcpmt.lib
+CFLAGS=/nologo /GX $(EXTRA_CFLAGS) /DUSE_HASHMAPS
+LFLAGS=/NOLOGO /NODEFAULTLIB:libcmt.lib
+LIBS=user32.lib gdi32.lib advapi32.lib
 LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
 
 INCPNGDIB=soft\pngdib
@@ -39,7 +39,7 @@ all_apps: apps
 	copy keybind.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll bootserv.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe
 
 release:
@@ -142,7 +142,7 @@ stadium.res:
 
 lodmixer.lib: lodmixer.obj
 lodmixer.dll: lodmixer.lib lodmixer.res
-	$(LINK) $(LFLAGS) /out:lodmixer.dll /DLL lodmixer.obj kload.lib lodmixer.res $(LIB)
+	$(LINK) $(LFLAGS) /out:lodmixer.dll /DLL lodmixer.obj kload.lib lodmixer.res $(LIBS)
 lodmixer.obj: lodmixer.cpp lodmixer.h
 
 lodmixer.res: 
@@ -150,7 +150,7 @@ lodmixer.res:
 	
 dxtools.lib: dxtools.obj
 dxtools.dll: dxtools.lib dxtools.res
-	$(LINK) $(LFLAGS) /out:dxtools.dll /DLL dxtools.obj kload.lib dxtools.res $(LIB)
+	$(LINK) $(LFLAGS) /out:dxtools.dll /DLL dxtools.obj kload.lib dxtools.res $(LIBS)
 dxtools.obj: dxtools.cpp dxtools.h
 
 dxtools.res: 
@@ -163,6 +163,14 @@ dxtools.res:
 #
 #savegames.res: 
 #	rc -r -fo savegames.res savegames.rc
+
+#teams.lib: teams.obj
+#teams.dll: teams.lib teams.res
+#	$(LINK) $(LFLAGS) /out:teams.dll /DLL teams.obj kload.lib teams.res $(LIBS)
+#teams.obj: teams.cpp teams.h
+#
+#teams.res: 
+#	$(RC) -r -fo teams.res teams.rc
 
 setupgui.obj: setupgui.cpp setupgui.h
 setup.obj: setup.cpp setup.h setupgui.h
@@ -180,15 +188,15 @@ keybind.exe: keybind.obj keybindui.obj keycfg.obj
 
 afstest.obj: afstest.cpp afsreader.h
 afstest.exe: afstest.obj afsreader.obj crc32.obj alog.obj aconfig.obj
-	$(LINK) $(LFLAGS) /out:afstest.exe afstest.obj afsreader.obj crc32.obj alog.obj aconfig.obj $(LIB)
+	$(LINK) $(LFLAGS) /out:afstest.exe afstest.obj afsreader.obj crc32.obj alog.obj aconfig.obj $(LIBS)
 
 afswalk.obj: afswalk.cpp afsreader.h
 afswalk.exe: afswalk.obj afsreader.obj crc32.obj alog.obj aconfig.obj
-	$(LINK) $(LFLAGS) /out:afswalk.exe afswalk.obj afsreader.obj crc32.obj alog.obj aconfig.obj $(LIB)
+	$(LINK) $(LFLAGS) /out:afswalk.exe afswalk.obj afsreader.obj crc32.obj alog.obj aconfig.obj $(LIBS)
 
 afsexport.obj: afsexport.cpp afsreader.h
 afsexport.exe: afsexport.obj afsreader.obj crc32.obj alog.obj aconfig.obj
-	$(LINK) $(LFLAGS) /out:afsexport.exe afsexport.obj afsreader.obj crc32.obj alog.obj aconfig.obj $(LIB)
+	$(LINK) $(LFLAGS) /out:afsexport.exe afsexport.obj afsreader.obj crc32.obj alog.obj aconfig.obj $(LIBS)
 	
 #stadimp.obj: stadimp.cpp
 #stadimp.exe: stadimp.obj
