@@ -34,7 +34,9 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		Log(&k_dxtools,"Attaching dll...");
 		hInst=hInstance;
 		RegisterKModule(&k_dxtools);
-        ReadConfig(&dxconfig, "kitserver\\kload.cfg");
+		char tmp[512];
+		sprintf(tmp,"%skload.cfg",GetPESInfo()->mydir);
+        ReadConfig(&dxconfig, tmp);
 		HookFunction(hk_D3D_CreateDevice,(DWORD)dxtoolsCreateDevice);
 		
 	}

@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <map>
+#include <hash_map>
 #include <string>
 
 using namespace std;
@@ -28,6 +29,7 @@ using namespace std;
 #define MASK_FILE     0x8000
 #define KITDESCRIPTION   0x10000
 #define SHIRT_NUMBER_LOCATION 0x20000
+#define SHORTS_MAIN_COLOR 0x40000
 
 // GDB data structures
 ///////////////////////////////
@@ -58,6 +60,7 @@ typedef struct _Kit {
     BYTE nameShape;
     BYTE logoLocation;
     RGBAColor radarColor;
+    RGBAColor shortsMainColor;
     char maskFile[MAXFILENAME];
     char numbersFile[MAXFILENAME];
     char shirtPaletteFile[MAXFILENAME];
@@ -75,7 +78,7 @@ typedef struct _KitCollection {
     BOOL loaded;
 } KitCollection;
 
-typedef map<WORD,KitCollection*> WordKitCollectionMap;
+typedef hash_map<WORD,KitCollection*> WordKitCollectionMap;
 
 typedef struct _GDB {
     char dir[MAXFILENAME];

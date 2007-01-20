@@ -23,7 +23,7 @@
 #include "d3dx8tex.h"
 
 #include <pngdib.h>
-#include <map>
+#include <hash_map>
 #include <string>
 
 //#include "allocator.h"
@@ -130,8 +130,8 @@ typedef struct _TextureBinding {
     UINT levels;
 } TextureBinding;
 
-map<DWORD,DWORD> _texture_to_id;
-map<DWORD,DWORD> _source_to_id;
+hash_map<DWORD,DWORD> _texture_to_id;
+hash_map<DWORD,DWORD> _source_to_id;
 vector<TextureBinding> _textureBindings;
 
 // textures for strip-selection
@@ -146,7 +146,7 @@ IDirect3DTexture8* g_gloves_left_tex = NULL;
 
 using namespace std;
 // map of textures for 2Dkits
-map<string,IDirect3DTexture8*> g_kitTextureMap;
+hash_map<string,IDirect3DTexture8*> g_kitTextureMap;
 
 // kit collection iterators
 typedef StringKitMap::iterator KitIterator;
@@ -353,15 +353,12 @@ DWORD codeArray[][CODELEN] = {
 DWORD code[CODELEN];
 DWORD data[DATALEN];
 
-//safe_allocator<MEMITEMINFO> myAlloc;
-//std::map<DWORD,MEMITEMINFO*,cmp,myAlloc> g_AFS_offsetMap;
-//std::map<DWORD,MEMITEMINFO*,cmp,myAlloc> g_AFS_addressMap;
-std::map<DWORD,MEMITEMINFO*> g_AFS_offsetMap;
-std::map<DWORD,MEMITEMINFO*> g_AFS_addressMap;
+std::hash_map<DWORD,MEMITEMINFO*> g_AFS_offsetMap;
+std::hash_map<DWORD,MEMITEMINFO*> g_AFS_addressMap;
 
 // saves modified kitpack info
-std::map<DWORD,TEAMKITINFO*> g_teamKitInfo;
-std::map<DWORD,TEAMKITINFO*>::iterator g_teamKitInfoIterator;
+std::hash_map<DWORD,TEAMKITINFO*> g_teamKitInfo;
+std::hash_map<DWORD,TEAMKITINFO*>::iterator g_teamKitInfoIterator;
 
 // Actual number of teams in the game
 int g_numTeams = 0; 
@@ -1173,11 +1170,6 @@ UINT level, IDirect3DSurface8** ppSurfaceLevel);
 
 void  JuceUniDecode(DWORD, DWORD, DWORD );
 void  JuceUnpack(DWORD, DWORD, DWORD, DWORD, DWORD*, DWORD);
-void  JuceGetNationalTeamInfo(DWORD,DWORD);
-void  JuceGetNationalTeamInfoExitEdit(DWORD,DWORD);
-void  JuceGetClubTeamInfo(DWORD,DWORD);
-void  JuceGetClubTeamInfoML1(DWORD,DWORD);
-void  JuceGetClubTeamInfoML2(DWORD,DWORD);
 void  JuceSet2Dkits();
 void  JuceClear2Dkits();
 DWORD JuceGetTeamInfo(DWORD id, DWORD p1);
@@ -1191,6 +1183,7 @@ DWORD kservResetFlag();
 DWORD kservResetFlag2();
 DWORD kservProcessKit(DWORD dest, DWORD src);
 void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* savedTeamInfo);
+void resetLicensedOrdinals();
 void clearTeamKitInfo();
 void setTeamKitInfo();
 void ClearTextureMaps();
@@ -2324,11 +2317,11 @@ BOOL IsNarrowBack(int which )
 
 int GetTemplateTypeForModel(BYTE model)
 {
-    map<int,bool>::iterator it0 = g_config.wideBackModels.find(model);
+    hash_map<int,bool>::iterator it0 = g_config.wideBackModels.find(model);
     if (it0 != g_config.wideBackModels.end()) return 0;
-    map<int,bool>::iterator it1 = g_config.narrowBackModels.find(model);
+    hash_map<int,bool>::iterator it1 = g_config.narrowBackModels.find(model);
     if (it1 != g_config.narrowBackModels.end()) return 1;
-    map<int,bool>::iterator it2 = g_config.squashedWithLogoModels.find(model);
+    hash_map<int,bool>::iterator it2 = g_config.squashedWithLogoModels.find(model);
     if (it2 != g_config.squashedWithLogoModels.end()) return 2;
     return 3;
 }
@@ -2616,7 +2609,9 @@ void Draw2Dkits(IDirect3DDevice8* dev)
     // gloves indicators
     if (typ == GK_TYPE) {
         if (!g_gloves_left_tex) {
-            if (FAILED(D3DXCreateTextureFromFileEx(dev, "kitserver\\igloves.png", 
+        	char tmp[512];
+        	sprintf(tmp,"%sigloves.png",GetPESInfo()->mydir);
+            if (FAILED(D3DXCreateTextureFromFileEx(dev, tmp, 
                         0, 0, 1, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED,
                         D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                         0xffffffff, NULL, NULL, &g_gloves_left_tex))) {
@@ -2975,8 +2970,8 @@ EXTERN_C _declspec(dllexport) void RestoreDeviceMethods()
 BOOL InitMemItemInfo(DWORD** ppIds, MEMITEMINFO** ppMemItemInfoArray, DWORD n, int first=data[FIRST_ID])
 {
 	ZeroMemory(g_afsFileName, sizeof(BUFLEN));
-	lstrcpy(g_afsFileName, GetPESInfo()->mydir);
-	lstrcat(g_afsFileName, "..\\dat\\0_text.afs");
+	lstrcpy(g_afsFileName, GetPESInfo()->pesdir);
+	lstrcat(g_afsFileName, GetPESInfo()->AFS_0_text);
 
 	FILE* f = fopen(g_afsFileName, "rb");
 	if (f == NULL) {
@@ -3260,6 +3255,7 @@ void InitKserv()
         // hook UniDecode
 		HookFunction(hk_UniDecode,(DWORD)JuceUniDecode);
 
+        /*
 		// hook GetNationalTeamInfo
 		HookFunction(hk_GetNationalTeamInfo,(DWORD)JuceGetNationalTeamInfo);
 
@@ -3270,6 +3266,7 @@ void InitKserv()
 		
 		// hook GetNationalTeamInfoExitEdit
 		HookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
+        */
 		
         // hook Unpack
         HookFunction(hk_Unpack,(DWORD)JuceUnpack);
@@ -3361,6 +3358,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
         // unhook UniDecode
 		UnhookFunction(hk_UniDecode,(DWORD)JuceUniDecode);
 
+        /*
 		// unhook GetNationalTeamInfo
 		UnhookFunction(hk_GetNationalTeamInfo,(DWORD)JuceGetNationalTeamInfo);
 
@@ -3371,6 +3369,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		
 		// unhook GetNationalTeamInfoExitEdit
 		UnhookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
+        */
 		
         // unhook Unpack
         UnhookFunction(hk_Unpack,(DWORD)JuceUnpack);
@@ -4681,7 +4680,7 @@ void DumpTexture(IDirect3DTexture8* const ptexture)
 {
     static int count = 0;
     char buf[BUFLEN];
-    sprintf(buf,"kitserver\\tex%03d.bmp",count++);
+    sprintf(buf,"%stex%03d.bmp",GetPESInfo()->mydir,count++);
     //sprintf(buf,"kitserver\\tex-%08x.bmp",(DWORD)ptexture);
     if (FAILED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, ptexture, NULL))) {
         LogWithString(&k_mydll, "DumpTexture: failed to save texture to %s", buf);
@@ -4851,7 +4850,7 @@ DWORD src, bool* IsProcessed)
     if (width == 512 && height == 256) {
         g_unidecode_flag = false;
 
-        map<DWORD,DWORD>::iterator mit = _source_to_id.find(src);
+        hash_map<DWORD,DWORD>::iterator mit = _source_to_id.find(src);
         if (mit != _source_to_id.end()) {
             LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
             LogWithNumber(&k_mydll,"JuceCreateTexture: (found entry): src = %08x", mit->first);
@@ -5884,6 +5883,15 @@ void SetKitInfo(Kit* kit, KITINFO* kitInfo, BOOL editable)
 			+0x20*((kit->radarColor.g>>3) & 31)
 			+0x400*((kit->radarColor.b>>3) & 31);
 	}
+	
+	// set shorts main color (for under-shorts)
+	if (kit && (kit->attDefined & SHORTS_MAIN_COLOR)) {
+		kitInfo->shortsColors[0] = 0x8000
+			+((kit->shortsMainColor.r>>3) & 31)
+			+0x20*((kit->shortsMainColor.g>>3) & 31)
+			+0x400*((kit->shortsMainColor.b>>3) & 31);
+	}
+	
     /*
 	// set name type
 	if (kit && (kit->attDefined & NAME_TYPE)) {
@@ -6040,12 +6048,16 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
 	return;
 }
 
-void clearTeamKitInfo()
+void restoreLicensedOrdinals()
 {
+	Log(&k_mydll,"restoreLicensedOrdinals: putting back 4 and 6");
     WORD* licensed_ids = (WORD*)data[LICENSED_LIST];
     licensed_ids[0] = g_licensed_ordinals[0];
     licensed_ids[1] = g_licensed_ordinals[1];
+}
 
+void clearTeamKitInfo()
+{
 	if (g_teamKitInfo.size() == 0) {
 		return;
 	}
@@ -6076,173 +6088,6 @@ void clearTeamKitInfo()
 
     // disable kit loading
     g_kit_loading_enabled = false;
-}
-
-/**
- * This function calls GetClubTeamInfo() function
- * Parameter:
- *   id   - team id
- * Return value:
- *   address of the KITPACKINFO structure
- */
-void JuceGetClubTeamInfoML1(DWORD id,DWORD result)
-{
-	// clear the hash-map
-	clearTeamKitInfo();
-
-	g_ML_kitPackInfoAddr = result;
-
-	return;
-}
-
-/**
- * This function calls GetClubTeamInfo() function
- * Parameter:
- *   id   - team id
- * Return value:
- *   address of the KITPACKINFO structure
- */
-void JuceGetClubTeamInfoML2(DWORD id,DWORD result)
-{
-	TRACE2(&k_mydll,"JuceGetClubTeamInfoML2: CALLED for id = %003d.", id);
-
-	if (id >= 64 && id < 255 && TeamDirExists(id)) {
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[result] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, (KITPACKINFO*)result, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = id;
-				g_teamKitInfo[result] = teamKitInfo;
-				//DumpData((BYTE*)&teamKitInfo->kits, sizeof(KITPACKINFO));
-			} else {
-				Log(&k_mydll,"JuceGetClubTeamInfoML2: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
-		}
-
-		// check if need to save ML copy
-		if (g_teamKitInfo[g_ML_kitPackInfoAddr] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, (KITPACKINFO*)result, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = id;
-				g_teamKitInfo[g_ML_kitPackInfoAddr] = teamKitInfo;
-				//DumpData((BYTE*)&teamKitInfo->kits, sizeof(KITPACKINFO));
-			} else {
-				Log(&k_mydll,"JuceGetClubTeamInfoML2: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
-		}
-
-		KITPACKINFO* kitPackInfo = (KITPACKINFO*)result;
-
-        KitCollection* col = MAP_FIND(gdb->uni,id);
-        if (col) {
-            Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GA_KIT));
-            Kit* gb = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GB_KIT));
-            Kit* gaShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GA_UNKNOWN1));
-            Kit* gbShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GB_UNKNOWN1));
-            Kit* pa = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PA_SHIRT));
-            Kit* pb = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PB_SHIRT));
-            Kit* paShorts = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PA_SHORTS));
-            Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PB_SHORTS));
-            
-            //BOOL editable = kDB->editable[id];
-            BOOL editable = TRUE;
-
-            // set attributes
-            SetKitInfo(ga, &kitPackInfo->gkHome, editable);
-            SetKitInfo(gb, &kitPackInfo->gkAway, editable);
-            SetShortsInfo(gaShorts, &kitPackInfo->gkHome, editable);
-            SetShortsInfo(gbShorts, &kitPackInfo->gkAway, editable);
-            SetKitInfo(pa, &kitPackInfo->plHome, editable);
-            SetKitInfo(pb, &kitPackInfo->plAway, editable);
-            SetShortsInfo(paShorts, &kitPackInfo->plHome, editable);
-            SetShortsInfo(pbShorts, &kitPackInfo->plAway, editable);
-        }
-	}
-	return;
-}
-
-
-/**
- * This function calls GetNationalTeamInfo() function
- * Parameter:
- *   id   - team id
- * Return value:
- *   address of the KITPACKINFO structure
- */
-void JuceGetNationalTeamInfo(DWORD id,DWORD result)
-{
-	TRACE2(&k_mydll,"JuceGetNationalTeamInfo: CALLED for id = %003d.", id);
-
-	if (id >= 0 && id < 64 && TeamDirExists(id)) {
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[result] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, (KITPACKINFO*)result, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = id;
-				g_teamKitInfo[result] = teamKitInfo;
-				//DumpData((BYTE*)&teamKitInfo->kits, sizeof(KITPACKINFO));
-			} else {
-				Log(&k_mydll,"JuceGetClubTeamInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
-            LogWithNumber(&k_mydll,"JuceGetClubTeamInfo: stored id = %003d.", id);
-		}
-
-		KITPACKINFO* kitPackInfo = (KITPACKINFO*)result;
-
-        KitCollection* col = MAP_FIND(gdb->uni,id);
-        if (col) {
-            Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GA_KIT));
-            Kit* gb = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GB_KIT));
-            Kit* gaShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GA_UNKNOWN1));
-            Kit* gbShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GB_UNKNOWN1));
-            Kit* pa = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PA_SHIRT));
-            Kit* pb = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PB_SHIRT));
-            Kit* paShorts = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PA_SHORTS));
-            Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PB_SHORTS));
-            
-            //BOOL editable = kDB->editable[id];
-            BOOL editable = TRUE;
-
-            // set attributes
-            SetKitInfo(ga, &kitPackInfo->gkHome, editable);
-            SetKitInfo(gb, &kitPackInfo->gkAway, editable);
-            SetShortsInfo(gaShorts, &kitPackInfo->gkHome, editable);
-            SetShortsInfo(gbShorts, &kitPackInfo->gkAway, editable);
-            SetKitInfo(pa, &kitPackInfo->plHome, editable);
-            SetKitInfo(pb, &kitPackInfo->plAway, editable);
-            SetShortsInfo(paShorts, &kitPackInfo->plHome, editable);
-            SetShortsInfo(pbShorts, &kitPackInfo->plAway, editable);
-        }
-	}
-	return;
-}
-
-/**
- * This function gets called upon exit of edit mode.
- * We need to remove all our changes from KITINFO structures.
- * This function calls GetNationalTeamInfo() function
- * Parameter:
- *   id   - team id
- * Return value:
- *   address of the KITPACKINFO structure
- */
-void JuceGetNationalTeamInfoExitEdit(DWORD id,DWORD result)
-{
-	TRACE2(&k_mydll,"JuceGetNationalTeamInfoExitEdit: CALLED for id = %003d.", id);
-
-	// clear the hash-map
-	clearTeamKitInfo();
-
-	return;
 }
 
 void DoMipMap(DWORD id, TEXIMGPACKHEADER* pack, int ordinal, char* fileSuffix, MASKFUNCPROC maskFunc)
@@ -6405,6 +6250,7 @@ DWORD kservSetFlag()
 {
 	Log(&k_mydll,"kservSetFlag: restoring kitinfo edits");
 
+    restoreLicensedOrdinals();
     clearTeamKitInfo();
     g_kit_loading_enabled = false;
 
@@ -6420,6 +6266,7 @@ DWORD kservResetFlag()
 {
 	Log(&k_mydll,"kservResetFlag: restoring kitinfo edits");
 
+    restoreLicensedOrdinals();
     clearTeamKitInfo();
     g_kit_loading_enabled = false;
     g_edit_mode = false;
@@ -6436,6 +6283,7 @@ DWORD kservResetFlag2()
 {
 	Log(&k_mydll,"kservResetFlag2: restoring kitinfo edits");
 
+    restoreLicensedOrdinals();
     clearTeamKitInfo();
     g_kit_loading_enabled = false;
     g_edit_mode = false;
@@ -6465,14 +6313,14 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
     DWORD result = MasterCallNext(dest,src);
     LogWithNumber(&k_mydll, "kservProcessKit: kit buffer addresses stored here: %08x", result);
 
-    map<DWORD,DWORD>::iterator it = _texture_to_id.find(src - 0x10);
+    hash_map<DWORD,DWORD>::iterator it = _texture_to_id.find(src - 0x10);
     if (it != _texture_to_id.end()) {
         _source_to_id[dest] = it->second;
         _texture_to_id.erase(it);
         LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, it->second);
 
     } else {
-        map<DWORD,DWORD>::iterator sit = _texture_to_id.find(src - 0x20);
+        hash_map<DWORD,DWORD>::iterator sit = _texture_to_id.find(src - 0x20);
         if (sit != _texture_to_id.end()) {
             _source_to_id[dest] = sit->second;
             _texture_to_id.erase(sit);
@@ -6482,7 +6330,7 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
             // nothing found. Make sure that we remove this dest key from _source_to_id, 
             // if it exists in there
             /*
-            map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
+            hash_map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
             if (dit != _source_to_id.end()) {
                 _source_to_id.erase(dit);
             }
@@ -6707,6 +6555,7 @@ DWORD JuceOnReplayLoad()
 {
 	Log(&k_mydll,"JuceOnReplayLoad: CALLED.");
 
+    restoreLicensedOrdinals();
     clearTeamKitInfo();
     g_kit_loading_enabled = true;
 
@@ -6721,8 +6570,9 @@ DWORD JuceOnReplayLoad()
 
 DWORD JuceGetTeamInfo(DWORD id, DWORD p1)
 {
-	Log(&k_mydll,"JuceGetTeamInfo: restoring kitinfo edits");
+	//Log(&k_mydll,"JuceGetTeamInfo: restoring kitinfo edits");
 
+    restoreLicensedOrdinals();
     clearTeamKitInfo();
     g_kit_loading_enabled = false;
     g_edit_mode = true;
@@ -6778,6 +6628,7 @@ void JuceClear2Dkits()
     // reset kit selection mode
     typ = PL_TYPE;
 
+    restoreLicensedOrdinals();
     clearTeamKitInfo();
     g_kit_loading_enabled = true;
 

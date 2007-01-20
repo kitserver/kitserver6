@@ -2,12 +2,12 @@
 #define _JUCE_CONFIG
 
 #include <windows.h>
-#include <map>
+#include <hash_map>
 
 #define BUFLEN 4096
 
 #define MODID 100
-#define NAMELONG "KitServer 6.3.6.2"
+#define NAMELONG "KitServer 6.4.0"
 #define NAMESHORT "KSERV"
 #define CONFIG_FILE "kserv.cfg"
 
@@ -34,9 +34,9 @@ public:
 	WORD   vKeyGKAwayKit;
 	bool   ShowKitInfo;
     bool   enable_HD_kits;
-    std::map<int,bool> wideBackModels;
-    std::map<int,bool> narrowBackModels;
-    std::map<int,bool> squashedWithLogoModels;
+    std::hash_map<int,bool> wideBackModels;
+    std::hash_map<int,bool> narrowBackModels;
+    std::hash_map<int,bool> squashedWithLogoModels;
 };
 
 BOOL ReadConfig(KSERV_CONFIG* config, char* cfgFile);

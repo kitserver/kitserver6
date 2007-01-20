@@ -656,7 +656,11 @@ void InitStadiumServer()
     
     Log(&k_stadium, "GetFileFromAFS hooked");
 
-    FILE* f = fopen("dat\\0_text.afs","rb");
+	char tmp[BUFLEN];
+	strcpy(tmp,GetPESInfo()->pesdir);
+	strcat(tmp,GetPESInfo()->AFS_0_text);
+
+    FILE* f = fopen(tmp,"rb");
     if (!f) {
         Log(&k_stadium, "InitStadiumServer: problem opening 0_text.afs for reading.");
         return;
@@ -869,14 +873,17 @@ void stadReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
     
 	return;
 }
-
+bool abc=true;
 void stadAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
   LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
 {
 	// search for such offset
 	MEMITEMINFO* info = FindMemItemInfoByOffset(_dwOffset1);
+	//if (abc) MessageBox(0,"stadAfterReadFile works","2-1",0);
+	abc=false;
 
 	if (info != NULL && info->id == g_fileId && g_afsId == 1) {
+		//MessageBox(0,"REPLACEING NOW!","2-2",0);
         LogWithNumber(&k_stadium,"OnReadFile: info->id = %d", info->id);
         LogWithNumber(&k_stadium,"OnReadFile: lpBuffer = %08x", (DWORD)lpBuffer);
         LogWithNumber(&k_stadium,"OnReadFile: nNumberOfBytesToRead = %08x", nNumberOfBytesToRead);

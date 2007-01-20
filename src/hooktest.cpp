@@ -2,6 +2,7 @@
 
 #include "hooklib.h"
 #include <cstdlib>
+#include <stdio.h>
 
 using namespace std;
 hook_manager manager;

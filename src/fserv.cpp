@@ -5,9 +5,10 @@
 #include "kload_exp.h"
 #include "numpages.h"
 
-#include <map>
+#include <hash_map>
 
 KMOD k_fserv={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
+#define DEFAULT_USESPECIALHAIR 0
 
 HINSTANCE hInst;
 bool Inited=false;
@@ -35,30 +36,30 @@ DWORD replaceOrgFileID=0;
 DWORD StartsStdFaces[4];
 WORD* randSelIDs=NULL;
 
-std::map<DWORD,LPVOID> g_Buffers;
-std::map<DWORD,LPVOID>::iterator g_BuffersIterator;
+std::hash_map<DWORD,LPVOID> g_Buffers;
+std::hash_map<DWORD,LPVOID>::iterator g_BuffersIterator;
 	
 //Stores the filenames to a face id
 DWORD numFaces=0;
-std::map<DWORD,char*> g_Faces;
-std::map<DWORD,char*>::iterator g_FacesIterator;
+std::hash_map<DWORD,char*> g_Faces;
+std::hash_map<DWORD,char*>::iterator g_FacesIterator;
 
 //Same for hair
 DWORD numHair=0;
-std::map<DWORD,char*> g_Hair;
-std::map<DWORD,char*>::iterator g_HairIterator;
-std::map<DWORD,BYTE> g_HairTransp;
+std::hash_map<DWORD,char*> g_Hair;
+std::hash_map<DWORD,char*>::iterator g_HairIterator;
+std::hash_map<DWORD,BYTE> g_HairTransp;
 
 //Stores larger face id for players
-std::map<DWORD,DWORD> g_Players;
-std::map<DWORD,DWORD> g_PlayersHair;
-std::map<DWORD,DWORD> g_PlayersAddr;
-std::map<DWORD,DWORD> g_PlayersAddr2;
-std::map<DWORD,DWORD> g_SpecialFaceHair;
-std::map<DWORD,DWORD> g_EditorAddresses;
-std::map<DWORD,bool>  g_FaceExists;
-std::map<DWORD,bool>  g_HairExists;
-std::map<DWORD,DWORD>::iterator g_PlayersIterator;
+std::hash_map<DWORD,DWORD> g_Players;
+std::hash_map<DWORD,DWORD> g_PlayersHair;
+std::hash_map<DWORD,DWORD> g_PlayersAddr;
+std::hash_map<DWORD,DWORD> g_PlayersAddr2;
+std::hash_map<DWORD,DWORD> g_SpecialFaceHair;
+std::hash_map<DWORD,DWORD> g_EditorAddresses;
+std::hash_map<DWORD,bool>  g_FaceExists;
+std::hash_map<DWORD,bool>  g_HairExists;
+std::hash_map<DWORD,DWORD>::iterator g_PlayersIterator;
 
 BYTE isInEditPlayerMode=0, isInEditPlayerList=0;
 DWORD lastPlayerNumber=0, lastFaceID=0;
@@ -75,7 +76,7 @@ void InitFserv();
 bool FileExists(char* filename);
 
 void GetGDBFaces();
-void AddPlayerFace(DWORD PlayerNumber,char* sfile);
+void AddPlayerFace(DWORD PlayerNumber, char* sfile, DWORD useSpecialHair);
 DWORD GetIDForFaceName(char* sfile);
 
 void GetGDBHair();
@@ -386,7 +387,7 @@ void GetGDBFaces()
 	char str[BUFLEN];
 	char *comment=NULL;
 	char sfile[BUFLEN];
-	DWORD number=0;
+	DWORD number=0, useSpecialHair, scanRes;
 	
 	strcpy(tmp,GetPESInfo()->gdbDir);
 	strcat(tmp,"GDB\\faces\\map.txt");
@@ -409,8 +410,16 @@ void GetGDBFaces()
 		
 		// parse line
 		ZeroMemory(sfile,BUFLEN);
-		if (sscanf(str,"%d,\"%[^\"]\"",&number,sfile)==2)
-			AddPlayerFace(number,sfile);
+		useSpecialHair=DEFAULT_USESPECIALHAIR;
+		scanRes=sscanf(str,"%d,\"%[^\"]\",%d",&number,sfile,&useSpecialHair);
+		switch (scanRes) {
+		case 3:
+			AddPlayerFace(number, sfile, useSpecialHair);
+			break;
+		case 2:
+			AddPlayerFace(number, sfile, DEFAULT_USESPECIALHAIR);
+			break;
+		};
 	};
 	fclose(cfg);
 	
@@ -418,7 +427,7 @@ void GetGDBFaces()
 	return;
 };
 
-void AddPlayerFace(DWORD PlayerNumber,char* sfile)
+void AddPlayerFace(DWORD PlayerNumber, char* sfile, DWORD useSpecialHair)
 {
 	LogWithNumberAndString(&k_fserv,"Player # %d gets face %s",PlayerNumber,sfile);
 	/* Leave out this check, this is done later
@@ -442,6 +451,10 @@ void AddPlayerFace(DWORD PlayerNumber,char* sfile)
 	};
 	LogWithNumber(&k_fserv,"Assigned face id is %d",newId);
 	g_Players[PlayerNumber]=newId;
+	
+	//don't use the hair belonging to a special face
+	if (useSpecialHair==0)
+		g_SpecialFaceHair[PlayerNumber]=0xffffffff;
 	return;
 };
 
@@ -739,7 +752,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 		if (g_PlayersIterator != g_Players.end()) {
 			TRACE2(&k_fserv,"Found player in map, assigning face id %d",g_PlayersIterator->second);
 			lastFaceID=g_PlayersIterator->second;
-			if (*Faceset==FACESET_SPECIAL)
+			if (*Faceset==FACESET_SPECIAL && g_SpecialFaceHair[usedPlayerNumber]!=0xffffffff)
 				g_SpecialFaceHair[usedPlayerNumber]=*FaceID;
 			*FaceID=GetNextSpecialAfsFileIdForFace(g_PlayersIterator->second,*Skincolor);
 			*Faceset=FACESET_NORMAL;
@@ -839,7 +852,7 @@ DWORD CalcHairFile(BYTE Caller)
 		
 		g_PlayersIterator=g_SpecialFaceHair.find(usedPlayerNumber);
 		if (g_PlayersIterator != g_SpecialFaceHair.end()) {
-			FaceID=g_SpecialFaceHair[usedPlayerNumber];
+			FaceID=g_PlayersIterator->second;
 			hadSpecialFace=true;
 		};
 		
@@ -856,7 +869,7 @@ DWORD CalcHairFile(BYTE Caller)
 			lastGDBHairID=HairID;
 			lastGDBHairRes=res;
 		};
-	} else if (*(DWORD*)(&Caller-4)==fIDs[CALCHAIRID]+5 && !hadSpecialFace)
+	} else if (*(DWORD*)(&Caller-4)==fIDs[CALCHAIRID]+5 && !(hadSpecialFace && FaceID==0xffffffff))
 		res=((DWORD*)fIDs[HAIRSTARTARRAY])[Skincolor+4*Faceset]+HairID;
 	else
 		res=((DWORD*)fIDs[HAIRSTARTARRAY])[Skincolor+4]+FaceID;
@@ -1009,10 +1022,34 @@ DWORD fservMyTeamCPD(DWORD playerNumber)
 
 BYTE fservGetHairTransp(DWORD addr)
 {
+	DWORD usedPlayerNumber=g_PlayersAddr2[addr];
+	BYTE *Faceset=(BYTE*)(addr+0x33);
+	DWORD *FaceID=(DWORD*)(addr+0x40);
+	
+	bool hadSpecialFace=false;
+	BYTE ourFaceset=*Faceset;
+	DWORD ourFaceID=*FaceID;
+	
+	
+	g_PlayersIterator=g_SpecialFaceHair.find(usedPlayerNumber);
+	if (g_PlayersIterator != g_SpecialFaceHair.end() && g_PlayersIterator->second!=0xffffffff) {
+		//set back to special face to get the right transparency for it
+		*FaceID = g_PlayersIterator->second;
+		*Faceset = FACESET_SPECIAL;
+		hadSpecialFace=true;
+	};
+	
+	
 	BYTE result=orgGetHairTransp(addr);
 	
-	DWORD usedPlayerNumber=g_PlayersAddr2[addr];
-	if (usedPlayerNumber != 0 && isInEditPlayerMode==0)
+	
+	if (hadSpecialFace) {
+		//and set back to our settings
+		*Faceset=ourFaceset;
+		*FaceID=ourFaceID;
+	};
+	
+	if (usedPlayerNumber != 0) // && isInEditPlayerMode==0)
 		if (g_PlayersHair.find(usedPlayerNumber) != g_PlayersHair.end())
 			result=g_HairTransp[usedPlayerNumber];
 	

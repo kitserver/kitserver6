@@ -9,12 +9,13 @@
 KMOD k_boot={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 HINSTANCE hInst;
 
-#define DATALEN 10
+#define DATALEN 13
 enum {
     EDITMODE_CURRPLAYER_MOD, EDITMODE_CURRPLAYER_ORG,
     EDITMODE_FLAG, EDITPLAYERMODE_FLAG, EDITPLAYER_ID,
     PLAYERS_LINEUP, PLAYERID_IN_PLAYERDATA,
-    LINEUP_RECORD_SIZE, LINEUP_BLOCKSIZE, PLAYERDATA_SIZE,
+    LINEUP_RECORD_SIZE, LINEUP_BLOCKSIZE, PLAYERDATA_SIZE, STACK_SHIFT,
+    EDITPLAYERBOOT_FLAG, EDITBOOTS_FLAG,
 };
 DWORD dataArray[][DATALEN] = {
     // PES6
@@ -22,14 +23,16 @@ DWORD dataArray[][DATALEN] = {
         0x112e1c0, 0x112e1c8,
         0x1108488, 0x11084e8, 0x112e24a,
         0x3bdcbc0, 0x3bcf586, 
-        0x240, 0x60, 0x348,
+        0x240, 0x60, 0x348, 0,
+        0x11308dc, 0x1108830,
     },
     // PES6 1.10
     {
         0x112f1c0, 0x112f1c8,
         0x1109488, 0x11094e8, 0x112f24a,
         0x3bddbc0, 0x3bd0586,
-        0x240, 0x60, 0x348,
+        0x240, 0x60, 0x348, 0 /*0x1b4*/,
+        0x11318dc, 0x1109830,
     },
 };
 DWORD data[DATALEN];
@@ -55,8 +58,9 @@ DWORD code[CODELEN];
 
 class BootServConfig {
 public:
-    BootServConfig() : _randomBootsEnabled(false) {}
+    BootServConfig() : _randomBootsEnabled(false), _version(BOOT_DEFAULT_VERSION) {}
     bool _randomBootsEnabled;
+    int _version;
 };
 
 class TexturePack {
@@ -80,6 +84,13 @@ static BootServConfig g_config;
 vector<string> g_bootTextureFiles;
 hash_map<WORD,TexturePack> g_bootTexturePacks;
 hash_map<WORD,TexturePack> g_bootTexturePacksRandom;
+DWORD g_bootTexturesColl[5];
+DWORD g_bootTexturesPos[5];
+IDirect3DTexture8* g_bootTextures[2][64]; //[big/small][32*team + posInTeam]
+DWORD g_bootPlayerIds[64]; //[32*team + posInTeam]
+DWORD currRenderPlayer=0xffffffff;
+PLAYER_RECORD* currRenderPlayerRecord=NULL;
+
 
 //////////////////////////////////////////////////////
 
@@ -100,12 +111,36 @@ void bootBeginUniSelect();
 DWORD bootResetFlag2();
 int getPosition(DWORD blockAddr);
 WORD getPlayerId(int pos);
+void bootBeginRenderPlayer(DWORD playerMainColl);
+void bootPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res);
+bool isEditBootsMode();
 
 //////////////////////////////////////////////////////
 //
 // FUNCTIONS
 //
 //////////////////////////////////////////////////////
+
+// Calls IUnknown::Release() on an instance
+void SafeRelease(LPVOID ppObj)
+{
+    try {
+        IUnknown** ppIUnknown = (IUnknown**)ppObj;
+        if (ppIUnknown == NULL)
+        {
+            Log(&k_boot,"Address of IUnknown reference is 0");
+            return;
+        }
+        if (*ppIUnknown != NULL)
+        {
+            (*ppIUnknown)->Release();
+            *ppIUnknown = NULL;
+        }
+    } catch (...) {
+        // problem with a safe-release
+        TRACE(&k_boot,"Problem with safe-release");
+    }
+}
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
@@ -116,13 +151,21 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		RegisterKModule(&k_boot);
 		HookFunction(hk_D3D_CreateDevice,(DWORD)bootInit);
 		
+		// read config
+    	readConfig();
+    	SetBootserverVersion(g_config._version);
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		Log(&k_boot,"Detaching dll...");
 		UnhookFunction(hk_D3D_CreateDevice,(DWORD)bootInit);
-        UnhookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
         UnhookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
+        if (g_config._version==VERSION_JUCE) {
+        	UnhookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
+        } else {
+        	UnhookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
+			UnhookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
+		};
 	}
 
 	return true;
@@ -136,17 +179,21 @@ void bootInit(IDirect3D8* self, UINT Adapter,
     Log(&k_boot, "Initializing bootserver...");
     memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
     memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
-
-    HookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
+    
     HookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
-    MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, bootResetFlag2);
+    if (g_config._version==VERSION_JUCE) {
+	    MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
+	    HookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
+	
+	} else {
+		HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
+    	HookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
+    };
 
     // read the map
     readMap();
 
-    // read config
-    readConfig();
     if (g_config._randomBootsEnabled) {
         populateTextureFilesVector(g_bootTextureFiles, string(""));
         LogWithNumber(&k_boot, "Total # of boot textures found: %d", g_bootTextureFiles.size());
@@ -187,11 +234,16 @@ void readConfig()
         int val = 0;
 		if (sscanf(str,"random-boots.enabled = %d",&val)==1) {
             g_config._randomBootsEnabled = (val==1);
+        } else if (sscanf(str,"otherVersion = %d",&val)==1) {
+        	if (val==1)
+            	g_config._version = 1-BOOT_DEFAULT_VERSION;
         }
 
 		if (feof(cfg)) break;
 	}
 	fclose(cfg);
+	LogWithString(&k_boot, "readConfig: USING VERSION BY %s", 
+			(g_config._version==VERSION_JUCE)?"JUCE":"ROBBIE");
     LogWithNumber(&k_boot, "readConfig: g_config._randomBootsEnabled = %d", 
             g_config._randomBootsEnabled);
 }
@@ -279,13 +331,13 @@ void releaseBootTextures()
             it != g_bootTexturePacks.end();
             it++) {
         if (it->second._big) {
-            it->second._big->Release();
+            SafeRelease(it->second._big);
             it->second._big = NULL;
             it->second._bigLoaded = false;
             LogWithNumber(&k_boot, "Released big boot texture for player %d", it->first);
         }
         if (it->second._small) {
-            it->second._small->Release();
+            SafeRelease(it->second._small);
             it->second._small = NULL;
             it->second._smallLoaded = false;
             LogWithNumber(&k_boot, "Released small boot texture for player %d", it->first);
@@ -295,18 +347,23 @@ void releaseBootTextures()
             it != g_bootTexturePacksRandom.end();
             it++) {
         if (it->second._big) {
-            it->second._big->Release();
+            SafeRelease(it->second._big);
             it->second._big = NULL;
             it->second._bigLoaded = false;
             LogWithNumber(&k_boot, "Released big boot texture for player %d", it->first);
         }
         if (it->second._small) {
-            it->second._small->Release();
+            SafeRelease(it->second._small);
             it->second._small = NULL;
             it->second._smallLoaded = false;
             LogWithNumber(&k_boot, "Released small boot texture for player %d", it->first);
         }
     }
+    
+    if (g_config._version==VERSION_ROBBIE) {
+		ZeroMemory(g_bootTextures, 64*4*2);
+	    ZeroMemory(g_bootPlayerIds, 64*4);
+	};
 }
 
 void bootBeginUniSelect()
@@ -333,8 +390,9 @@ vector<string>::iterator getRandomElement(vector<string>& vec)
     return vec.begin() + pos;
 }
 
-IDirect3DTexture8* getBootTexture(WORD playerId, bool big, D3DSURFACE_DESC* pDesc, UINT levels)
+IDirect3DTexture8* getBootTexture(WORD playerId, bool big)
 {
+	UINT Width=big?512:128, Height=big?256:64;
     IDirect3DTexture8* bootTexture = NULL;
     hash_map<WORD,TexturePack>::iterator it = g_bootTexturePacks.find(playerId);
     if (it != g_bootTexturePacks.end()) {
@@ -355,21 +413,23 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big, D3DSURFACE_DESC* pDes
             sprintf(filename,"%sGDB\\boots\\%s", GetPESInfo()->gdbDir, it->second._textureFile.c_str());
             if (SUCCEEDED(D3DXCreateTextureFromFileEx(
                             GetActiveDevice(), filename,
-                            256, 256, levels, pDesc->Usage, 
-                            pDesc->Format, D3DPOOL_MANAGED,
+                            256, 256, 1, 0, 
+                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
                             D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                             0, NULL, NULL, &temp))) {
                 // create canvas
+                char canvasFilename[512];
+                sprintf(canvasFilename, "%s\\bcanvas.png", GetPESInfo()->mydir);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                GetActiveDevice(), "kitserver\\bcanvas.png",
-                                pDesc->Width, pDesc->Height, levels, pDesc->Usage, 
-                                pDesc->Format, D3DPOOL_MANAGED,
+                                GetActiveDevice(), canvasFilename,
+                                Width, Height, 1, 0, 
+                                D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
                                 D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                                 0, NULL, NULL, &bootTexture))) {
                     // copy the temp texture to canvas 3 times
-                    ReplaceBootTexture(bootTexture, temp, pDesc->Width);
+                    ReplaceBootTexture(bootTexture, temp, Width);
                 }
-                // release the temp texture, as we don't need it anymore
+				// release the temp texture, as we don't need it anymore
                 temp->Release();
 
                 // store in the map
@@ -392,8 +452,8 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big, D3DSURFACE_DESC* pDes
                 it->second._smallLoaded = true;
             }
         }
-
-    } else if (g_config._randomBootsEnabled) {
+        
+	} else if (g_config._randomBootsEnabled) {
         // not in the main map. 
         // try random boots map instead: if no entry, it will be created
         TexturePack& pack = g_bootTexturePacksRandom[playerId];
@@ -420,21 +480,23 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big, D3DSURFACE_DESC* pDes
             sprintf(filename,"%sGDB\\boots\\%s", GetPESInfo()->gdbDir, pack._textureFile.c_str());
             if (SUCCEEDED(D3DXCreateTextureFromFileEx(
                             GetActiveDevice(), filename,
-                            256, 256, levels, pDesc->Usage, 
-                            pDesc->Format, D3DPOOL_MANAGED,
+                            256, 256, 1, 0, 
+                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
                             D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                             0, NULL, NULL, &temp))) {
                 // create canvas
+                char canvasFilename[512];
+                sprintf(canvasFilename, "%s\\bcanvas.png", GetPESInfo()->mydir);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                GetActiveDevice(), "kitserver\\bcanvas.png",
-                                pDesc->Width, pDesc->Height, levels, pDesc->Usage, 
-                                pDesc->Format, D3DPOOL_MANAGED,
+                                GetActiveDevice(), canvasFilename,
+                                Width, Height, 1, 0, 
+                                D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
                                 D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                                 0, NULL, NULL, &bootTexture))) {
                     // copy the temp texture to canvas 3 times
-                    ReplaceBootTexture(bootTexture, temp, pDesc->Width);
+                    ReplaceBootTexture(bootTexture, temp, Width);
                 }
-                // release the temp texture, as we don't need it anymore
+				// release the temp texture, as we don't need it anymore
                 temp->Release();
 
                 if (big) {
@@ -459,14 +521,19 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big, D3DSURFACE_DESC* pDes
     return bootTexture;
 }
 
-bool isEditMode()
-{
-    return *(BYTE*)data[EDITMODE_FLAG] == 1;
-}
-
 bool isEditPlayerMode()
 {
     return *(BYTE*)data[EDITPLAYERMODE_FLAG] == 1;
+}
+
+bool isEditPlayerBootMode()
+{
+    return *(BYTE*)data[EDITPLAYERBOOT_FLAG] == 1;
+}
+
+bool isEditBootsMode()
+{
+    return *(BYTE*)data[EDITBOOTS_FLAG] == 1;
 }
 
 DWORD bootCopyPlayerData(DWORD p0, DWORD p1, DWORD p2)
@@ -539,18 +606,24 @@ KEXPORT void bootUnlockRect(IDirect3DTexture8* self, UINT Level)
 
     static int count = 0;
 
+    int shift = data[STACK_SHIFT];
     int levels = self->GetLevelCount();
     D3DSURFACE_DESC desc;
     if (SUCCEEDED(self->GetLevelDesc(0, &desc))) {
         if (((desc.Width==512 && desc.Height==256 && Level==0) 
                     || (desc.Width==128 && desc.Height==64 && Level==0))
-                && *(DWORD*)(oldEBP+0x3c)==0 
-                && *(DWORD*)(oldEBP+0x34) + 8 == *(DWORD*)(oldEBP+0x38)
-                && (*(WORD*)(*(DWORD*)(oldEBP+0x2c)) & 0xfff0)==0x0510
+                && *(DWORD*)(oldEBP+0x3c+shift)==0 
+                && *(DWORD*)(oldEBP+0x2c+shift)!=0 
+                && *(DWORD*)(oldEBP+0x30+shift)!=0 
+                && *(DWORD*)(oldEBP+0x34+shift) + 8 == *(DWORD*)(oldEBP+0x38+shift)
+                && (*(WORD*)(*(DWORD*)(oldEBP+0x2c+shift)) & 0xfff0)==0x0510
                 ) {
 
             WORD playerId = 0xffff;
-            if (isEditMode()) {// && isEditPlayerMode()) {
+            if (isEditMode()) {
+                if (isEditBootsMode()) {
+                    return; // no replacement in Edit Boots
+                }
                 // edit player
                 if (desc.Width==512) {
                     playerId = *(WORD*)data[EDITPLAYER_ID];
@@ -565,14 +638,14 @@ KEXPORT void bootUnlockRect(IDirect3DTexture8* self, UINT Level)
                 }
             } else {
                 // match or training
-                int pos = getPosition(*(DWORD*)(oldEBP+0x30));
+                int pos = getPosition(*(DWORD*)(oldEBP+0x30+shift));
                 playerId = getPlayerId(pos);
             }
             //DumpTexture(self);
             //LogWithNumber(&k_boot, "bootUnlockRect: playerId = %d", playerId);
 
             bool isBig = desc.Width==512;
-            IDirect3DTexture8* bootTexture = getBootTexture(playerId, isBig, &desc, levels);
+            IDirect3DTexture8* bootTexture = getBootTexture(playerId, isBig);
             if (bootTexture) {
                 // replace the texture
                 ReplaceTextureLevel(self, bootTexture, 0);
@@ -645,10 +718,126 @@ void DumpTexture(IDirect3DTexture8* const ptexture)
 {
     static int count = 0;
     char buf[BUFLEN];
-    //sprintf(buf,"kitserver\\boot_tex%03d.bmp",count++);
-    sprintf(buf,"kitserver\\%03d_tex_%08x.bmp",count++,(DWORD)ptexture);
+    sprintf(buf,"%s\\%03d_tex_%08x.bmp",GetPESInfo()->mydir,count++,(DWORD)ptexture);
     if (FAILED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, ptexture, NULL))) {
         LogWithString(&k_boot, "DumpTexture: failed to save texture to %s", buf);
     }
 }
 
+void bootBeginRenderPlayer(DWORD playerMainColl)
+{
+	DWORD pmc=0, playerNumber=0;
+	DWORD* bodyColl=NULL;
+	int minI=1, maxI=22;
+	
+	currRenderPlayer=0xffffffff;
+	currRenderPlayerRecord=NULL;
+	
+	if (isEditMode()) {
+        playerNumber = editPlayerId();
+		if (isEditPlayerBootMode()) {
+			//using third "player" in lineup for boot preview
+			minI=3;
+			maxI=3;
+		} else {
+			maxI=1;
+		};
+	};
+
+	for (int i=minI;i<=maxI;i++) {
+		if (!isEditMode())
+			playerNumber=getRecordPlayerId(i);
+
+		if (playerNumber != 0) {
+			pmc=*(playerRecord(i)->texMain);
+			pmc=*(DWORD*)(pmc+0x10);
+			
+			if (pmc==playerMainColl) {
+				//PES is going to render this player now
+				currRenderPlayer = playerNumber;
+				currRenderPlayerRecord = playerRecord(i);
+				BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+				if (currRenderPlayer != g_bootPlayerIds[temp]) {
+					//not the same player anymore
+					g_bootPlayerIds[temp]=currRenderPlayer;
+					
+					//free the textures
+					for (int j=0; j<=1; j++) {
+						switch ((DWORD)g_bootTextures[j][temp]) {
+							case 0:
+							case 0xffffffff:
+								break;
+							default:
+								SafeRelease(g_bootTextures[j][temp]);
+								break;
+						};
+						 g_bootTextures[j][temp]=NULL;
+					};
+				};
+					
+				bodyColl=*(DWORD**)(playerMainColl+0x14) + 1;
+				
+				if (isEditPlayerBootMode()) {
+					//only lod level 1
+					g_bootTexturesColl[0]=*bodyColl;
+					g_bootTexturesPos[0]=1;
+					g_bootTexturesColl[1]=0;
+					g_bootTexturesColl[2]=0;
+					g_bootTexturesColl[3]=0;
+					g_bootTexturesColl[4]=0;
+				}
+				
+				else
+				{
+					for (int lod=0;lod<5;lod++) {
+						g_bootTexturesColl[lod]=*bodyColl;	//remember p2 value for this lod level
+						switch (lod) {
+							case 0:
+							case 1:
+								g_bootTexturesPos[lod] = isTrainingMode()?3:4; break;
+							case 2:
+							case 3:
+								g_bootTexturesPos[lod] = 3; break;
+							case 4:
+								g_bootTexturesPos[lod] = 2; break;
+						};
+						bodyColl+=2;
+					};
+				};
+			};
+		};
+	};	
+	return;
+};
+
+void bootPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
+{
+	if (currRenderPlayer==0xffffffff) return;
+	
+	for (int lod=0; lod<5; lod++) {
+		if (p2==g_bootTexturesColl[lod] && p3==g_bootTexturesPos[lod]) {
+			BYTE bigTex=(lod<3)?1:0;
+			BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+			IDirect3DTexture8* bootTexture=g_bootTextures[bigTex][temp];
+			
+			if ((DWORD)bootTexture != 0xffffffff) {	//0xffffffff means: has no gdb boots
+				if (!bootTexture) {
+					//no boot texture in cache yet
+					bootTexture = getBootTexture(currRenderPlayer, lod<3);		
+					if (!bootTexture) {
+						//no texture assigned
+						bootTexture = (IDirect3DTexture8*)0xffffffff;
+					} else {
+						*res=bootTexture;
+					};
+					//cache the texture pointer
+					g_bootTextures[bigTex][temp]=bootTexture;
+				} else {
+					//set texture
+					*res=bootTexture;
+				};
+			};
+		};
+	};
+	return;
+};

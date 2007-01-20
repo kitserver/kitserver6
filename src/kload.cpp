@@ -81,6 +81,7 @@ extern char* GAME[];
 
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
+void ReadPatchInfo();
 void SetPESInfo();
 
 KEXPORT KEYCFG* GetInputCfg()
@@ -117,6 +118,11 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		RegisterKModule(&k_kload);
 		
 		ReadConfig(&g_config, cfgFile);
+		
+		LogWithString(&k_kload,"0_text -> %s", g_pesinfo.AFS_0_text);
+		//LogWithString(&k_kload,"0_sound -> %s", g_pesinfo.AFS_0_sound);
+		//LogWithString(&k_kload,"L_text -> %s", g_pesinfo.AFS_L_text);
+		//LogWithString(&k_kload,"L_sound -> %s", g_pesinfo.AFS_L_sound);
 
         //read key bindings
         char keyCfgFile[BUFLEN];
@@ -200,6 +206,82 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	return TRUE;    /* ok */
 }
 
+void ReadPatchInfo()
+{
+	char patchFile[BUFLEN];
+	sprintf(patchFile,"%spatch.cfg",g_pesinfo.mydir);
+	
+	FILE* cfg = fopen(patchFile, "rt");
+	if (cfg == NULL) return;
+
+	char str[BUFLEN];
+	char name[BUFLEN];
+	int value = 0;
+
+	char *pName = NULL, *pValue = NULL, *comment = NULL;
+	while (!feof(cfg))
+	{
+		ZeroMemory(str, BUFLEN);
+		fgets(str, BUFLEN-1, cfg);
+
+		// skip comments
+		comment = strstr(str, "#");
+		if (comment != NULL) comment[0] = '\0';
+
+		// parse the line
+		pName = pValue = NULL;
+		ZeroMemory(name, BUFLEN); value = 0;
+		char* eq = strstr(str, "=");
+		if (eq == NULL || eq[1] == '\0') continue;
+
+		eq[0] = '\0';
+		pName = str; pValue = eq + 1;
+
+		ZeroMemory(name, NULL); 
+		sscanf(pName, "%s", name);
+
+		if (lstrcmp(name, "0_text.afs")==0)
+		{
+			char* startQuote = strstr(pValue, "\"");
+			if (startQuote == NULL) continue;
+			char* endQuote = strstr(startQuote + 1, "\"");
+			if (endQuote == NULL) continue;
+
+            memcpy(g_pesinfo.AFS_0_text, startQuote + 1, endQuote - startQuote - 1);
+		}
+		else if (lstrcmp(name, "0_sound.afs")==0)
+		{
+			char* startQuote = strstr(pValue, "\"");
+			if (startQuote == NULL) continue;
+			char* endQuote = strstr(startQuote + 1, "\"");
+			if (endQuote == NULL) continue;
+
+            memcpy(g_pesinfo.AFS_0_sound, startQuote + 1, endQuote - startQuote - 1);
+		}
+		else if (lstrcmp(name, "+_text.afs")==0)
+		{
+			char* startQuote = strstr(pValue, "\"");
+			if (startQuote == NULL) continue;
+			char* endQuote = strstr(startQuote + 1, "\"");
+			if (endQuote == NULL) continue;
+				
+            memcpy(g_pesinfo.AFS_L_text, startQuote + 1, endQuote - startQuote - 1);
+		}
+		else if (lstrcmp(name, "+_sound.afs")==0)
+		{
+			char* startQuote = strstr(pValue, "\"");
+			if (startQuote == NULL) continue;
+			char* endQuote = strstr(startQuote + 1, "\"");
+			if (endQuote == NULL) continue;
+
+            memcpy(g_pesinfo.AFS_L_sound, startQuote + 1, endQuote - startQuote - 1);
+		}
+	}
+	fclose(cfg);
+
+	return;
+}
+
 void SetPESInfo()
 {
 	char mydir[BUFLEN];
@@ -265,6 +347,23 @@ void SetPESInfo()
 	
 	g_pesinfo.GameVersion=GetGameVersion();
 	
+	//has to be implanted later
+	g_pesinfo.GameLang='e';
+	
+	lstrcpy(g_pesinfo.AFS_0_text,"dat\\0_text.afs");
+	lstrcpy(g_pesinfo.AFS_0_sound,"dat\\0_sound.afs");
+	lstrcpy(g_pesinfo.AFS_L_text,"dat\\+_text.afs");
+	lstrcpy(g_pesinfo.AFS_L_sound,"dat\\+_text.afs");
+	
+	ReadPatchInfo();
+	
+	//replace the PLUS with the letter for the chosen language
+	char* plusChar = strchr(g_pesinfo.AFS_L_text, '+');
+	if (plusChar != NULL) plusChar[0] = g_pesinfo.GameLang;
+		
+	plusChar = strchr(g_pesinfo.AFS_L_sound, '+');
+	if (plusChar != NULL) plusChar[0] = g_pesinfo.GameLang;
+		
 	return;
 };
 
@@ -470,7 +569,7 @@ DWORD MasterCallFirst(...)
 		
 		//change the return address to the destination of our jump
 		*(DWORD*)(oldEBP+4)=jmpDest;
-	};
+	}
 	
 	return result;
 };

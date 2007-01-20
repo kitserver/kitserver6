@@ -14,8 +14,9 @@
 extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
+int bootserverVersion=0;
 
-#define CODELEN 46
+#define CODELEN 52
 
 enum {
 	C_UNIDECODE, C_UNIDECODE_CS,C_UNIDECODE_CS2,
@@ -39,6 +40,8 @@ enum {
     C_GETTEAMINFO, C_GETTEAMINFO_CS,
     C_CLEANINPUTTABLE_HOOK,
     C_FILEFROMAFS_JUMPHACK,
+    C_PES_GETTEXTURE, C_PES_GETTEXTURE_CS1,
+    C_BEGIN_RENDERPLAYER_CS, C_BEGIN_RENDERPLAYER_JUMPHACK,
 };
 
 // Code addresses.
@@ -64,7 +67,9 @@ DWORD codeArray[][CODELEN] = {
       0, 0, 0,
       0x865240, 0x804cda,
       0x9cd4f2,
-      0
+      0,
+      0x408c20, 0x402723,
+      0x8acf93, 0x8acfeb,
     },
     // PES6 1.10
 	{ 0x8cd5f0, 0x8b1a63, 0,
@@ -88,21 +93,29 @@ DWORD codeArray[][CODELEN] = {
       0x865370, 0x804e5a,
       0x9cd682,
       0x65b85b,
+      0x408d90, 0x402723,
+      0x8ad0f3, 0x8ad14b,
     },
 };
 
 // data addresses
+#define DATALEN 11
+enum { INPUT_TABLE, STACK_SHIFT, RESMEM1, RESMEM2, RESMEM3,
+	PLAYERS_LINEUP, LINEUP_RECORD_SIZE, PLAYERDATA_BASE, GAME_MODE, EDITMODE_FLAG,
+	EDITPLAYER_ID };
 
-#define DATALEN 5
-enum { INPUT_TABLE, STACK_SHIFT, RESMEM1, RESMEM2, RESMEM3 };
 DWORD dataArray[][DATALEN] = {
     //PES6
     {
         0x3a71254, 0, 0x8c7b6d, 0x8c7b82, 0x8c7b99,
+        0x3bdc980, 0x240, 0x3bcf55c, 0x3be12c9, 0x1108488,
+        0x112e24a,
     },
     //PES6 1.10
     {
-        0x3a72254, 0x2c, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
+        0x3a72254, 0 /*0x2c*/, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
+        0x3bdd980, 0x240, 0x3bd055c, 0x3be22c9, 0x1109488,
+        0x112f24a,
     },
 };
 
@@ -111,6 +124,13 @@ BYTE _shortJumpHack[][2] = {
     {0,0},
     //PES6 1.10
     {0xeb,0x4a},
+};
+
+BYTE _shortJumpHack2[][2] = {
+    //PES6
+    {0xeb,0x37},
+    //PES6 1.10
+    {0,0}, //later!
 };
 
 #define GPILEN 19
@@ -210,6 +230,10 @@ bool bFileFromAFSJumpHackHooked = false;
 bool bFreeMemoryHooked = false;
 bool bProcessPlayerDataHooked = false;
 bool bUniSplitHooked = false;
+bool bPesGetTextureHooked = false;
+bool bBeginRenderPlayerHooked = false;
+bool bBeginRenderPlayerJumpHackHooked = false;
+
 
 UNIDECODE UniDecode = NULL;
 UNPACK Unpack = NULL;
@@ -223,6 +247,8 @@ SETLODMIXERDATA SetLodMixerData2 = NULL;
 GETPLAYERINFO oGetPlayerInfo = NULL;
 FREEMEMORY oFreeMemory = NULL;
 UNISPLIT UniSplit = NULL;
+PES_GETTEXTURE orgPesGetTexture = NULL;
+
 
 CALLLINE l_D3D_Create={0,NULL};
 CALLLINE l_D3D_GetDeviceCaps={0,NULL};
@@ -255,15 +281,28 @@ CALLLINE l_OnHideMenu={0,NULL};
 CALLLINE l_UniSplit={0,NULL};
 CALLLINE l_AfterReadFile={0,NULL};
 CALLLINE l_D3D_UnlockRect={0,NULL};
+CALLLINE l_PesGetTexture={0,NULL};
+CALLLINE l_BeginRenderPlayer={0,NULL};
 
 void HookDirect3DCreate8()
 {
 	BYTE g_jmp[5] = {0,0,0,0,0};
 	// Put a JMP-hook on Direct3DCreate8
 	Log(&k_kload,"JMP-hooking Direct3DCreate8...");
-	HMODULE hD3D8 = GetModuleHandle("d3d8");
+	
+	char d3dDLL[5];
+	switch (g_pesinfo.GameVersion) {
+	case gvPES6PC110:
+		strcpy(d3dDLL,"d3dw");
+		break;
+	default:
+		strcpy(d3dDLL,"d3d8");
+		break;
+	};
+	
+	HMODULE hD3D8 = GetModuleHandle(d3dDLL);
 	if (!hD3D8) {
-	    hD3D8 = LoadLibrary("d3d8");
+	    hD3D8 = LoadLibrary(d3dDLL);
 	}
 	if (hD3D8) {
 		g_orgDirect3DCreate8 = (PFNDIRECT3DCREATE8PROC)GetProcAddress(hD3D8, "Direct3DCreate8");
@@ -390,7 +429,7 @@ void HookOthers()
 		HookProc(C_UNISPLIT, C_UNISPLIT_CS8, 
 	        (DWORD)NewUniSplit,"C_UNISPLIT", "C_UNISPLIT_CS8");
 	        
-	        	        
+
 	// hook GetPlayerInfo
 	char tmp[BUFLEN];
 	bGetPlayerInfoHooked=true;
@@ -465,6 +504,38 @@ void HookOthers()
 	bProcessPlayerDataHooked = MasterHookFunction(code[C_PROCESSPLAYERDATA_JMP],
 													0, NewProcessPlayerData);
 	Log(&k_kload,"Jump to ProcessPlayerData HOOKED at code[C_PROCESSPLAYERDATA_JMP]");
+	
+	if (bootserverVersion==VERSION_ROBBIE) {
+		// hook PesGetTexure
+		bPesGetTextureHooked = HookProc(C_PES_GETTEXTURE,C_PES_GETTEXTURE_CS1,(DWORD)NewPesGetTexture,
+			"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
+			
+		// hook BeginRenderPlayer
+		if (code[C_BEGIN_RENDERPLAYER_CS] != 0 && code[C_BEGIN_RENDERPLAYER_JUMPHACK] != 0)
+		{
+			bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_CS]);
+			ptr = (DWORD*)(code[C_BEGIN_RENDERPLAYER_CS] + 1);
+		
+		    if (VirtualProtect(bptr, 9, newProtection, &protection)) {
+		    	bptr[0]=0xe8; //call
+		    	bptr[5]=0x33; //xor ebx, ebx
+		    	bptr[6]=0xdb;
+		    	bptr[7]=0xeb; //jump back
+		    	bptr[8]=code[C_BEGIN_RENDERPLAYER_JUMPHACK] - (code[C_BEGIN_RENDERPLAYER_CS] + 7);
+	            ptr[0] = (DWORD)NewBeginRenderPlayer - (DWORD)(code[C_BEGIN_RENDERPLAYER_CS] + 5);
+		        bBeginRenderPlayerHooked = true;
+		        Log(&k_kload,"BeginRenderPlayer HOOKED at code[C_BEGIN_RENDERPLAYER_CS]");
+		    };
+		    
+	        bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_JUMPHACK]);
+	        if (VirtualProtect(bptr, 2, newProtection, &protection)) {
+	            bptr[0]=0xeb;
+	            bptr[1]=0x100 + code[C_BEGIN_RENDERPLAYER_CS] - (code[C_BEGIN_RENDERPLAYER_JUMPHACK] + 2);
+	            bBeginRenderPlayerJumpHackHooked = true;
+	            Log(&k_kload,"BeginRenderPlayer Short-Jump-Hack installed.");
+	        }
+		};
+	};
 
     // hook num-pages
     HookGetNumPages();
@@ -595,7 +666,16 @@ void UnhookOthers()
 		bProcessPlayerDataHooked=MasterUnhookFunction(code[C_PROCESSPLAYERDATA_JMP], 
 														NewProcessPlayerData);
 		Log(&k_kload,"Jump to ProcessPlayerData UNHOOKED");
-
+		
+		if (bootserverVersion==VERSION_ROBBIE) {
+			// unhook PesGetTexure
+			bPesGetTextureHooked = !UnhookProc(bPesGetTextureHooked,C_PES_GETTEXTURE,
+				C_PES_GETTEXTURE_CS1,"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
+				
+			ClearLine(&l_PesGetTexture);
+			ClearLine(&l_BeginRenderPlayer);
+		};
+		
 	return;
 };
 
@@ -843,7 +923,7 @@ KEXPORT DWORD AFSMemUnpack(DWORD FileID, DWORD Buffer)
 	DWORD NBW=0;
 	
 	strcpy(tmp,g_pesinfo.pesdir);
-	strcat(tmp,"dat\\0_text.afs");
+	strcat(tmp,g_pesinfo.AFS_0_text);
 	
 	HANDLE file=CreateFile(tmp,GENERIC_READ,3,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
 	if (file==INVALID_HANDLE_VALUE) return 0;
@@ -1085,7 +1165,7 @@ void NewProcessPlayerData()
 	//Log(&k_kload,"NewProcessPlayerData done.");
 	return;
 };
-
+bool abc=true;
 /**
  * Monitors the file pointer.
  */
@@ -1093,7 +1173,7 @@ BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberO
   LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	PFNREADFILE NextCall=NULL;
-	
+	//if (abc) MessageBox(0,"Before ReadFile call chain","1-1",0);
 	for (int i=0;i<(l_ReadFile.num);i++)
 	if (l_ReadFile.addr[i]!=0) {
 		NextCall=(PFNREADFILE)l_ReadFile.addr[i];
@@ -1101,15 +1181,26 @@ BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberO
 	};
 
     //Log(&k_kload, "NewReadFile called.");
-	
+	//if (abc) MessageBox(0,"Before ReadFile","1-2",0);
 	// call original function		
 	BOOL result=ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+	//if (abc) MessageBox(0,"After ReadFile","1-3",0);
+	
+	char temp[BUFLEN];
+	sprintf(temp,"Number of calls: %d",l_AfterReadFile.num);
+	//if (abc) MessageBox(0,temp,"",0);
 	
 	for (i=0;i<(l_AfterReadFile.num);i++)
 	if (l_AfterReadFile.addr[i]!=0) {
 		NextCall=(PFNREADFILE)l_AfterReadFile.addr[i];
+		sprintf(temp,"Call address: %x",l_AfterReadFile.addr[i]);
+		//if (abc) MessageBox(0,temp,"",0);
 		NextCall(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 	};
+	//if (abc) MessageBox(0,"After AfterReadFile call chain","1-4",0);
+		
+	//if (abc) MessageBox(0,"You should have seen 4 messages about ReadFile now.","1-5",0);
+	abc=false;
 	
 	return result;
 }
@@ -1697,6 +1788,51 @@ void CheckInput()
     }
 }
 
+IDirect3DTexture8* STDMETHODCALLTYPE NewPesGetTexture(DWORD p1)
+{
+	DWORD oldEBP;
+	__asm mov oldEBP, ebp
+	
+	IDirect3DTexture8* res=orgPesGetTexture(p1);
+	
+	DWORD orgEBP=*(DWORD*)oldEBP;
+	DWORD p2=*(DWORD*)(orgEBP+8), p3=*(DWORD*)(orgEBP+0xc);
+	
+	
+	CPES_GETTEXTURE NextCall=NULL;
+	for (int i=0;i<(l_PesGetTexture.num);i++)
+	if (l_PesGetTexture.addr[i]!=0) {
+		NextCall=(CPES_GETTEXTURE)l_PesGetTexture.addr[i];
+		NextCall(p1, p2, p3, &res);
+	};
+	
+	return res;
+}
+
+void NewBeginRenderPlayer()
+{
+	DWORD oldEAX, oldEDI;
+	
+	__asm {
+		mov oldEAX, eax
+		mov oldEDI, edi
+	};
+	
+	CBEGINRENDERPLAYER NextCall=NULL;
+	for (int i=0;i<(l_BeginRenderPlayer.num);i++)
+	if (l_BeginRenderPlayer.addr[i]!=0) {
+		NextCall=(CBEGINRENDERPLAYER)l_BeginRenderPlayer.addr[i];
+		NextCall(oldEDI);
+	};
+	
+	__asm {
+		mov edi, oldEDI
+		mov eax, oldEAX
+		xor ebx, ebx
+	};
+	return;
+};
+
 void DrawKitSelectInfo()
 {
 	char tmp[BUFLEN];
@@ -1726,6 +1862,159 @@ KEXPORT void dksiSetMenuTitle(char* newTitle)
 	return;
 };
 
+void DumpTexture(IDirect3DTexture8* const ptexture) 
+{
+    static int count = 0;
+    char buf[BUFLEN];
+    //sprintf(buf,"kitserver\\boot_tex%03d.bmp",count++);
+    sprintf(buf,"kitserver\\%03d_tex_%08x.bmp",count++,(DWORD)ptexture);
+    if (FAILED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, ptexture, NULL))) {
+        LogWithString(&k_kload, "DumpTexture: failed to save texture to %s", buf);
+    }
+    else
+    {
+    	LogWithString(&k_kload, "DumpTexture: Saved texture to %s", buf);
+    };
+}
+
+KEXPORT bool isEditMode()
+{
+    return *(BYTE*)data[EDITMODE_FLAG] == 1;
+}
+
+KEXPORT DWORD editPlayerId()
+{
+	DWORD playerId = *(WORD*)data[EDITPLAYER_ID];
+	return playerId;
+};
+
+KEXPORT bool isTrainingMode()
+{
+	if (isEditMode()) return false;
+	return *(BYTE*)data[GAME_MODE] == 5;
+};
+
+KEXPORT PLAYER_RECORD* playerRecord(BYTE pos)
+{
+	if (pos>22) pos=1;
+	return (PLAYER_RECORD*)(data[PLAYERS_LINEUP] + pos*data[LINEUP_RECORD_SIZE]);
+};
+
+KEXPORT DWORD getRecordPlayerId(BYTE pos)
+{
+	DWORD id=0;
+	if (pos>22) return 0;
+	
+	PLAYER_RECORD* rec = playerRecord(pos);
+	id=*(WORD*)(data[PLAYERDATA_BASE] + (rec->team*0x20 + rec->posInTeam)*0x348 + 0x2a);
+	
+	return id;
+};
+
+KEXPORT IDirect3DTexture8* GetTextureFromColl(DWORD texColl, DWORD which)
+{
+	IDirect3DTexture8* res=NULL;
+	
+	DWORD p1=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x38) + which*4;
+	DWORD p2=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) + which*4;
+	p1=*(DWORD*)p1;
+	p2=*(DWORD*)p2;
+	
+	//sorry for using assembler here, but else ecx is used for the parameter
+	__asm {
+		push p1
+		mov ecx, p2 //doesn't work without this!
+		call orgPesGetTexture
+		mov res, eax
+	};
+	
+	return res;
+};
+
+KEXPORT void SetTextureToColl(DWORD texColl, DWORD which, IDirect3DTexture8* tex)
+{
+	DWORD* p1=*(DWORD**)(texColl+(*(DWORD*)(texColl+0x40))*4+0x38) + which*4;
+	DWORD* p2=*(DWORD**)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) + which*4;
+	
+	TEXTURE_INFO* ti = (TEXTURE_INFO*)HeapAlloc(GetProcessHeap(),
+							HEAP_ZERO_MEMORY, sizeof(TEXTURE_INFO));
+							
+	if (*p2 == 0) return;
+		//if (**(DWORD**)p2 != 0)
+			memcpy((BYTE*)ti, (BYTE*)*p2, sizeof(TEXTURE_INFO));
+	LogWithNumber(&k_kload, "  ---> %x", (DWORD)ti);
+
+	ti->refCount = 0xffff;	//don't want PES to free our memory
+	ti->tex = NULL;//tex;
+	//ti->unknown5 = 1;
+	
+	*p1=(DWORD)ti;
+	*p2=(DWORD)ti;
+	return;
+};
+
+KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel)
+{
+	IDirect3DTexture8* res=NULL;
+	
+	if (lodLevel>4 || texCollType>3) return NULL;
+	
+	DWORD playerMainColl=*(playerRecord(playerPos)->texMain);
+	playerMainColl=*(DWORD*)(playerMainColl+0x10);
+	
+	DWORD texColl=0;
+	DWORD bodyNumTexs[2][5]={
+		//0: body
+		{
+			9, 9, 7, 7, 4,
+		},
+		//1: body (training)
+		{
+			6, 6, 6, 6, 4,
+		}
+	};
+	
+	switch (texCollType) {
+		case 0:
+		case 1:
+			texColl=*(DWORD*)(playerMainColl+0x14);
+			texColl+=lodLevel*8;
+			texColl=*(DWORD*)(texColl + 4);
+			break;
+		case 2:
+			//if (lodLevel>=*(BYTE*)(playerMainColl+5)) return NULL;
+			texColl=*(DWORD*)(playerMainColl+0x18);
+			texColl+=lodLevel*0x1c; //actually not really lod, but other parameter
+			texColl=*(DWORD*)(texColl + 8);
+			break;
+		case 3:
+			if (lodLevel>=*(BYTE*)(playerMainColl+6)) return NULL;
+			texColl=*(DWORD*)(playerMainColl+0x1c);
+			texColl+=lodLevel*0x14; //actually not really lod, but other parameter
+			texColl=*(DWORD*)(texColl + 8);
+			break;
+	};
+	
+	if (texColl == 0) return NULL;
+	//if (which>=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) - 4) return NULL;
+	
+	DWORD p1=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x38) + which*4;
+	DWORD p2=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) + which*4;
+	p1=*(DWORD*)p1;
+	p2=*(DWORD*)p2;
+	
+	//sorry for using assembler here, but else ecx is used for the parameter
+	__asm {
+		push p1
+		mov ecx, p2 //doesn't work without this!
+		call orgPesGetTexture
+		mov res, eax
+	};
+	
+	LogWithThreeNumbers(&k_kload,"### %d %d %d",texCollType, which, lodLevel);
+	
+	return res;
+};
 
 LRESULT CALLBACK KeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 {
@@ -1738,6 +2027,20 @@ LRESULT CALLBACK KeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 		};
 	};
 	
+	/*
+	// Dump all textures of team 1 goalie, for all lod levels
+	if (!IsKitSelectMode && code1 >= 0 && code1==HC_ACTION && lParam & 0x80000000) {
+		KEYCFG* keyCfg = GetInputCfg();
+		if (wParam == keyCfg->keyboard.keyInfoPageNext) {
+			for (int j=0;j<5;j++) {
+				for (int i=0;i<9;i++) {
+					//DumpTexture(GetPlayerTexture(1, isTrainingMode()?1:0, i, j));
+					//DumpTexture(GetPlayerTexture(1, 3, i, 2));
+				};
+			};
+        }
+    }
+    */
 	
 	CINPUT NextCall=NULL;
 	for (int i=0;i<(l_Input.num);i++)
@@ -1938,6 +2241,8 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_UniSplit: cl = &l_UniSplit; break;
 		case hk_AfterReadFile: cl = &l_AfterReadFile; break;
 		case hk_D3D_UnlockRect: cl = &l_D3D_UnlockRect; break;
+		case hk_PesGetTexture: cl = &l_PesGetTexture; break;
+		case hk_BeginRenderPlayer: cl = &l_BeginRenderPlayer; break;
 	};
 	return cl;
 };
@@ -1962,6 +2267,7 @@ void InitAddresses(int v)
 	oGetPlayerInfo = (GETPLAYERINFO)code[C_GETPLAYERINFO];
 	oFreeMemory = (FREEMEMORY)code[C_FREEMEMORY];
 	UniSplit = (UNISPLIT)code[C_UNISPLIT];
+	orgPesGetTexture = (PES_GETTEXTURE)code[C_PES_GETTEXTURE];
 	
 	return;
 };
@@ -1986,5 +2292,11 @@ void FixReservedMemory()
 	};
 	
 
+	return;
+};
+
+KEXPORT void SetBootserverVersion(int version)
+{
+	bootserverVersion=version;
 	return;
 };

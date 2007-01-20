@@ -363,6 +363,11 @@ void gdbLoadConfig(GDB* gdb, Kit* kit)
                 if (ParseColor(value, &kit->radarColor))
                     kit->attDefined |= RADAR_COLOR;
             }
+			else if (lstrcmp(key, "shorts.color")==0)
+            {
+                if (ParseColor(value, &kit->shortsMainColor))
+                    kit->attDefined |= SHORTS_MAIN_COLOR;
+            }
             else if (lstrcmp(key, "mask")==0)
             {
                 ZeroMemory(kit->maskFile,MAXFILENAME);
@@ -375,6 +380,7 @@ void gdbLoadConfig(GDB* gdb, Kit* kit)
                 strncpy(kit->description, value, MAXFILENAME);
                 kit->attDefined |= KITDESCRIPTION;
             }
+
             // legacy attributes. Unsupported or irrelevant
             /*
             else if (lstrcmp(key, "cuff")==0)

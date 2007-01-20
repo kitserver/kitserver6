@@ -23,6 +23,11 @@ typedef struct _PESINFO {
 	UINT bbHeight;
 	double stretchX;
 	double stretchY;
+	char GameLang;
+	char AFS_0_text[256];
+	char AFS_0_sound[256];
+	char AFS_L_text[256];
+	char AFS_L_sound[256];
 } PESINFO;
 
 enum {gvPES6PC,gvPES6PC110};

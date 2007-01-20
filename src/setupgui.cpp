@@ -36,7 +36,7 @@ bool BuildControls(HWND parent)
 	borW = WIN_WIDTH - spacer*3;
 	statW = 120;
 	boxW = borW - statW - spacer*3; boxH = 20; statH = 16;
-	borH = spacer*3 + boxH*2;
+	borH = spacer*3 + boxH*2 + 10;
 
 	HWND staticBorderTopControl = CreateWindowEx(
 			xstyle, "Static", "", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
@@ -96,11 +96,11 @@ bool BuildControls(HWND parent)
 
 	g_exeInfoControl = CreateWindowEx(
 			xstyle, "Static", "Information unavailable", style,
-			x, y+4, boxW, boxH,
+			x, y+4, boxW, boxH + 10,
 			parent, NULL, NULL, NULL);
 
 	x = spacer*2;
-	y += boxH + spacer*2;
+	y += boxH + spacer*2 + 10;
 
 	// BOTTOM SECTION - buttons
 

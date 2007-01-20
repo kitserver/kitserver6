@@ -10,7 +10,6 @@
 #include "input.h"
 #include "keycfg.h"
 
-#include <map>
 #include <pngdib.h>
 
 KMOD k_bserv={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
@@ -133,7 +132,6 @@ void bservUnlockRect(IDirect3DTexture8* self,UINT Level);
 
 DWORD SetBallName(char** names, DWORD numNames, DWORD p3, DWORD p4, DWORD p5, DWORD p6, DWORD p7);
 
-
 void DumpBuffer(char* filename, LPVOID buf, DWORD len)
 {
     FILE* f = fopen(filename,"wb");
@@ -212,9 +210,8 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
 		
 		char tmp[BUFLEN];
-		
 		strcpy(tmp,GetPESInfo()->pesdir);
-		strcat(tmp,"dat\\0_text.afs");
+		strcat(tmp,GetPESInfo()->AFS_0_text);
 		
 		HANDLE TempHandle=CreateFile(tmp,GENERIC_READ,3,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
 		DWORD HeapAddress=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,8);
@@ -245,9 +242,9 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	    ZeroMemory(ballCfg, BUFLEN);
 	    sprintf(ballCfg, "%s\\bserv.cfg", GetPESInfo()->mydir);
         ReadConfig(&bserv_cfg, ballCfg);
-	    
+
 		SetBall(bserv_cfg.selectedBall);
-		
+
 		HookFunction(hk_D3D_Create,(DWORD)InitBserv);
 		HookFunction(hk_ReadFile,(DWORD)bservReadFile);
 		HookFunction(hk_AfterReadFile,(DWORD)bservAfterReadFile);
@@ -313,9 +310,10 @@ void InitBserv()
     Log(&k_bserv, "InitBserv called.");
 	MasterHookFunction(code[C_SETBALLNAME_CS], 7, SetBallName);
 	
-	HookFunction(hk_D3D_Create,(DWORD)InitBserv);
+	UnhookFunction(hk_D3D_Create,(DWORD)InitBserv);
 
     RegisterGetNumPagesCallback(bservGetNumPages);
+
 	return;
 };
 
