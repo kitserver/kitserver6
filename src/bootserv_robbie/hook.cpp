@@ -15,7 +15,7 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
 
-#define CODELEN 60
+#define CODELEN 52
 
 enum {
 	C_UNIDECODE, C_UNIDECODE_CS,C_UNIDECODE_CS2,
@@ -40,8 +40,6 @@ enum {
     C_CLEANINPUTTABLE_HOOK,
     C_FILEFROMAFS_JUMPHACK,
     C_PES_GETTEXTURE, C_PES_GETTEXTURE_CS1,
-    C_LOD1, C_LOD2, C_LOD3, C_LOD4, C_LOD5,
-    C_ONSETLODLEVEL, C_GETLODTEXTURE_CS, C_GETLODTEXTURE_JUMPHACK,
     C_BEGIN_RENDERPLAYER_CS, C_BEGIN_RENDERPLAYER_JUMPHACK,
 };
 
@@ -70,8 +68,6 @@ DWORD codeArray[][CODELEN] = {
       0x9cd4f2,
       0,
       0x408c20, 0x402723,
-      0x8afc35, 0x8afcf4, 0x8afdb4, 0x8afe5e, 0x8afef4,
-      0x8ae1b0, 0x883aa6, 0x883a6d,
       0x8acf93, 0x8acfeb,
     },
     // PES6 1.10
@@ -96,9 +92,7 @@ DWORD codeArray[][CODELEN] = {
       0x865370, 0x804e5a,
       0x9cd682,
       0x65b85b,
-      0, 0,  //later!
-      0x8afd15, 0x8afdd4, 0x8afe94, 0x8aff3e, 0x8affd4,
-      0x8ae310, 0, 0, //later!
+      0, 0,  //### HAVE TO BE FILLED! ###
       0, 0,
     },
 };
@@ -236,11 +230,9 @@ bool bFreeMemoryHooked = false;
 bool bProcessPlayerDataHooked = false;
 bool bUniSplitHooked = false;
 bool bPesGetTextureHooked = false;
-bool bOnSetLodLevelHooked =false;
-bool bGetLodTextureHooked = false;
-bool bGetLodTextureJumpHackHooked = false;
 bool bBeginRenderPlayerHooked = false;
 bool bBeginRenderPlayerJumpHackHooked = false;
+
 
 UNIDECODE UniDecode = NULL;
 UNPACK Unpack = NULL;
@@ -255,7 +247,7 @@ GETPLAYERINFO oGetPlayerInfo = NULL;
 FREEMEMORY oFreeMemory = NULL;
 UNISPLIT UniSplit = NULL;
 PES_GETTEXTURE orgPesGetTexture = NULL;
-ONSETLODLEVEL orgOnSetLodLevel = NULL;
+
 
 CALLLINE l_D3D_Create={0,NULL};
 CALLLINE l_D3D_GetDeviceCaps={0,NULL};
@@ -289,8 +281,6 @@ CALLLINE l_UniSplit={0,NULL};
 CALLLINE l_AfterReadFile={0,NULL};
 CALLLINE l_D3D_UnlockRect={0,NULL};
 CALLLINE l_PesGetTexture={0,NULL};
-CALLLINE l_OnSetLodLevel={0,NULL};
-CALLLINE l_GetLodTexture={0,NULL};
 CALLLINE l_BeginRenderPlayer={0,NULL};
 
 void HookDirect3DCreate8()
@@ -427,19 +417,7 @@ void HookOthers()
 		HookProc(C_UNISPLIT, C_UNISPLIT_CS8, 
 	        (DWORD)NewUniSplit,"C_UNISPLIT", "C_UNISPLIT_CS8");
 	        
-	// hook OnSetLodLevel
-	bOnSetLodLevelHooked = HookProc(C_ONSETLODLEVEL, C_LOD1, 
-	        (DWORD)NewOnSetLodLevel,"C_ONSETLODLEVEL", "C_LOD1") &&
-		HookProc(C_ONSETLODLEVEL, C_LOD2, 
-	        (DWORD)NewOnSetLodLevel,"C_ONSETLODLEVEL", "C_LOD2") &&
-		HookProc(C_ONSETLODLEVEL, C_LOD3, 
-	        (DWORD)NewOnSetLodLevel,"C_ONSETLODLEVEL", "C_LOD3") &&
-		HookProc(C_ONSETLODLEVEL, C_LOD4, 
-	        (DWORD)NewOnSetLodLevel,"C_ONSETLODLEVEL", "C_LOD4") &&
-		HookProc(C_ONSETLODLEVEL, C_LOD5,
-	        (DWORD)NewOnSetLodLevel,"C_ONSETLODLEVEL", "C_LOD5");
-	        
-	        	        
+
 	// hook GetPlayerInfo
 	char tmp[BUFLEN];
 	bGetPlayerInfoHooked=true;
@@ -519,30 +497,6 @@ void HookOthers()
 	bPesGetTextureHooked = HookProc(C_PES_GETTEXTURE,C_PES_GETTEXTURE_CS1,(DWORD)NewPesGetTexture,
 		"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
 		
-	// hook GetLodTexture
-	if (code[C_GETLODTEXTURE_CS] != 0)
-	{
-		bptr = (BYTE*)(code[C_GETLODTEXTURE_CS]);
-		ptr = (DWORD*)(code[C_GETLODTEXTURE_CS] + 1);
-	
-	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
-	    	bptr[0]=0xe8; //call
-	    	bptr[5]=0xc3; //ret
-            ptr[0] = (DWORD)NewGetLodTexture - (DWORD)(code[C_GETLODTEXTURE_CS] + 5);
-	        bGetLodTextureHooked = true;
-	        Log(&k_kload,"GetLodTexture HOOKED at code[C_GETLODTEXTURE_CS]");
-	    };
-	    
-		if (code[C_GETLODTEXTURE_JUMPHACK] != 0) {
-            bptr = (BYTE*)(code[C_GETLODTEXTURE_JUMPHACK]);
-            if (VirtualProtect(bptr, 2, newProtection, &protection)) {
-                memcpy(bptr, _shortJumpHack2[GetPESInfo()->GameVersion], 2);
-                bGetLodTextureJumpHackHooked = true;
-                Log(&k_kload,"GetLodTexture Short-Jump-Hack installed.");
-            }
-        }
-	};
-	
 	// hook BeginRenderPlayer
 	if (code[C_BEGIN_RENDERPLAYER_CS] != 0 && code[C_BEGIN_RENDERPLAYER_JUMPHACK] != 0)
 	{
@@ -704,22 +658,6 @@ void UnhookOthers()
 			C_PES_GETTEXTURE_CS1,"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
 			
 		ClearLine(&l_PesGetTexture);
-		
-		// unhook OnSetLodLevel
-		bOnSetLodLevelHooked = !(UnhookProc(bOnSetLodLevelHooked,C_ONSETLODLEVEL, C_LOD1, 
-		        "C_ONSETLODLEVEL", "C_LOD1") &&
-			UnhookProc(bOnSetLodLevelHooked,C_ONSETLODLEVEL, C_LOD2, 
-		        "C_ONSETLODLEVEL", "C_LOD2") &&
-			UnhookProc(bOnSetLodLevelHooked,C_ONSETLODLEVEL, C_LOD3, 
-		        "C_ONSETLODLEVEL", "C_LOD3") &&
-			UnhookProc(bOnSetLodLevelHooked,C_ONSETLODLEVEL, C_LOD4, 
-		        "C_ONSETLODLEVEL", "C_LOD4") &&
-			UnhookProc(bOnSetLodLevelHooked,C_ONSETLODLEVEL, C_LOD5, 
-		        "C_ONSETLODLEVEL", "C_LOD5"));
-		        
-		ClearLine(&l_OnSetLodLevel);
-		
-		ClearLine(&l_GetLodTexture);
 		ClearLine(&l_BeginRenderPlayer);
 		
 	return;
@@ -1855,42 +1793,6 @@ IDirect3DTexture8* STDMETHODCALLTYPE NewPesGetTexture(DWORD p1)
 	return res;
 }
 
-DWORD NewOnSetLodLevel(DWORD p1, DWORD p2, DWORD p3, DWORD p4)
-{
-	DWORD res=orgOnSetLodLevel(p1, p2, p3, p4);
-	DWORD caller=*(&p1-1)-5, level=0;
-	
-	if (caller==code[C_LOD2])
-		level=1;
-	else if (caller==code[C_LOD3])
-		level=2;
-	else if (caller==code[C_LOD4])
-		level=3;
-	else if (caller==code[C_LOD5])
-		level=4;		
-	
-	CONSETLODLEVEL NextCall=NULL;
-	for (int i=0;i<(l_OnSetLodLevel.num);i++)
-	if (l_OnSetLodLevel.addr[i]!=0) {
-		NextCall=(CONSETLODLEVEL)l_OnSetLodLevel.addr[i];
-		NextCall(p1, level);
-	};
-	
-	return res;
-};
-
-DWORD NewGetLodTexture(DWORD caller, DWORD p1, DWORD res)
-{
-	CGETLODTEXTURE NextCall=NULL;
-	for (int i=0;i<(l_GetLodTexture.num);i++)
-	if (l_GetLodTexture.addr[i]!=0) {
-		NextCall=(CGETLODTEXTURE)l_GetLodTexture.addr[i];
-		NextCall(p1, res);
-	};
-	
-	return res;
-};
-
 void NewBeginRenderPlayer()
 {
 	DWORD oldEAX, oldEDI;
@@ -2324,8 +2226,6 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_AfterReadFile: cl = &l_AfterReadFile; break;
 		case hk_D3D_UnlockRect: cl = &l_D3D_UnlockRect; break;
 		case hk_PesGetTexture: cl = &l_PesGetTexture; break;
-		case hk_OnSetLodLevel: cl = &l_OnSetLodLevel; break;
-		case hk_GetLodTexture: cl = &l_GetLodTexture; break;
 		case hk_BeginRenderPlayer: cl = &l_BeginRenderPlayer; break;
 	};
 	return cl;
@@ -2352,7 +2252,6 @@ void InitAddresses(int v)
 	oFreeMemory = (FREEMEMORY)code[C_FREEMEMORY];
 	UniSplit = (UNISPLIT)code[C_UNISPLIT];
 	orgPesGetTexture = (PES_GETTEXTURE)code[C_PES_GETTEXTURE];
-	orgOnSetLodLevel = (ONSETLODLEVEL)code[C_ONSETLODLEVEL];
 	
 	return;
 };
