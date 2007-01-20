@@ -10,6 +10,8 @@
 
 //#define KeyNextMenu VK_PRIOR
 //#define KeyPrevMenu VK_NEXT
+#define VERSION_JUCE 0
+#define VERSION_ROBBIE 1
 
 typedef struct _CALLLINE {
 	DWORD num;
@@ -294,5 +296,6 @@ KEXPORT void UnhookFunction(HOOKS h,DWORD addr);
 CALLLINE* LineFromID(HOOKS h);
 
 void InitAddresses(int v);
+KEXPORT void SetBootserverVersion(int version);
 
 #endif

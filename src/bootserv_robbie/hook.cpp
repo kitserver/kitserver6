@@ -14,6 +14,7 @@
 extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
+int bootserverVersion=0;
 
 #define CODELEN 52
 
@@ -92,8 +93,8 @@ DWORD codeArray[][CODELEN] = {
       0x865370, 0x804e5a,
       0x9cd682,
       0x65b85b,
-      0, 0,  //### HAVE TO BE FILLED! ###
-      0, 0,
+      0x408d90, 0x402723,
+      0x8ad0f3, 0x8ad14b,
     },
 };
 
@@ -493,34 +494,36 @@ void HookOthers()
 													0, NewProcessPlayerData);
 	Log(&k_kload,"Jump to ProcessPlayerData HOOKED at code[C_PROCESSPLAYERDATA_JMP]");
 	
-	// hook PesGetTexure
-	bPesGetTextureHooked = HookProc(C_PES_GETTEXTURE,C_PES_GETTEXTURE_CS1,(DWORD)NewPesGetTexture,
-		"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
+	if (bootserverVersion==VERSION_ROBBIE) {
+		// hook PesGetTexure
+		bPesGetTextureHooked = HookProc(C_PES_GETTEXTURE,C_PES_GETTEXTURE_CS1,(DWORD)NewPesGetTexture,
+			"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
+			
+		// hook BeginRenderPlayer
+		if (code[C_BEGIN_RENDERPLAYER_CS] != 0 && code[C_BEGIN_RENDERPLAYER_JUMPHACK] != 0)
+		{
+			bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_CS]);
+			ptr = (DWORD*)(code[C_BEGIN_RENDERPLAYER_CS] + 1);
 		
-	// hook BeginRenderPlayer
-	if (code[C_BEGIN_RENDERPLAYER_CS] != 0 && code[C_BEGIN_RENDERPLAYER_JUMPHACK] != 0)
-	{
-		bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_CS]);
-		ptr = (DWORD*)(code[C_BEGIN_RENDERPLAYER_CS] + 1);
-	
-	    if (VirtualProtect(bptr, 9, newProtection, &protection)) {
-	    	bptr[0]=0xe8; //call
-	    	bptr[5]=0x33; //xor ebx, ebx
-	    	bptr[6]=0xdb;
-	    	bptr[7]=0xeb; //jump back
-	    	bptr[8]=code[C_BEGIN_RENDERPLAYER_JUMPHACK] - (code[C_BEGIN_RENDERPLAYER_CS] + 7);
-            ptr[0] = (DWORD)NewBeginRenderPlayer - (DWORD)(code[C_BEGIN_RENDERPLAYER_CS] + 5);
-	        bBeginRenderPlayerHooked = true;
-	        Log(&k_kload,"BeginRenderPlayer HOOKED at code[C_BEGIN_RENDERPLAYER_CS]");
-	    };
-	    
-        bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_JUMPHACK]);
-        if (VirtualProtect(bptr, 2, newProtection, &protection)) {
-            bptr[0]=0xeb;
-            bptr[1]=0x100 + code[C_BEGIN_RENDERPLAYER_CS] - (code[C_BEGIN_RENDERPLAYER_JUMPHACK] + 2);
-            bBeginRenderPlayerJumpHackHooked = true;
-            Log(&k_kload,"BeginRenderPlayer Short-Jump-Hack installed.");
-        }
+		    if (VirtualProtect(bptr, 9, newProtection, &protection)) {
+		    	bptr[0]=0xe8; //call
+		    	bptr[5]=0x33; //xor ebx, ebx
+		    	bptr[6]=0xdb;
+		    	bptr[7]=0xeb; //jump back
+		    	bptr[8]=code[C_BEGIN_RENDERPLAYER_JUMPHACK] - (code[C_BEGIN_RENDERPLAYER_CS] + 7);
+	            ptr[0] = (DWORD)NewBeginRenderPlayer - (DWORD)(code[C_BEGIN_RENDERPLAYER_CS] + 5);
+		        bBeginRenderPlayerHooked = true;
+		        Log(&k_kload,"BeginRenderPlayer HOOKED at code[C_BEGIN_RENDERPLAYER_CS]");
+		    };
+		    
+	        bptr = (BYTE*)(code[C_BEGIN_RENDERPLAYER_JUMPHACK]);
+	        if (VirtualProtect(bptr, 2, newProtection, &protection)) {
+	            bptr[0]=0xeb;
+	            bptr[1]=0x100 + code[C_BEGIN_RENDERPLAYER_CS] - (code[C_BEGIN_RENDERPLAYER_JUMPHACK] + 2);
+	            bBeginRenderPlayerJumpHackHooked = true;
+	            Log(&k_kload,"BeginRenderPlayer Short-Jump-Hack installed.");
+	        }
+		};
 	};
 
     // hook num-pages
@@ -653,12 +656,14 @@ void UnhookOthers()
 														NewProcessPlayerData);
 		Log(&k_kload,"Jump to ProcessPlayerData UNHOOKED");
 		
-		// unhook PesGetTexure
-		bPesGetTextureHooked = !UnhookProc(bPesGetTextureHooked,C_PES_GETTEXTURE,
-			C_PES_GETTEXTURE_CS1,"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
-			
-		ClearLine(&l_PesGetTexture);
-		ClearLine(&l_BeginRenderPlayer);
+		if (bootserverVersion==VERSION_ROBBIE) {
+			// unhook PesGetTexure
+			bPesGetTextureHooked = !UnhookProc(bPesGetTextureHooked,C_PES_GETTEXTURE,
+				C_PES_GETTEXTURE_CS1,"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
+				
+			ClearLine(&l_PesGetTexture);
+			ClearLine(&l_BeginRenderPlayer);
+		};
 		
 	return;
 };
@@ -2276,5 +2281,11 @@ void FixReservedMemory()
 	};
 	
 
+	return;
+};
+
+KEXPORT void SetBootserverVersion(int version)
+{
+	bootserverVersion=version;
 	return;
 };
