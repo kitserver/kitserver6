@@ -9,6 +9,12 @@ software to build this program:
 (Modify the Makefile so that it points to correct location
 of the SDK on your disk. Default is \DXSDK9)
 
+- STLPort 4.6.2 (or later)
+
+You'll need to copy "setenv.cmd.sample" file into "setenv.cmd" and
+modify the paths there so that they point correctly to your c++ compiler
+and STLPort directory.
+
 Three types of build are supported by the current Makefile: 
 "debug" and "release"
 

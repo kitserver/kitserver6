@@ -27,6 +27,7 @@
         a:active {color:#448;}
         tr.newf td {background-color:#efd}
         span.exclam {font-weight:bold;color:#484;}
+        span.emph {color:#844;}
         div.hist {color:#888;float:right;}
         span.buttontext {font-weight:bold;color:#000;background-color:#888}
         a.ac{font-weight:bold;}
@@ -38,12 +39,13 @@
 Version history: <a href="history.txt">history.txt</a>
 </div>
 <div>
-December 21, 2006<br />
-Module Versions: <a href="#kitserver">Kserv 6.3.6</a>, 
-<a href="#ballserver">Ballserver 6.3.4</a>,
+January 8, 2007<br />
+Module Versions: <a href="#kserv">Kserv 6.4.0</a>, 
+<a href="#ballserver">Ballserver 6.4.0</a>,
 <a href="#lodmixer">LOD Mixer 6.3.6</a>,
 <a href="#stadiumserver">Stadium Server 6.3.4</a>,
-<a href="#faceserver">Faceserver 6.3.5</a>
+<a href="#faceserver">Faceserver 6.4.0</a>,
+<a href="#bootserver">Bootserver 6.4.0</a>
 </div>
 
 
@@ -53,7 +55,8 @@ Module Versions: <a href="#kitserver">Kserv 6.3.6</a>,
 <p>
 Kitserver 6 is an add-on program for Pro Evolution Soccer 6.
 It is a loader and manager for various modules.
-Kserv Module 6.3.6 provides the alternative way of managing players and goalkeeper kits
+<a href="#kserv">Kserv Module 6.4.0</a> was historically the first module implemented (that's
+where Kitserver got its original name from). It provides an alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
 Also, you are not restricted to just 1st and 2nd kit for each team - you can have as many as you like.
@@ -69,23 +72,36 @@ teams - licensed and unlicensed!</span>
 </p>
 
 <p>
-The BallServer Module 6.3.4 does similar things to KitServer, it offers the
+The <a href="#ballserver">BallServer Module 6.4.0</a> does similar things to KitServer, it offers the
 possibility of chosing a ball from the GDB. Of course it is possible to store
 as many balls as you like. You can use different texture sizes for the balls: standard - 256x256,
 and also 512x512 and 1024x1024.
 </p>
 
 <p>
-LOD Mixer Module 6.3.6 allows to make some tweaks to the graphics engine of the game, such
+<a href=#lodmixer">LOD Mixer Module 6.3.6</a> allows to make some tweaks to the graphics engine of the game, such
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
 </p>
 
+<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server 6.3.4</a>.
+With it, you can organize your stadiums in GDB and again have as large collection as you wish,
+only limited by your hard disk space. Another benefit of using Stadium Server is that you can pick the stadium
+in situations where the game itself doesn't offer you such an option: for example in league, cup
+modes or during online matches.
+</p>
+
 <p>
-Faceserver Module 6.3.5 controls players faces and hair. You can assign a face BIN and a hair BIN
+<a href="#faceserver">Faceserver Module 6.4.0</a> controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
+</p>
+
+<p>
+Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.4.0</a> module, which allows you to 
+assign each player his own boots. <span class="exclam">With bootserver, you are no longer limited
+by 9 slots for boots that the game offers.</span>
 </p>
 
 <h3>1.2 Installation</h3>
@@ -238,7 +254,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kitserver">Kserv Module 6.3.6 (kserv.dll)</h2>
+<h2 id="kserv">Kserv Module 6.4.0 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -385,7 +401,7 @@ Here's the summary table of all the supported attributes:<br />
         <td>string in double quotes</td>
         <td><nobr>shorts.num-pal.pa = "..\pal-black.png"</nobr></td>
     </tr>
-    <tr class="newf">
+    <tr>
         <td><b>shirt.number.location</b></td>
         <td>Where on the front of the shirt the number should be placed. ("off" means the number
 will not be displayed at all.) This only applies to national teams.
@@ -429,13 +445,22 @@ type3 - curved.</td>
     </tr>
 	<tr>
         <td><b>radar.color</b></td>
-        <td>This attributes specifies the color you see on the ingame radar. It 
+        <td>This attribute specifies the color you see on the ingame radar. It 
         also influences the kit that is selected by default after selecting teams, 
         as PES6 uses it as an indicator whether two kits have similar colors and 
         would be too confusing together. Be careful: This is also the main color 
         of standard mini-kits (not 2.5D)!</td>
         <td>color, written in hexadecimal format RRGGBB (red,green,blue)</td>
         <td><nobr>radar.color = 0A5D88</nobr></td>
+    </tr>
+	<tr>
+        <td><b>shorts.color</b></td>
+        <td>This attribute specifies the color of the player/gk shorts. The color
+         of shorts is used by the game to determine correct color of the underpants
+         for those players who wear them, and have them set to match the shorts
+         color.</td>
+        <td>color, written in hexadecimal format RRGGBB (red,green,blue)</td>
+        <td><nobr>shorts.color = 0A5D88</nobr></td>
     </tr>
 	<tr>
         <td><b>description</b></td>
@@ -571,7 +596,7 @@ number of available pages.
 
 <!-- ### BALLSERVER ### -->
 
-<h2 id="ballserver">Ballserver Module 6.3.4 (bserv.dll)</h2>
+<h2 id="ballserver">Ballserver Module 6.4.0 (bserv.dll)</h2>
 
 <h3>3.1 Quick summary of the features</h3>
 
@@ -871,7 +896,7 @@ in "View Stadiums" mode. Gamepad doesn't work.</div>
 
 <!-- ### FACESERVER ### -->
 
-<h2 id="faceserver">FaceServer Module 6.3.5 (fserv.dll)</h2>
+<h2 id="faceserver">FaceServer Module 6.4.0 (fserv.dll)</h2>
 
 <h3>6.1 Introduction</h3>
 <p>
@@ -910,13 +935,121 @@ everything right, you will see it in edit mode at the same place as the face fil
 <div class="note">Most crashes are caused by corrupted files or wrong map files. In case of a crash
 please check first if this is the reason before posting in the forums.
 </div>
+<p>For players with buzz-cut hair files, you may need to change the transparency to make it
+look alright. That's just like the "Darkness" setting when editing the player's hair. For that
+purpose, you can add a third parameter to the hair map:</p>
+<pre>
+195, Henry, 128
+</pre>
+<p>This parameter can be 0-255, where 255 is the default and means full opaqueness, whereas
+0 stands for complete transparency. Just experiment a bit with the values to find the
+one which looks best for you.</p>
+
+
+<!-- ### Bootserver ### -->
+
+<h2 id="bootserver">Bootserver module 6.4.0 (bootserv.dll)</h2>
+
+<h3>7.1. Introduction</h3>
+
+<p>The idea of Bootserver is similar to Faceserver: you use a map where you assign 
+boot images to playes, using player IDs. This allows to overcome the limitation of 9 slots that
+the game has for boots - with bootserver, each player can have his own boots. As with faceserver, the bootserver currently doesn't work in Museum Replays,
+although ingame instant replays, highlights, and other cut-scenes are fully supported.
+</p>
+
+<img src="editboot.jpg"/>
+
+<p>Similar to other modules that use <b>map.txt</b>, you put a player ID and the filename
+for the boot texture on one line, separating them by a comma. You can find out the ID for
+each player in the Edit Mode: the <b>Player ID:</b> text will be displayed at the top of
+the screen. Texture filename needs to be a pathname relative to <b>GDB\boots</b>, so you can 
+organize your boots into subfolders if you want, or just have a flat structure with all boots
+placed in the "boots" folder itself. It's up to you.<br />
+Here is an example of simple map:
+</p>
+
+<pre>
+# Bootserver map
+################
+
+185,"adidas_00.png"  # Barthez
+186,"adidas_01.png"  # Thuram
+194,"puma.png"       # Zidane
+195,"adidas_02.png"  # Henry
+217,"Germany\adidas_yellow.png"  # Klose
+1791,"adidas_00.png" # Davids
+</pre>
+
+
+<h3>7.2. "Random boots" setting</h3>
+
+<p>
+Bootserver configuration file (bootserv.cfg) contains a setting called <b>random-boots.enabled</b>, which
+allows to activate random selection of boots for those players, who don't have a GDB boot assigned
+in map.txt. So say, for example, you have a large collection of boot textures, but you don't
+fancy writing a long map.txt, specifying boots for hundreds if not thousands of players. Instead
+you can just assign boots to a limited number of players that you really care about (players of your Master League team, for example) and let bootserver choose the boots randomly 
+for all others. This random choice will occur every match, so it's likely that a player without
+specific boots assigned in map.txt, will wear very something new every time.
+</p>
+
+<p>By default, this option is disabled (set to <b>0</b>). To enable it, just change its value 
+to <b>1</b> in bootserv.cfg:
+
+<pre>
+random-boots.enabled = 1
+</pre>
+</p>
+
+<h3>7.3. Switching between implementation algorithms</h3>
+
+<p>Bootserver module actually contains two different implementations. Both accomplish the
+same task, but using different means. We have included both of them in this release of bootserver
+to increase the chance of providing correct behaviour for everyone. In other words, if everything 
+works fine for you "out of the box", you don't need to worry about this and can stop reading now. 
+If, however, you notice a problem - perhaps a significant slowdown during the match, or a situation,
+where GDB boots should be displayed but aren't, you can try to switch to alternative implementation,
+and see if that helps your case. You can do that by modifying the <b>otherVersion</b> option in 
+<b>bootserv.cfg</b> file. Here's how it looks by default:</p>
+
+<pre>
+# bootserver configuration file
+
+random-boots.enabled = 0
+otherVersion = 0
+</pre>
+
+<p>
+Setting <b>otherVersion</b> to <b>1</b> will switch the way bootserver works internally. A few words 
+on the difference between the two. You will need to know this, if you decide to try changing it.
+</p>
+
+<pre>otherVersion = 0</pre>
+<p>
+This is the default mode of operation. Bootserver uses a new algorithm to determine which texture
+is being processed by the game engine and replaces it accordingly, if it's a boot texture. We decided
+to make this the default mode, because it uses a more generic approach than the other implementation,
+and can potentially be used in the future for other textures that each player has (such as kit,
+hair,face,etc.). Also, it doesn't require any modifications to your current boot setup (See next
+section for more details on that.)
+</p>
+
+<pre>otherVersion = 1</pre>
+<p>
+This activates the alternative algorithm in bootserver. It's simpler and less generic, but is also
+"lighter", meaning that it introduces less additional overhead for your PC to process, which
+may result in smoother frame rate. <span class="emph">In order for this implementation to function 
+properly, you need to go to "Edit Boots" menu in Edit mode, and set the <b>Type 1</b> to 
+"Editable" boots. (One easy way to accomplish this is to reset all boot types to Default).</span>
+</p>
 
 
 <!-- ### ADVANCED CONFIGURATION ### -->
 
 <h2 id="advconfig">Advanced configuration</h2>
 
-<h3>7.1. Master configuration file: kload.cfg</h3>
+<h3>8.1. Master configuration file: kload.cfg</h3>
 
 <p>
 Typically, you wouldn't need to modify that, unless you're running into problems, or
@@ -931,7 +1064,7 @@ do that by modifying the <b>kload.cfg</b> file. Here's how the default config lo
 gdb.dir = ".\"
 ReservedMemory=55000000
 
-DLL.num = 8
+DLL.num = 9
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
 DLL.2 = "kitserver\kserv.dll"
@@ -940,6 +1073,7 @@ DLL.4 = "kitserver\lodmixer.dll"
 DLL.5 = "kitserver\dxtools.dll"
 DLL.6 = "kitserver\stadium.dll"
 DLL.7 = "kitserver\fserv.dll"
+DLL.8 = "kitserver\bootserv.dll"
 
 # DirectX options
 dx.force-SW-TnL = 0
@@ -955,7 +1089,7 @@ just comment it out with a "#" symbol at the beginning of the line:
 </p>
 
 <pre>
-DLL.num = 8
+DLL.num = 9
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
 #DLL.2 = "kitserver\kserv.dll"
@@ -964,6 +1098,7 @@ DLL.4 = "kitserver\lodmixer.dll"
 DLL.5 = "kitserver\dxtools.dll"
 DLL.6 = "kitserver\stadium.dll"
 DLL.7 = "kitserver\fserv.dll"
+DLL.8 = "kitserver\bootserv.dll"
 
 </pre>
 
@@ -994,11 +1129,12 @@ sure you specify resolution that your monitor supports.</i>
 
 <p>
 Programming: <b>juce</b>, <b>Robbie</b><br />
-Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun</b><br />
+Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun, Seax, pogoss</b><br />
 Kits: <b>Spark, kel, qiankun, OPM, Simonhibsey</b>.<br />
 Balls: <b>DAMned</b><br />
 Ball models: <b>Ariel</b>, <b>Gwidon</b><br />
 Faces/Hair: <b>Mystiq</b>, <b>Alex</b><br />
+Boots: taken from boot collection by <b>Valmir</b>, actual authors unknown.<br />
 Kits, balls, fonts, and numbers were taken from <a href="http://www.wevolution.org">http://www.wevolution.org</a> and
 <a href="http://forums.evo-web.co.uk">http://forums.evo-web.co.uk</a> sites.<br /> and also
 from a PES5 GDB collection by <b>FabioS</b><br />
@@ -1007,6 +1143,8 @@ Stadium Server GDB organization and "home team stadium" idea: <b>Gwidon</b><br /
 Information about stadiums in AFS: <b>nt89</b><br />
 "Wildparkstadion" stadium: <b>nt89</b>, with UEFA Champions League adboards by <b>mIGUEL</b><br />
 "Saturn Ramenskoye" stadium: <b>Asiat</b><br />
+Various useful bits of information about boots: <b>Lancaster</b><br />
+Idea for "Random boots" feature: <b>leshiy87</b><br />
 
 <br />
 

@@ -2,6 +2,16 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2007-01-08
+----------
+v6.4.0
+- bootserver: first "official" release
+- faceserver: fixed problem with buzz-cut for players, who didn't have hair assigned.
+- kserv: added new "shorts.color" attribute, to allow for correct underpants color.
+- kserv: another attempt to fix the infamous "GK-bug". Was easily seen after a replay-save, 
+but should be eliminated now.
+
+
 2006-12-21
 ----------
 v6.3.6:
