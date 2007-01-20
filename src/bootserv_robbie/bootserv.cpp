@@ -9,13 +9,13 @@
 KMOD k_boot={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 HINSTANCE hInst;
 
-#define DATALEN 11
+#define DATALEN 13
 enum {
     EDITMODE_CURRPLAYER_MOD, EDITMODE_CURRPLAYER_ORG,
     EDITMODE_FLAG, EDITPLAYERMODE_FLAG, EDITPLAYER_ID,
     PLAYERS_LINEUP, PLAYERID_IN_PLAYERDATA,
-    LINEUP_RECORD_SIZE, LINEUP_BLOCKSIZE, PLAYERDATA_SIZE,
-    EDITPLAYERBOOT_FLAG,
+    LINEUP_RECORD_SIZE, LINEUP_BLOCKSIZE, PLAYERDATA_SIZE, STACK_SHIFT,
+    EDITPLAYERBOOT_FLAG, EDITBOOTS_FLAG,
 };
 DWORD dataArray[][DATALEN] = {
     // PES6
@@ -23,38 +23,35 @@ DWORD dataArray[][DATALEN] = {
         0x112e1c0, 0x112e1c8,
         0x1108488, 0x11084e8, 0x112e24a,
         0x3bdcbc0, 0x3bcf586, 
-        0x240, 0x60, 0x348,
-        0x11308dc,
+        0x240, 0x60, 0x348, 0,
+        0x11308dc, 0x1108830,
     },
     // PES6 1.10
     {
         0x112f1c0, 0x112f1c8,
         0x1109488, 0x11094e8, 0x112f24a,
         0x3bddbc0, 0x3bd0586,
-        0x240, 0x60, 0x348,
-        0x11318dc,
+        0x240, 0x60, 0x348, 0 /*0x1b4*/,
+        0x11318dc, 0x1109830,
     },
 };
 DWORD data[DATALEN];
 
-#define CODELEN 3
+#define CODELEN 2
 enum {
     C_COPYPLAYERDATA_CS,
     C_RESETFLAG2_CS,
-    C_BOOTTYPE_JUMP,
 };
 DWORD codeArray[][CODELEN] = {
     // PES6
     {
         0xa4b4b2,
         0x9c15a7,
-        0xb643ed,
     },
     // PES6 1.10
     {
         0xa4b612,
         0x9c1737,
-        0,
     },
 };
 DWORD code[CODELEN];
@@ -116,6 +113,7 @@ int getPosition(DWORD blockAddr);
 WORD getPlayerId(int pos);
 void bootBeginRenderPlayer(DWORD playerMainColl);
 void bootPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res);
+bool isEditBootsMode();
 
 //////////////////////////////////////////////////////
 //
@@ -188,18 +186,6 @@ void bootInit(IDirect3D8* self, UINT Adapter,
 	    MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
 	    HookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
 	
-	    /*
-	    // nop out the boot-type conditional jump
-	    DWORD protection = 0;
-	    DWORD newProtection = PAGE_EXECUTE_READWRITE;
-	    if (VirtualProtect((BYTE*)code[C_BOOTTYPE_JUMP], 4, newProtection, &protection))
-	    {
-	        BYTE* cptr = (BYTE*)code[C_BOOTTYPE_JUMP];
-	        cptr[0] = 0x90; //nop
-	        cptr[1] = 0x90; //nop
-	        Log(&k_boot,"Boot-type jump noped.");
-	    }
-	    */
 	} else {
 		HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
     	HookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
@@ -541,6 +527,11 @@ bool isEditPlayerBootMode()
     return *(BYTE*)data[EDITPLAYERBOOT_FLAG] == 1;
 }
 
+bool isEditBootsMode()
+{
+    return *(BYTE*)data[EDITBOOTS_FLAG] == 1;
+}
+
 DWORD bootCopyPlayerData(DWORD p0, DWORD p1, DWORD p2)
 {
 	DWORD playerNumber, addr;
@@ -611,18 +602,24 @@ KEXPORT void bootUnlockRect(IDirect3DTexture8* self, UINT Level)
 
     static int count = 0;
 
+    int shift = data[STACK_SHIFT];
     int levels = self->GetLevelCount();
     D3DSURFACE_DESC desc;
     if (SUCCEEDED(self->GetLevelDesc(0, &desc))) {
         if (((desc.Width==512 && desc.Height==256 && Level==0) 
                     || (desc.Width==128 && desc.Height==64 && Level==0))
-                && *(DWORD*)(oldEBP+0x3c)==0 
-                && *(DWORD*)(oldEBP+0x34) + 8 == *(DWORD*)(oldEBP+0x38)
-                && (*(WORD*)(*(DWORD*)(oldEBP+0x2c)) & 0xfff0)==0x0510
+                && *(DWORD*)(oldEBP+0x3c+shift)==0 
+                && *(DWORD*)(oldEBP+0x2c+shift)!=0 
+                && *(DWORD*)(oldEBP+0x30+shift)!=0 
+                && *(DWORD*)(oldEBP+0x34+shift) + 8 == *(DWORD*)(oldEBP+0x38+shift)
+                && (*(WORD*)(*(DWORD*)(oldEBP+0x2c+shift)) & 0xfff0)==0x0510
                 ) {
 
             WORD playerId = 0xffff;
-            if (isEditMode()) {// && isEditPlayerMode()) {
+            if (isEditMode()) {
+                if (isEditBootsMode()) {
+                    return; // no replacement in Edit Boots
+                }
                 // edit player
                 if (desc.Width==512) {
                     playerId = *(WORD*)data[EDITPLAYER_ID];
@@ -637,7 +634,7 @@ KEXPORT void bootUnlockRect(IDirect3DTexture8* self, UINT Level)
                 }
             } else {
                 // match or training
-                int pos = getPosition(*(DWORD*)(oldEBP+0x30));
+                int pos = getPosition(*(DWORD*)(oldEBP+0x30+shift));
                 playerId = getPlayerId(pos);
             }
             //DumpTexture(self);

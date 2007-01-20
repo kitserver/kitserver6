@@ -113,7 +113,7 @@ DWORD dataArray[][DATALEN] = {
     },
     //PES6 1.10
     {
-        0x3a72254, 0x2c, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
+        0x3a72254, 0 /*0x2c*/, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
         0x3bdd980, 0x240, 0x3bd055c, 0x3be22c9, 0x1109488,
         0x112f24a,
     },
@@ -289,9 +289,20 @@ void HookDirect3DCreate8()
 	BYTE g_jmp[5] = {0,0,0,0,0};
 	// Put a JMP-hook on Direct3DCreate8
 	Log(&k_kload,"JMP-hooking Direct3DCreate8...");
-	HMODULE hD3D8 = GetModuleHandle("d3d8");
+	
+	char d3dDLL[5];
+	switch (g_pesinfo.GameVersion) {
+	case gvPES6PC110:
+		strcpy(d3dDLL,"d3dw");
+		break;
+	default:
+		strcpy(d3dDLL,"d3d8");
+		break;
+	};
+	
+	HMODULE hD3D8 = GetModuleHandle(d3dDLL);
 	if (!hD3D8) {
-	    hD3D8 = LoadLibrary("d3d8");
+	    hD3D8 = LoadLibrary(d3dDLL);
 	}
 	if (hD3D8) {
 		g_orgDirect3DCreate8 = (PFNDIRECT3DCREATE8PROC)GetProcAddress(hD3D8, "Direct3DCreate8");
@@ -1803,7 +1814,7 @@ void NewBeginRenderPlayer()
 	DWORD oldEAX, oldEDI;
 	
 	__asm {
-		mov oldEAX, edi
+		mov oldEAX, eax
 		mov oldEDI, edi
 	};
 	
