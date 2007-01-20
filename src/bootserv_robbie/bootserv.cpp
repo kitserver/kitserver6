@@ -7,39 +7,33 @@
 KMOD k_boot={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 HINSTANCE hInst;
 
-#define DATALEN 6
+#define DATALEN 1
 enum {
-    EDITMODE_CURRPLAYER_MOD, EDITMODE_CURRPLAYER_ORG, EDITPLAYER_ID,
-    PLAYERS_LINEUP, LINEUP_RECORD_SIZE, LINEUP_BASEID,
+    DUMMY,
 };
 DWORD dataArray[][DATALEN] = {
     // PES6
     {
-        0x112e1c0, 0x112e1c8, 0x112e24a,
-        0x3bdcbcc, 0x240, 0x2487,
+        0,
     },
     // PES6 1.10
     {
-        0x112f1c0, 0x112f1c8, 0x112f24a,
-        0x3bddbcc, 0x240, 0x2487,
+		0,
     },
 };
 DWORD data[DATALEN];
 
-#define CODELEN 2
+#define CODELEN 1
 enum {
-    C_COPYPLAYERDATA_CS,
     C_RESETFLAG2_CS,
 };
 DWORD codeArray[][CODELEN] = {
     // PES6
     {
-        0xa4b4b2,
         0x9c15a7,
     },
     // PES6 1.10
     {
-        0xa4b612,
         0x9c1737,
     },
 };
@@ -74,10 +68,7 @@ void bootInit(IDirect3D8* self, UINT Adapter,
     D3DPRESENT_PARAMETERS *pPresentationParameters, 
     IDirect3DDevice8** ppReturnedDeviceInterface);
 void DumpTexture(IDirect3DTexture8* const ptexture);
-void ReplaceTextureLevel(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT level);
 void ReplaceBootTexture(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT width);
-KEXPORT void bootUnlockRect(IDirect3DTexture8* self,UINT Level);
-KEXPORT DWORD bootCopyPlayerData(DWORD p0, DWORD p1, DWORD p2);
 void readMap();
 void bootBeginUniSelect();
 DWORD bootResetFlag2();
@@ -106,7 +97,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	{
 		Log(&k_boot,"Detaching dll...");
 		UnhookFunction(hk_D3D_CreateDevice,(DWORD)bootInit);
-        //UnhookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
         UnhookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
         UnhookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
         UnhookFunction(hk_OnSetLodLevel,(DWORD)bootOnSetLodLevel);
@@ -127,10 +117,8 @@ void bootInit(IDirect3D8* self, UINT Adapter,
     Log(&k_boot, "Initializing bootserver...");
     memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
     memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
-
-    //HookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
+    
     HookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
-    //MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, bootResetFlag2);
     HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
     HookFunction(hk_OnSetLodLevel,(DWORD)bootOnSetLodLevel);
@@ -282,94 +270,6 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big)
     return bootTexture;
 }
 
-DWORD bootCopyPlayerData(DWORD p0, DWORD p1, DWORD p2)
-{
-	DWORD playerNumber, addr;
-	__asm mov playerNumber, ebx
-	__asm mov addr, edi
-	
-	DWORD result = MasterCallNext(p0,p1,p2);
-
-    BYTE* pBootType = (BYTE*)(addr-0x1c+1);
-    /*
-    if (0xba <= playerNumber && playerNumber <= 0xc3) { // France first 11
-    */
-    map<WORD,TexturePack>::iterator it = g_bootTexturePacks.find(playerNumber);
-    if (it != g_bootTexturePacks.end()) {
-		*pBootType &= 0x0f;
-        LogWithTwoNumbers(&k_boot,"setting boot-type to 0 at %08x -> player %d",
-                (DWORD)pBootType, playerNumber);
-    }
-	return result;
-}
-
-KEXPORT void bootUnlockRect(IDirect3DTexture8* self, UINT Level) 
-{
-    DWORD oldEBP;
-    __asm mov oldEBP,ebp;
-
-    static int count = 0;
-
-    int levels = self->GetLevelCount();
-    D3DSURFACE_DESC desc;
-    if (SUCCEEDED(self->GetLevelDesc(0, &desc))) {
-        if (((desc.Width==512 && desc.Height==256 && Level==0) 
-                    || (desc.Width==128 && desc.Height==64 && Level==0))
-                && *(DWORD*)(oldEBP+0x3c)==0 
-                && *(DWORD*)(oldEBP+0x34) + 8 == *(DWORD*)(oldEBP+0x38)
-                && *(DWORD*)(oldEBP+0x2c)<0x0e000000
-                && *(DWORD*)(oldEBP+0x90)<0x7000000
-                && *(DWORD*)(oldEBP+0x98)!=0x4107b4
-                ) {
-
-            WORD playerId = 0xffff;
-            if (isEditMode()) {
-                // edit player
-                playerId = *(WORD*)data[EDITPLAYER_ID];
-            } else {
-                // match or training
-                int pos = *(WORD*)(*(DWORD*)(oldEBP+0x30)) - data[LINEUP_BASEID];
-                playerId = *(WORD*)(data[PLAYERS_LINEUP] + data[LINEUP_RECORD_SIZE]*pos + 2);
-            }
-            LogWithNumber(&k_boot, "bootUnlockRect: playerId = %d", playerId);
-
-            bool isBig = desc.Width==512;
-            IDirect3DTexture8* bootTexture = getBootTexture(playerId, isBig);
-            if (bootTexture) {
-                // replace the texture
-                ReplaceTextureLevel(self, bootTexture, 0);
-            }
-        }
-
-    } else {
-        Log(&k_boot, "GetLevelDesc FAILED");
-    }
-}
-
-void ReplaceTextureLevel(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT level)
-{
-    IDirect3DSurface8* src = NULL;
-    IDirect3DSurface8* dest = NULL;
-
-    if (SUCCEEDED(srcTexture->GetSurfaceLevel(level, &dest))) {
-        if (SUCCEEDED(repTexture->GetSurfaceLevel(level, &src))) {
-            if (SUCCEEDED(D3DXLoadSurfaceFromSurface(
-                            dest, NULL, NULL,
-                            src, NULL, NULL,
-                            D3DX_DEFAULT, 0))) {
-                //LogWithNumber(&k_boot,"ReplaceTextureLevel: replacing level %d COMPLETE", level);
-
-            } else {
-                //LogWithNumber(&k_boot,"ReplaceTextureLevel: replacing level %d FAILED", level);
-            }
-            src->Release();
-        }
-        dest->Release();
-    }
-
-    //DumpTexture(srcTexture);
-}
-
 void ReplaceBootTexture(IDirect3DTexture8* srcTexture, IDirect3DTexture8* repTexture, UINT width)
 {
     IDirect3DSurface8* src = NULL;
@@ -442,14 +342,14 @@ void bootOnSetLodLevel(DWORD p1, DWORD level)
 	if (p1==0) return;
 	
 	if (isEditMode()) {
-        playerNumber = *(WORD*)data[EDITPLAYER_ID];
+        playerNumber = editPlayerId();
 		maxI=0;
 	};
 	for (int i=0;i<=maxI;i++) {
 		if (!isEditMode())
-			playerNumber=*(WORD*)(data[PLAYERS_LINEUP] + data[LINEUP_RECORD_SIZE]*i + 2);
+			playerNumber=getRecordPlayerId(i+1);
 		if (playerNumber != 0) {
-			playerMainColl=**(DWORD**)(data[PLAYERS_LINEUP] + data[LINEUP_RECORD_SIZE]*i - 8);
+			playerMainColl=*(playerRecord(i+1)->texMain);
 			playerMainColl=*(DWORD*)(playerMainColl+0x10);
 			if (playerMainColl==p1) {
 				//ok, this is the player to process
@@ -492,7 +392,7 @@ void bootGetLodTexture(DWORD p1, DWORD res)
 	// res is later *bodyColl
 	if (g_bootTextures.erase(res)>0) {
 		g_bootTexturesPos.erase(res);
-		LogWithNumber(&k_boot,"Erased bodyColl %x",res);
+		//LogWithNumber(&k_boot,"Erased bodyColl %x",res);
 	};
 	return;
 };

@@ -101,20 +101,23 @@ DWORD codeArray[][CODELEN] = {
 };
 
 // data addresses
-#define DATALEN 9
+#define DATALEN 11
 enum { INPUT_TABLE, STACK_SHIFT, RESMEM1, RESMEM2, RESMEM3,
-	PLAYERS_LINEUP, LINEUP_RECORD_SIZE, GAME_MODE, EDITMODE_FLAG, };
+	PLAYERS_LINEUP, LINEUP_RECORD_SIZE, PLAYERDATA_BASE, GAME_MODE, EDITMODE_FLAG,
+	EDITPLAYER_ID };
 
 DWORD dataArray[][DATALEN] = {
     //PES6
     {
         0x3a71254, 0, 0x8c7b6d, 0x8c7b82, 0x8c7b99,
-        0x3bdcbcc, 0x240, 0x3be12c9, 0x1108488,
+        0x3bdc980, 0x240, 0x3bcf55c, 0x3be12c9, 0x1108488,
+        0x112e24a,
     },
     //PES6 1.10
     {
         0x3a72254, 0x2c, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
-        0x3bddbcc, 0x240, 0x3be22c9, 0x1109488,
+        0x3bdd980, 0x240, 0x3bd055c, 0x3be22c9, 0x1109488,
+        0x112f24a,
     },
 };
 
@@ -1904,10 +1907,33 @@ KEXPORT bool isEditMode()
     return *(BYTE*)data[EDITMODE_FLAG] == 1;
 }
 
+KEXPORT DWORD editPlayerId()
+{
+	DWORD playerId = *(WORD*)data[EDITPLAYER_ID];
+	return playerId;
+};
+
 KEXPORT bool isTrainingMode()
 {
 	if (isEditMode()) return false;
 	return *(BYTE*)data[GAME_MODE] == 5;
+};
+
+KEXPORT PLAYER_RECORD* playerRecord(BYTE pos)
+{
+	if (pos>22) pos=1;
+	return (PLAYER_RECORD*)(data[PLAYERS_LINEUP] + pos*data[LINEUP_RECORD_SIZE]);
+};
+
+KEXPORT DWORD getRecordPlayerId(BYTE pos)
+{
+	DWORD id=0;
+	if (pos>22) return 0;
+	
+	PLAYER_RECORD* rec = playerRecord(pos);
+	id=*(WORD*)(data[PLAYERDATA_BASE] + (rec->team*0x20 + rec->posInTeam)*0x348 + 0x2a);
+	
+	return id;
 };
 
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel)
@@ -1916,7 +1942,7 @@ KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, 
 	
 	if (lodLevel>4 || texCollType>3) return NULL;
 	
-	DWORD playerMainColl=**(DWORD**)(data[PLAYERS_LINEUP] + data[LINEUP_RECORD_SIZE]*0 - 8);
+	DWORD playerMainColl=*(playerRecord(1)->texMain);
 	playerMainColl=*(DWORD*)(playerMainColl+0x10);
 	
 	DWORD texColl=0;
@@ -1984,7 +2010,7 @@ LRESULT CALLBACK KeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 		};
 	};
 	
-	
+	/*
 	// Dump all textures of team 1 goalie, for all lod levels
 	if (!IsKitSelectMode && code1 >= 0 && code1==HC_ACTION && lParam & 0x80000000) {
 		KEYCFG* keyCfg = GetInputCfg();
@@ -1997,7 +2023,7 @@ LRESULT CALLBACK KeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 			};
         }
     }
-    
+    */
 	
 	CINPUT NextCall=NULL;
 	for (int i=0;i<(l_Input.num);i++)

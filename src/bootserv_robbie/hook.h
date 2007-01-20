@@ -16,6 +16,18 @@ typedef struct _CALLLINE {
 	DWORD* addr;
 } CALLLINE;
 
+typedef struct _PLAYER_RECORD {
+	BYTE number;
+	BYTE unknown1[3];
+	DWORD* texMain;
+	BYTE unknown2[6];
+	WORD playerId;
+	BYTE formOrientation; //something with the formation
+	BYTE posInTeam;
+	BYTE team;
+	BYTE unknown3[0x240-19];
+} PLAYER_RECORD;
+
 #define VTAB_GETDEVICECAPS 13
 #define VTAB_CREATEDEVICE 15
 #define VTAB_RESET 14
@@ -150,7 +162,10 @@ IDirect3DTexture8* STDMETHODCALLTYPE NewPesGetTexture(DWORD p1);
 DWORD NewOnSetLodLevel(DWORD p1, DWORD p2, DWORD p3, DWORD p4);
 DWORD NewGetLodTexture(DWORD caller, DWORD p1, DWORD res);
 KEXPORT bool isEditMode();
+KEXPORT DWORD editPlayerId();
 KEXPORT bool isTrainingMode();
+KEXPORT PLAYER_RECORD* playerRecord(BYTE pos);
+KEXPORT DWORD getRecordPlayerId(BYTE pos);
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel);
 
 BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
