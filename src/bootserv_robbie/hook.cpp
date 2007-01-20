@@ -15,7 +15,7 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
 
-#define CODELEN 56
+#define CODELEN 58
 
 enum {
 	C_UNIDECODE, C_UNIDECODE_CS,C_UNIDECODE_CS2,
@@ -41,7 +41,7 @@ enum {
     C_FILEFROMAFS_JUMPHACK,
     C_PES_GETTEXTURE, C_PES_GETTEXTURE_CS1,
     C_LOD1, C_LOD2, C_LOD3, C_LOD4, C_LOD5,
-    C_ONSETLODLEVEL,
+    C_ONSETLODLEVEL, C_GETLODTEXTURE_JMP, C_GETLODTEXTURE,
 };
 
 // Code addresses.
@@ -70,7 +70,7 @@ DWORD codeArray[][CODELEN] = {
       0,
       0x408c20, 0x402723,
       0x8afc35, 0x8afcf4, 0x8afdb4, 0x8afe5e, 0x8afef4,
-      0x8ae1b0,
+      0x8ae1b0, 0x45bbf0, 0x876fc0,
     },
     // PES6 1.10
 	{ 0x8cd5f0, 0x8b1a63, 0,
@@ -96,7 +96,7 @@ DWORD codeArray[][CODELEN] = {
       0x65b85b,
       0, 0,  //later!
       0x8afd15, 0x8afdd4, 0x8afe94, 0x8aff3e, 0x8affd4,
-      0x8ae310,
+      0x8ae310, 0, 0,
     },
 };
 
@@ -224,6 +224,7 @@ bool bProcessPlayerDataHooked = false;
 bool bUniSplitHooked = false;
 bool bPesGetTextureHooked = false;
 bool bOnSetLodLevelHooked =false;
+bool bGetLodTextureHooked = false;
 
 UNIDECODE UniDecode = NULL;
 UNPACK Unpack = NULL;
@@ -239,6 +240,7 @@ FREEMEMORY oFreeMemory = NULL;
 UNISPLIT UniSplit = NULL;
 PES_GETTEXTURE orgPesGetTexture = NULL;
 ONSETLODLEVEL orgOnSetLodLevel = NULL;
+GETLODTEXTURE orgGetLodTexture = NULL;
 
 CALLLINE l_D3D_Create={0,NULL};
 CALLLINE l_D3D_GetDeviceCaps={0,NULL};
@@ -273,6 +275,7 @@ CALLLINE l_AfterReadFile={0,NULL};
 CALLLINE l_D3D_UnlockRect={0,NULL};
 CALLLINE l_PesGetTexture={0,NULL};
 CALLLINE l_OnSetLodLevel={0,NULL};
+CALLLINE l_GetLodTexture={0,NULL};
 
 void HookDirect3DCreate8()
 {
@@ -499,6 +502,21 @@ void HookOthers()
 	// hook PesGetTexure
 	bPesGetTextureHooked = HookProc(C_PES_GETTEXTURE,C_PES_GETTEXTURE_CS1,(DWORD)NewPesGetTexture,
 		"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
+		
+	// hook GetLodTexture
+	if (code[C_GETLODTEXTURE_JMP] != 0)
+	{
+		bptr = (BYTE*)(code[C_GETLODTEXTURE_JMP]);
+		ptr = (DWORD*)(code[C_GETLODTEXTURE_JMP] + 1);
+	
+	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
+	    	bptr[0]=0xe8; //call
+	    	bptr[5]=0xc3; //ret
+            ptr[0] = (DWORD)NewGetLodTexture - (DWORD)(code[C_GETLODTEXTURE_JMP] + 5);
+	        bGetLodTextureHooked = true;
+	        Log(&k_kload,"GetLodTexture HOOKED at code[C_GETLODTEXTURE_JMP]");
+	    };
+	};
 
     // hook num-pages
     HookGetNumPages();
@@ -649,6 +667,8 @@ void UnhookOthers()
 		        "C_ONSETLODLEVEL", "C_LOD5"));
 		        
 		ClearLine(&l_OnSetLodLevel);
+		
+		ClearLine(&l_GetLodTexture);
 		
 	return;
 };
@@ -1806,7 +1826,20 @@ DWORD NewOnSetLodLevel(DWORD p1, DWORD p2, DWORD p3, DWORD p4)
 	
 	return res;
 };
+
+DWORD NewGetLodTexture(DWORD caller, DWORD p1)
+{
+	DWORD res=orgGetLodTexture(p1);
 	
+	CGETLODTEXTURE NextCall=NULL;
+	for (int i=0;i<(l_GetLodTexture.num);i++)
+	if (l_GetLodTexture.addr[i]!=0) {
+		NextCall=(CGETLODTEXTURE)l_GetLodTexture.addr[i];
+		NextCall(p1, &res);
+	};
+	
+	return res;
+};
 
 void DrawKitSelectInfo()
 {
@@ -2135,6 +2168,7 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_D3D_UnlockRect: cl = &l_D3D_UnlockRect; break;
 		case hk_PesGetTexture: cl = &l_PesGetTexture; break;
 		case hk_OnSetLodLevel: cl = &l_OnSetLodLevel; break;
+		case hk_GetLodTexture: cl = &l_GetLodTexture; break;
 	};
 	return cl;
 };
@@ -2161,6 +2195,7 @@ void InitAddresses(int v)
 	UniSplit = (UNISPLIT)code[C_UNISPLIT];
 	orgPesGetTexture = (PES_GETTEXTURE)code[C_PES_GETTEXTURE];
 	orgOnSetLodLevel = (ONSETLODLEVEL)code[C_ONSETLODLEVEL];
+	orgGetLodTexture = (GETLODTEXTURE)code[C_GETLODTEXTURE];
 	
 	return;
 };

@@ -83,6 +83,7 @@ void bootBeginUniSelect();
 DWORD bootResetFlag2();
 void bootPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res);
 void bootOnSetLodLevel(DWORD p1, DWORD level);
+void bootGetLodTexture(DWORD p1, DWORD* res);
 
 
 //////////////////////////////////////////////////////
@@ -109,6 +110,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
         UnhookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
         UnhookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
         UnhookFunction(hk_OnSetLodLevel,(DWORD)bootOnSetLodLevel);
+        UnhookFunction(hk_GetLodTexture,(DWORD)bootGetLodTexture);
         
         g_bootTextures.clear();
         g_bootTexturesPos.clear();
@@ -132,6 +134,7 @@ void bootInit(IDirect3D8* self, UINT Adapter,
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, bootResetFlag2);
     HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
     HookFunction(hk_OnSetLodLevel,(DWORD)bootOnSetLodLevel);
+    HookFunction(hk_GetLodTexture,(DWORD)bootGetLodTexture);
 
     // read the map
     readMap();
@@ -480,6 +483,16 @@ void bootOnSetLodLevel(DWORD p1, DWORD level)
 				};
 			};
 		};
+	};
+	return;
+};
+
+void bootGetLodTexture(DWORD p1, DWORD* res)
+{
+	// *res is later *bodyColl
+	if (g_bootTextures.erase(*res)>0) {
+		g_bootTexturesPos.erase(*res);
+		LogWithNumber(&k_boot,"Erased bodyColl %x",*res);
 	};
 	return;
 };

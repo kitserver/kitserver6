@@ -112,6 +112,8 @@ typedef IDirect3DTexture8*  (STDMETHODCALLTYPE *PES_GETTEXTURE)(DWORD);
 typedef void   (*CPES_GETTEXTURE)(DWORD,DWORD,DWORD,IDirect3DTexture8**);
 typedef DWORD  (*ONSETLODLEVEL)(DWORD,DWORD,DWORD,DWORD);
 typedef void   (*CONSETLODLEVEL)(DWORD,DWORD);
+typedef DWORD  (*GETLODTEXTURE)(DWORD);
+typedef void   (*CGETLODTEXTURE)(DWORD,DWORD*);
 typedef void   (*ALLVOID)();
 
 void HookDirect3DCreate8();
@@ -147,6 +149,7 @@ void NewFreeMemory(DWORD addr);
 void NewProcessPlayerData();
 IDirect3DTexture8* STDMETHODCALLTYPE NewPesGetTexture(DWORD p1);
 DWORD NewOnSetLodLevel(DWORD p1, DWORD p2, DWORD p3, DWORD p4);
+DWORD NewGetLodTexture(DWORD caller, DWORD p1);
 KEXPORT bool isEditMode();
 KEXPORT bool isTrainingMode();
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel);
@@ -248,6 +251,7 @@ enum HOOKS {
 	hk_D3D_UnlockRect,
 	hk_PesGetTexture,
 	hk_OnSetLodLevel,
+	hk_GetLodTexture,
 };
 
 KEXPORT void HookFunction(HOOKS h,DWORD addr);
