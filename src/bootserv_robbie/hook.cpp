@@ -94,27 +94,27 @@ DWORD codeArray[][CODELEN] = {
       0x865370, 0x804e5a,
       0x9cd682,
       0x65b85b,
-      0, 0,
-      0,0,0,0,0,
-      0,
+      0, 0,  //later!
+      0x8afd15, 0x8afdd4, 0x8afe94, 0x8aff3e, 0x8affd4,
+      0x8ae310,
     },
 };
 
 // data addresses
 #define DATALEN 9
 enum { INPUT_TABLE, STACK_SHIFT, RESMEM1, RESMEM2, RESMEM3,
-	PLAYERS_LINEUP, LINEUP_RECORD_SIZE, TEAM_IDS, EDITMODE_FLAG, };
+	PLAYERS_LINEUP, LINEUP_RECORD_SIZE, GAME_MODE, EDITMODE_FLAG, };
 
 DWORD dataArray[][DATALEN] = {
     //PES6
     {
         0x3a71254, 0, 0x8c7b6d, 0x8c7b82, 0x8c7b99,
-        0x3bdcbcc, 0x240, 0x3be0940, 0x1108488,
+        0x3bdcbcc, 0x240, 0x3be12c9, 0x1108488,
     },
     //PES6 1.10
     {
         0x3a72254, 0x2c, 0x8c7c3d, 0x8c7c52, 0x8c7c69,
-        0x3bddbcc, 0x240, 0x3be1940, 0x1109488,
+        0x3bddbcc, 0x240, 0x3be22c9, 0x1109488,
     },
 };
 
@@ -1860,7 +1860,7 @@ KEXPORT bool isEditMode()
 KEXPORT bool isTrainingMode()
 {
 	if (isEditMode()) return false;
-	return *(BYTE*)(data[TEAM_IDS]+0x10) == 1; //will be 2 for friendly match
+	return *(BYTE*)data[GAME_MODE] == 5;
 };
 
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel)
