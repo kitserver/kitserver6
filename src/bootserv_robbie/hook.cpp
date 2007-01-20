@@ -41,7 +41,7 @@ enum {
     C_FILEFROMAFS_JUMPHACK,
     C_PES_GETTEXTURE, C_PES_GETTEXTURE_CS1,
     C_LOD1, C_LOD2, C_LOD3, C_LOD4, C_LOD5,
-    C_ONSETLODLEVEL, C_GETLODTEXTURE_JMP, C_GETLODTEXTURE,
+    C_ONSETLODLEVEL, C_GETLODTEXTURE_CS, C_GETLODTEXTURE_JUMPHACK,
 };
 
 // Code addresses.
@@ -70,7 +70,7 @@ DWORD codeArray[][CODELEN] = {
       0,
       0x408c20, 0x402723,
       0x8afc35, 0x8afcf4, 0x8afdb4, 0x8afe5e, 0x8afef4,
-      0x8ae1b0, 0x45bbf0, 0x876fc0,
+      0x8ae1b0, 0x883aa6, 0x883a6d,
     },
     // PES6 1.10
 	{ 0x8cd5f0, 0x8b1a63, 0,
@@ -96,7 +96,7 @@ DWORD codeArray[][CODELEN] = {
       0x65b85b,
       0, 0,  //later!
       0x8afd15, 0x8afdd4, 0x8afe94, 0x8aff3e, 0x8affd4,
-      0x8ae310, 0, 0,
+      0x8ae310, 0, 0, //later!
     },
 };
 
@@ -123,6 +123,13 @@ BYTE _shortJumpHack[][2] = {
     {0,0},
     //PES6 1.10
     {0xeb,0x4a},
+};
+
+BYTE _shortJumpHack2[][2] = {
+    //PES6
+    {0xeb,0x37},
+    //PES6 1.10
+    {0,0}, //later!
 };
 
 #define GPILEN 19
@@ -225,6 +232,7 @@ bool bUniSplitHooked = false;
 bool bPesGetTextureHooked = false;
 bool bOnSetLodLevelHooked =false;
 bool bGetLodTextureHooked = false;
+bool bGetLodTextureJumpHackHooked = false;
 
 UNIDECODE UniDecode = NULL;
 UNPACK Unpack = NULL;
@@ -240,7 +248,6 @@ FREEMEMORY oFreeMemory = NULL;
 UNISPLIT UniSplit = NULL;
 PES_GETTEXTURE orgPesGetTexture = NULL;
 ONSETLODLEVEL orgOnSetLodLevel = NULL;
-GETLODTEXTURE orgGetLodTexture = NULL;
 
 CALLLINE l_D3D_Create={0,NULL};
 CALLLINE l_D3D_GetDeviceCaps={0,NULL};
@@ -504,18 +511,27 @@ void HookOthers()
 		"C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
 		
 	// hook GetLodTexture
-	if (code[C_GETLODTEXTURE_JMP] != 0)
+	if (code[C_GETLODTEXTURE_CS] != 0)
 	{
-		bptr = (BYTE*)(code[C_GETLODTEXTURE_JMP]);
-		ptr = (DWORD*)(code[C_GETLODTEXTURE_JMP] + 1);
+		bptr = (BYTE*)(code[C_GETLODTEXTURE_CS]);
+		ptr = (DWORD*)(code[C_GETLODTEXTURE_CS] + 1);
 	
 	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
 	    	bptr[0]=0xe8; //call
 	    	bptr[5]=0xc3; //ret
-            ptr[0] = (DWORD)NewGetLodTexture - (DWORD)(code[C_GETLODTEXTURE_JMP] + 5);
+            ptr[0] = (DWORD)NewGetLodTexture - (DWORD)(code[C_GETLODTEXTURE_CS] + 5);
 	        bGetLodTextureHooked = true;
-	        Log(&k_kload,"GetLodTexture HOOKED at code[C_GETLODTEXTURE_JMP]");
+	        Log(&k_kload,"GetLodTexture HOOKED at code[C_GETLODTEXTURE_CS]");
 	    };
+	    
+		if (code[C_GETLODTEXTURE_JUMPHACK] != 0) {
+            bptr = (BYTE*)(code[C_GETLODTEXTURE_JUMPHACK]);
+            if (VirtualProtect(bptr, 2, newProtection, &protection)) {
+                memcpy(bptr, _shortJumpHack2[GetPESInfo()->GameVersion], 2);
+                bGetLodTextureJumpHackHooked = true;
+                Log(&k_kload,"GetLodTexture Short-Jump-Hack installed.");
+            }
+        }
 	};
 
     // hook num-pages
@@ -1827,15 +1843,13 @@ DWORD NewOnSetLodLevel(DWORD p1, DWORD p2, DWORD p3, DWORD p4)
 	return res;
 };
 
-DWORD NewGetLodTexture(DWORD caller, DWORD p1)
+DWORD NewGetLodTexture(DWORD caller, DWORD p1, DWORD res)
 {
-	DWORD res=orgGetLodTexture(p1);
-	
 	CGETLODTEXTURE NextCall=NULL;
 	for (int i=0;i<(l_GetLodTexture.num);i++)
 	if (l_GetLodTexture.addr[i]!=0) {
 		NextCall=(CGETLODTEXTURE)l_GetLodTexture.addr[i];
-		NextCall(p1, &res);
+		NextCall(p1, res);
 	};
 	
 	return res;
@@ -1900,13 +1914,13 @@ KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, 
 {
 	IDirect3DTexture8* res=NULL;
 	
-	if (lodLevel>4 || texCollType>1) return NULL;
+	if (lodLevel>4 || texCollType>3) return NULL;
 	
 	DWORD playerMainColl=**(DWORD**)(data[PLAYERS_LINEUP] + data[LINEUP_RECORD_SIZE]*0 - 8);
 	playerMainColl=*(DWORD*)(playerMainColl+0x10);
 	
 	DWORD texColl=0;
-	DWORD numTexs[][5]={
+	DWORD bodyNumTexs[2][5]={
 		//0: body
 		{
 			9, 9, 7, 7, 4,
@@ -1914,7 +1928,7 @@ KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, 
 		//1: body (training)
 		{
 			6, 6, 6, 6, 4,
-		},
+		}
 	};
 	
 	switch (texCollType) {
@@ -1924,9 +1938,22 @@ KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, 
 			texColl+=lodLevel*8;
 			texColl=*(DWORD*)(texColl + 4);
 			break;
+		case 2:
+			//if (lodLevel>=*(BYTE*)(playerMainColl+5)) return NULL;
+			texColl=*(DWORD*)(playerMainColl+0x18);
+			texColl+=lodLevel*0x1c; //actually not really lod, but other parameter
+			texColl=*(DWORD*)(texColl + 8);
+			break;
+		case 3:
+			if (lodLevel>=*(BYTE*)(playerMainColl+6)) return NULL;
+			texColl=*(DWORD*)(playerMainColl+0x1c);
+			texColl+=lodLevel*0x14; //actually not really lod, but other parameter
+			texColl=*(DWORD*)(texColl + 8);
+			break;
 	};
 	
-	if (texColl == 0 || which>=numTexs[texCollType][lodLevel]) return NULL;
+	if (texColl == 0) return NULL;
+	//if (which>=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) - 4) return NULL;
 	
 	DWORD p1=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x38) + which*4;
 	DWORD p2=*(DWORD*)(texColl+(*(DWORD*)(texColl+0x40))*4+0x34) + which*4;
@@ -1940,6 +1967,8 @@ KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, 
 		call orgPesGetTexture
 		mov res, eax
 	};
+	
+	LogWithThreeNumbers(&k_kload,"### %d %d %d",texCollType, which, lodLevel);
 	
 	return res;
 };
@@ -1955,17 +1984,20 @@ LRESULT CALLBACK KeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 		};
 	};
 	
-	/* 
+	
 	// Dump all textures of team 1 goalie, for all lod levels
 	if (!IsKitSelectMode && code1 >= 0 && code1==HC_ACTION && lParam & 0x80000000) {
 		KEYCFG* keyCfg = GetInputCfg();
 		if (wParam == keyCfg->keyboard.keyInfoPageNext) {
-			for (int j=0;j<5;j++)
-				for (int i=0;i<9;i++)
-					DumpTexture(GetPlayerTexture(0, isTrainingMode()?1:0, i, j));
+			for (int j=0;j<5;j++) {
+				for (int i=0;i<9;i++) {
+					//DumpTexture(GetPlayerTexture(0, isTrainingMode()?1:0, i, j));
+					//DumpTexture(GetPlayerTexture(0, 3, i, 2));
+				};
+			};
         }
     }
-    */
+    
 	
 	CINPUT NextCall=NULL;
 	for (int i=0;i<(l_Input.num);i++)
@@ -2195,7 +2227,6 @@ void InitAddresses(int v)
 	UniSplit = (UNISPLIT)code[C_UNISPLIT];
 	orgPesGetTexture = (PES_GETTEXTURE)code[C_PES_GETTEXTURE];
 	orgOnSetLodLevel = (ONSETLODLEVEL)code[C_ONSETLODLEVEL];
-	orgGetLodTexture = (GETLODTEXTURE)code[C_GETLODTEXTURE];
 	
 	return;
 };

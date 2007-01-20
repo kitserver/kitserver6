@@ -83,7 +83,7 @@ void bootBeginUniSelect();
 DWORD bootResetFlag2();
 void bootPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res);
 void bootOnSetLodLevel(DWORD p1, DWORD level);
-void bootGetLodTexture(DWORD p1, DWORD* res);
+void bootGetLodTexture(DWORD p1, DWORD res);
 
 
 //////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ void bootInit(IDirect3D8* self, UINT Adapter,
 
     //HookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
     HookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
-    MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
+    //MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, bootResetFlag2);
     HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
     HookFunction(hk_OnSetLodLevel,(DWORD)bootOnSetLodLevel);
@@ -296,7 +296,7 @@ DWORD bootCopyPlayerData(DWORD p0, DWORD p1, DWORD p2)
     */
     map<WORD,TexturePack>::iterator it = g_bootTexturePacks.find(playerNumber);
     if (it != g_bootTexturePacks.end()) {
-        *pBootType = 0;
+		*pBootType &= 0x0f;
         LogWithTwoNumbers(&k_boot,"setting boot-type to 0 at %08x -> player %d",
                 (DWORD)pBootType, playerNumber);
     }
@@ -487,12 +487,12 @@ void bootOnSetLodLevel(DWORD p1, DWORD level)
 	return;
 };
 
-void bootGetLodTexture(DWORD p1, DWORD* res)
+void bootGetLodTexture(DWORD p1, DWORD res)
 {
-	// *res is later *bodyColl
-	if (g_bootTextures.erase(*res)>0) {
-		g_bootTexturesPos.erase(*res);
-		LogWithNumber(&k_boot,"Erased bodyColl %x",*res);
+	// res is later *bodyColl
+	if (g_bootTextures.erase(res)>0) {
+		g_bootTexturesPos.erase(res);
+		LogWithNumber(&k_boot,"Erased bodyColl %x",res);
 	};
 	return;
 };
