@@ -1140,6 +1140,7 @@ void ReadBallModel()
     if (retval != Z_OK) {
         LogWithString(&k_bserv, "Unable to uncompress ball model: %s", model);
         HeapFree(GetProcessHeap(), 0, mdlFileCompr);
+        HeapFree(GetProcessHeap(), 0, mdlFile);
         return;
     }
 	HeapFree(GetProcessHeap(), 0, mdlFileCompr);

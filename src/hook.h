@@ -129,8 +129,8 @@ typedef void   (*CGETTEAMINFO)(DWORD,DWORD);
 typedef DWORD  (*BEGINUNISELECT)();
 typedef DWORD  (*ENDUNISELECT)();
 typedef DWORD  (*SETLODMIXERDATA)();
-typedef DWORD  (*GETPLAYERINFO)();
-typedef void   (*CGETPLAYERINFO)(DWORD,DWORD*,DWORD,DWORD*);
+typedef DWORD  (*GETPLAYERINFO_OLD)();
+typedef void   (*CGETPLAYERINFO_OLD)(DWORD,DWORD*,DWORD,DWORD*);
 typedef DWORD  (*ALLOCMEM)(DWORD,DWORD,DWORD);
 typedef bool   (*CALLOCMEM)(DWORD,DWORD,DWORD*);
 typedef HRESULT (STDMETHODCALLTYPE *CCREATETEXTURE)(IDirect3DDevice8*,UINT,UINT,UINT,DWORD,D3DFORMAT,
@@ -176,7 +176,7 @@ DWORD NewUniSplit(DWORD id);
 DWORD NewBeginUniSelect();
 DWORD NewEndUniSelect();
 DWORD NewSetLodMixerData(DWORD dummy);
-DWORD NewGetPlayerInfo();
+DWORD NewGetPlayerInfoOld();
 KEXPORT DWORD GetPlayerInfo(DWORD PlayerNumber,DWORD Mode);
 void NewFileFromAFS(DWORD retAddr, DWORD infoBlock);
 void NewFreeMemory(DWORD addr);
@@ -274,7 +274,7 @@ enum HOOKS {
 	hk_GetNationalTeamInfoExitEdit,
 	hk_AllocMem,
 	hk_SetLodMixerData,
-	hk_GetPlayerInfo,
+	hk_GetPlayerInfoOld,
 	hk_BeforeUniDecode,
 	hk_FileFromAFS,
 	hk_BeforeFreeMemory,

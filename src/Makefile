@@ -20,6 +20,7 @@ all: dlls apps
 	copy lodcfg.exe output
 	copy keybind.exe output
 	copy filedec.exe output
+	#copy speedtest.exe output
 	copy soft\zlib123-dll\zlib1.dll output
 	copy soft\libpng-1.2.8-bin\libpng13.dll output
 	
@@ -33,14 +34,15 @@ all_dlls: dlls
 all_apps: apps
 	if exist output (rd /S /Q output)
 	mkdir output
-	copy filedec.exe output
 	copy setup.exe output
 	copy lodcfg.exe output
 	copy keybind.exe output
+	copy filedec.exe output
+	#copy speedtest.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
 dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll
-apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe
+apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe
 
 release:
 	$(MAKE) EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
@@ -53,6 +55,7 @@ afsexport: afsexport.exe
 lodcfg: lodcfg.exe
 stadimp: stadimp.exe
 filedec: filedec.exe
+speedtest: speedtest.exe
 
 pngdib.obj:
 	(cd soft\pngdib && $(MAKE))
@@ -205,6 +208,10 @@ afsexport.exe: afsexport.obj afsreader.obj crc32.obj alog.obj aconfig.obj
 filedec.obj: filedec.cpp
 filedec.exe: filedec.obj
 	$(LINK) $(LFLAGS) /out:filedec.exe filedec.obj $(LIBS)
+	
+speedtest.obj: speedtest.cpp
+speedtest.exe: speedtest.obj
+	$(LINK) $(LFLAGS) /out:speedtest.exe speedtest.obj $(LIBS)
 	
 #diaggui.obj: diaggui.cpp diaggui.h
 #diag.exe: diag.obj diaggui.obj

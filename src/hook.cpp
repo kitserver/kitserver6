@@ -31,7 +31,7 @@ enum {
     C_ENDUNISELECT, C_ENDUNISELECT_CS,
     C_LODMIXER_HOOK_ORG, C_LODMIXER_HOOK_CS,
     C_LODMIXER_HOOK_ORG2, C_LODMIXER_HOOK_CS2,
-    C_GETPLAYERINFO, C_GETPLAYERINFO_JMP,
+    C_GETPLAYERINFO_OLD, C_GETPLAYERINFO_JMP_OLD,
     C_FILEFROMAFS, C_FREEMEMORY, C_FREEMEMORY_JMP,
     C_PROCESSPLAYERDATA_JMP, C_CALL050,
     C_UNISPLIT, C_UNISPLIT_CS1, C_UNISPLIT_CS2,
@@ -223,8 +223,8 @@ bool bBeginUniSelectHooked = false;
 bool bEndUniSelectHooked = false;
 bool bAllocMemHooked=false;
 bool bSetLodMixerDataHooked = false;
-bool bGetPlayerInfoHooked = false;
-bool bGetPlayerInfoJmpHooked = false;
+bool bGetPlayerInfoOldHooked = false;
+bool bGetPlayerInfoOldJmpHooked = false;
 bool bFileFromAFSHooked = false;
 bool bFileFromAFSJumpHackHooked = false;
 bool bFreeMemoryHooked = false;
@@ -244,7 +244,7 @@ ENDUNISELECT EndUniSelect = NULL;
 ALLOCMEM AllocMem=NULL;
 SETLODMIXERDATA SetLodMixerData = NULL;
 SETLODMIXERDATA SetLodMixerData2 = NULL;
-GETPLAYERINFO oGetPlayerInfo = NULL;
+GETPLAYERINFO_OLD oGetPlayerInfo = NULL;
 FREEMEMORY oFreeMemory = NULL;
 UNISPLIT UniSplit = NULL;
 PES_GETTEXTURE orgPesGetTexture = NULL;
@@ -269,7 +269,7 @@ CALLLINE l_GetClubTeamInfoML2={0,NULL};
 CALLLINE l_GetNationalTeamInfoExitEdit={0,NULL};
 CALLLINE l_AllocMem={0,NULL};
 CALLLINE l_SetLodMixerData={0,NULL};
-CALLLINE l_GetPlayerInfo={0,NULL};
+CALLLINE l_GetPlayerInfoOld={0,NULL};
 CALLLINE l_BeforeUniDecode={0,NULL};
 CALLLINE l_FileFromAFS={0,NULL};
 CALLLINE l_BeforeFreeMemory={0,NULL};
@@ -429,34 +429,35 @@ void HookOthers()
 		HookProc(C_UNISPLIT, C_UNISPLIT_CS8, 
 	        (DWORD)NewUniSplit,"C_UNISPLIT", "C_UNISPLIT_CS8");
 	        
-
-	// hook GetPlayerInfo
+/*
+	// hook GetPlayerInfoOld
 	char tmp[BUFLEN];
-	bGetPlayerInfoHooked=true;
+	bGetPlayerInfoOldHooked=true;
 	for (int i=0;i<GPILEN;i++)
 		if (gpi[i]!=0) {
-			sprintf(tmp,"C_GETPLAYERINFO_CS%d",i+1);
-			bGetPlayerInfoHooked&=HookProcAtAddr(code[C_GETPLAYERINFO], gpi[i], 
-	    	    (DWORD)NewGetPlayerInfo,"C_GETPLAYERINFO", tmp);
+			sprintf(tmp,"C_GETPLAYERINFO_OLD_CS%d",i+1);
+			bGetPlayerInfoOldHooked&=HookProcAtAddr(code[C_GETPLAYERINFO_OLD], gpi[i], 
+	    	    (DWORD)NewGetPlayerInfoOld,"C_GETPLAYERINFO_OLD", tmp);
 		};
-	
+	*/
 	DWORD* ptr;
 	BYTE* bptr;
 	DWORD protection=0,newProtection=PAGE_EXECUTE_READWRITE;
-	
-	// hook jmp to GetPlayerInfo
-	if (code[C_GETPLAYERINFO_JMP] != 0)
+	/*
+	// hook jmp to GetPlayerInfoOld
+	if (code[C_GETPLAYERINFO_JMP_OLD] != 0)
 	{
-		ptr = (DWORD*)(code[C_GETPLAYERINFO_JMP] + 1);
-	    // save original code for JMP GetPlayerInfo
+		ptr = (DWORD*)(code[C_GETPLAYERINFO_JMP_OLD] + 1);
+	    // save original code for JMP GetPlayerInfoOld
 	    memcpy(g_gpiJmpCode, ptr, 4);
 	
 	    if (VirtualProtect(ptr, 4, newProtection, &protection)) {
-	        ptr[0] = (DWORD)NewGetPlayerInfo - (DWORD)(code[C_GETPLAYERINFO_JMP] + 5);
-	        bGetPlayerInfoJmpHooked = true;
-	        Log(&k_kload,"Jump to GetPlayerInfo HOOKED at code[C_GETPLAYERINFO_JMP]");
+	        ptr[0] = (DWORD)NewGetPlayerInfoOld - (DWORD)(code[C_GETPLAYERINFO_JMP_OLD] + 5);
+	        bGetPlayerInfoOldJmpHooked = true;
+	        Log(&k_kload,"Jump to GetPlayerInfoOld HOOKED at code[C_GETPLAYERINFO_JMP_OLD]");
 	    };
 	}
+	*/
 
 	// hook FileFromAFS
 	if (code[C_FILEFROMAFS] != 0)
@@ -640,28 +641,28 @@ void UnhookOthers()
 		        "C_UNISPLIT", "C_UNISPLIT_CS8"));
 		ClearLine(&l_UniSplit);	        
 
-		
-		// unhook GetPlayerInfo
+		/*
+		// unhook GetPlayerInfoOld
 		char tmp[BUFLEN];
-		bGetPlayerInfoHooked=false;
+		bGetPlayerInfoOldHooked=false;
 		for (int i=0;i<GPILEN;i++)
 			if (gpi[i]!=0) {
-				sprintf(tmp,"C_GETPLAYERINFO_CS%d",i+1);
-				bGetPlayerInfoHooked|=(!UnhookProcAtAddr(true,code[C_GETPLAYERINFO], gpi[i], 
-		    	    "C_GETPLAYERINFO", tmp));
+				sprintf(tmp,"C_GETPLAYERINFO_OLD_CS%d",i+1);
+				bGetPlayerInfoOldHooked|=(!UnhookProcAtAddr(true,code[C_GETPLAYERINFO_OLD], gpi[i], 
+		    	    "C_GETPLAYERINFO_OLD", tmp));
 			};
 		
-		// unhook jmp to GetPlayerInfo
-		if (bGetPlayerInfoJmpHooked)
+		// unhook jmp to GetPlayerInfoOld
+		if (bGetPlayerInfoOldJmpHooked)
 		{
-		    DWORD* ptr = (DWORD*)(code[C_GETPLAYERINFO_JMP] + 1);
+		    DWORD* ptr = (DWORD*)(code[C_GETPLAYERINFO_JMP_OLD] + 1);
 		    memcpy(ptr,g_gpiJmpCode,4);
-	        bGetPlayerInfoHooked = false;
-	        Log(&k_kload,"Jump to GetPlayerInfo UNHOOKED");
+	        bGetPlayerInfoOldHooked = false;
+	        Log(&k_kload,"Jump to GetPlayerInfoOld UNHOOKED");
 		}
 		
-		ClearLine(&l_GetPlayerInfo);
-		
+		ClearLine(&l_GetPlayerInfoOld);
+		*/
 		//unhook ProcessPlayerData
 		bProcessPlayerDataHooked=MasterUnhookFunction(code[C_PROCESSPLAYERDATA_JMP], 
 														NewProcessPlayerData);
@@ -1063,7 +1064,7 @@ DWORD NewSetLodMixerData(DWORD dummy)
 };
 
 //Parameters are stored in EAX and ECX
-DWORD NewGetPlayerInfo()
+DWORD NewGetPlayerInfoOld()
 {
 	DWORD PlayerNumber, Mode, Caller=0;
 	DWORD oldEBP=0;
@@ -1095,10 +1096,10 @@ DWORD NewGetPlayerInfo()
 
 	PlayerNumber&=0xFFFF;
 
-	CGETPLAYERINFO NextCall=NULL;
-	for (i=0;i<(l_GetPlayerInfo.num);i++)
-	if (l_GetPlayerInfo.addr[i]!=0) {
-		NextCall=(CGETPLAYERINFO)l_GetPlayerInfo.addr[i];
+	CGETPLAYERINFO_OLD NextCall=NULL;
+	for (i=0;i<(l_GetPlayerInfoOld.num);i++)
+	if (l_GetPlayerInfoOld.addr[i]!=0) {
+		NextCall=(CGETPLAYERINFO_OLD)l_GetPlayerInfoOld.addr[i];
 		NextCall(Caller,&PlayerNumber,Mode,&result);
 	};
 	
@@ -2229,7 +2230,7 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_GetNationalTeamInfoExitEdit: cl = &l_GetNationalTeamInfoExitEdit; break;
 		case hk_AllocMem: cl = &l_AllocMem; break;
 		case hk_SetLodMixerData: cl = &l_SetLodMixerData; break;
-		case hk_GetPlayerInfo: cl = &l_GetPlayerInfo; break;
+		case hk_GetPlayerInfoOld: cl = &l_GetPlayerInfoOld; break;
 		case hk_BeforeUniDecode: cl = &l_BeforeUniDecode; break;
 		case hk_FileFromAFS: cl = &l_FileFromAFS; break;
 		case hk_BeforeFreeMemory: cl = &l_BeforeFreeMemory; break;
@@ -2264,7 +2265,7 @@ void InitAddresses(int v)
 	AllocMem=(ALLOCMEM)code[C_ALLOCMEM];
 	SetLodMixerData = (SETLODMIXERDATA)code[C_LODMIXER_HOOK_ORG];
 	SetLodMixerData2 = (SETLODMIXERDATA)code[C_LODMIXER_HOOK_ORG2];
-	oGetPlayerInfo = (GETPLAYERINFO)code[C_GETPLAYERINFO];
+	oGetPlayerInfo = (GETPLAYERINFO_OLD)code[C_GETPLAYERINFO_OLD];
 	oFreeMemory = (FREEMEMORY)code[C_FREEMEMORY];
 	UniSplit = (UNISPLIT)code[C_UNISPLIT];
 	orgPesGetTexture = (PES_GETTEXTURE)code[C_PES_GETTEXTURE];
