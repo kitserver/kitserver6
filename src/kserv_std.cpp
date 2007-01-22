@@ -123,6 +123,7 @@ bool g_kit_loading_enabled = false;
 bool g_edit_mode = false;
 bool g_unidecode_flag = false;
 DWORD g_currentAfsId = false;
+RGBAColor* savedRadarColor[2]={NULL, NULL};
 
 typedef struct _TextureBinding {
     IDirect3DTexture8* srcTexture;
@@ -265,8 +266,8 @@ WORD g_last_away = 0xff;
 DWORD* g_AFS_id = NULL;
 MEMITEMINFO* g_AFS_memItemInfo = NULL;
 
-#define DATALEN 21
-#define CODELEN 20
+#define DATALEN 22
+#define CODELEN 21
 
 // data array names
 enum {
@@ -279,6 +280,7 @@ enum {
     LICENSED_LIST,
     SAVED_TEAM_HOME, SAVED_TEAM_AWAY,
     TRAINING_KIT, OFFLINE_FLAG,
+    RADARCOLORS,
 };
 
 // Data addresses.
@@ -292,6 +294,7 @@ DWORD dataArray[][DATALEN] = {
       0xd42e20,
       0x1131fd4, 0x1131fd8,
       6793, 0x3be6320,
+      0x3be14a1,
     },
     // PES6 1.10
     { 0x3be1940, 0x3be7078, 0,
@@ -302,6 +305,7 @@ DWORD dataArray[][DATALEN] = {
       0xd43f00,
       0x1132fd4, 0x1132fd8,
       6793, 0x3be7320,
+      0x3be24a1,
     }
 };
 
@@ -317,6 +321,7 @@ enum {
     C_WRITEKITINFO_CS, C_WRITEKITINFO_CS2, C_WRITEKITINFO_CS3, 
     C_WRITEKITINFO_CS4, C_WRITEKITINFO,
     C_PROCESSKIT_CS, C_PROCESSKIT,
+    C_SETRADARCOLOR_CS,
 };
 
 DWORD codeArray[][CODELEN] = {
@@ -333,6 +338,7 @@ DWORD codeArray[][CODELEN] = {
         0x6b2487, 0x966e15, 0x966e62, 
         0x80843e, 0x865380,
         0x8b1a59, 0x8d1a60,
+        0x9cc37c,
     },
     // PES6 1.10
     {
@@ -347,6 +353,7 @@ DWORD codeArray[][CODELEN] = {
         0x6b25a7, 0x966f95, 0x966fe2, 
         0x8085ae, 0x8654b0,
         0x8b1b39, 0x8d1b50,
+        0x9cc50c,
     },
 };
 
@@ -1182,6 +1189,7 @@ DWORD kservSetFlag();
 DWORD kservResetFlag();
 DWORD kservResetFlag2();
 DWORD kservProcessKit(DWORD dest, DWORD src);
+DWORD kservSetRadarColor();
 void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* savedTeamInfo);
 void resetLicensedOrdinals();
 void clearTeamKitInfo();
@@ -3288,6 +3296,7 @@ void InitKserv()
         MasterHookFunction(code[C_WRITEKITINFO_CS4], 2, kservWriteKitInfo);
 
         MasterHookFunction(code[C_PROCESSKIT_CS], 2, kservProcessKit);
+        MasterHookFunction(code[C_SETRADARCOLOR_CS], 0, kservSetRadarColor);
 
         // create font instance
         //g_font = new CD3DFont( _T("Arial"), 10, D3DFONT_BOLD);
@@ -5910,6 +5919,30 @@ void SetKitInfo(Kit* kit, KITINFO* kitInfo, BOOL editable)
     */
 }
 
+DWORD RGBAColor2DWORD(RGBAColor color)
+{
+	DWORD res = color.r;
+	res += (color.g <<  8);
+	res += (color.b << 16);
+	res += (color.a << 24);
+	return res;
+};
+
+DWORD kservSetRadarColor()
+{
+	DWORD res=MasterCallNext();
+
+	for (int i=0; i<2; i++) {
+		if (savedRadarColor[i]) {
+			DWORD dwColor=RGBAColor2DWORD(*savedRadarColor[i]);
+			((DWORD*)data[RADARCOLORS])[i]=dwColor;
+			//LogWithTwoNumbers(&k_mydll, "Set radar color %d to %.8x", i, dwColor);
+		};
+	};
+
+	return res;
+};
+
 void SetShortsInfo(Kit* kit, KITINFO* kitInfo, BOOL editable)
 {
     // set shorts number position
@@ -6058,6 +6091,9 @@ void restoreLicensedOrdinals()
 
 void clearTeamKitInfo()
 {
+	savedRadarColor[0]=NULL;
+    savedRadarColor[1]=NULL;
+	
 	if (g_teamKitInfo.size() == 0) {
 		return;
 	}
@@ -6349,6 +6385,9 @@ void setTeamKitInfo()
 
     WORD home = GetTeamId(HOME);
     WORD away = GetTeamId(AWAY);
+    
+    savedRadarColor[0]=NULL;
+    savedRadarColor[1]=NULL;
 
     if (TeamDirExists(home))
     {
@@ -6394,6 +6433,12 @@ void setTeamKitInfo()
             SetKitInfo(pb, &ki->plAway, editable);
             SetShortsInfo(paShorts, &ki->plHome, editable);
             SetShortsInfo(pbShorts, &ki->plAway, editable);
+            
+            Kit* selPlKit=(GetTeamStrips(HOME) & STRIP_PL_SHIRT == 0)?pa:pb;
+            if (home == away) selPlKit=pa;
+            if (selPlKit && (selPlKit->attDefined & RADAR_COLOR)) {
+				savedRadarColor[0]=&selPlKit->radarColor;
+			};
 
             // clear out the padding
             size_t len = (home < 0x40) ? 0x68 : 0x128;
@@ -6450,6 +6495,12 @@ void setTeamKitInfo()
             SetKitInfo(pb, &ki->plAway, editable);
             SetShortsInfo(paShorts, &ki->plHome, editable);
             SetShortsInfo(pbShorts, &ki->plAway, editable);
+            
+			Kit* selPlKit=(GetTeamStrips(AWAY) & STRIP_PL_SHIRT == 0)?pa:pb;
+			if (home == away) selPlKit=pb;
+            if (selPlKit && (selPlKit->attDefined & RADAR_COLOR)) {
+				savedRadarColor[1]=&selPlKit->radarColor;
+			};
 
             // clear out the padding
             size_t len = (away < 0x40) ? 0x68 : 0x128;
