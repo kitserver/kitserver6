@@ -20,7 +20,7 @@ all: dlls apps
 	copy lodcfg.exe output
 	copy keybind.exe output
 	copy filedec.exe output
-	#copy speedtest.exe output
+#	copy speedtest.exe output
 	copy soft\zlib123-dll\zlib1.dll output
 	copy soft\libpng-1.2.8-bin\libpng13.dll output
 	
@@ -38,7 +38,7 @@ all_apps: apps
 	copy lodcfg.exe output
 	copy keybind.exe output
 	copy filedec.exe output
-	#copy speedtest.exe output
+#	copy speedtest.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
 dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll
