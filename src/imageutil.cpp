@@ -134,6 +134,98 @@ bool SeekImageBase(FILE* f)
 	return false;
 }
 
+DWORD getFileOffset(FILE *f, DWORD RVA)
+{
+	fseek(f, 0, SEEK_SET);
+	IMAGE_DOS_HEADER dh;
+	fread(&dh, sizeof(IMAGE_DOS_HEADER), 1, f);
+	fseek(f, dh.e_lfanew - sizeof(IMAGE_DOS_HEADER), SEEK_CUR);
+	IMAGE_NT_HEADERS nth;
+	fread(&nth, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), 1, f);
+	fseek(f, nth.FileHeader.SizeOfOptionalHeader, SEEK_CUR);
+
+	IMAGE_SECTION_HEADER sec;
+	WORD num = nth.FileHeader.NumberOfSections;
+	for (WORD i=0; i<num; i++)
+	{
+		fread(&sec, sizeof(IMAGE_SECTION_HEADER), 1, f);
+		if (RVA >= sec.VirtualAddress && RVA < (sec.VirtualAddress + sec.Misc.VirtualSize)) {
+			return RVA - sec.VirtualAddress + sec.PointerToRawData;
+		}
+	}
+	
+	return 0;
+}
+
+DWORD SeekImportTable(FILE *f)
+{
+	DWORD itRVA=0, itSize=0;
+	
+	fseek(f, 0, SEEK_SET);
+	IMAGE_DOS_HEADER dh;
+	fread(&dh, sizeof(IMAGE_DOS_HEADER), 1, f);
+	fseek(f, dh.e_lfanew - sizeof(IMAGE_DOS_HEADER), SEEK_CUR);
+	IMAGE_NT_HEADERS nth;
+	fread(&nth, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), 1, f);
+	if (nth.FileHeader.SizeOfOptionalHeader > 0)
+	{
+		fseek(f, 104, SEEK_CUR);
+		fread(&itRVA, sizeof(DWORD), 1, f);
+		fread(&itSize, sizeof(DWORD), 1, f);
+		fseek(f, getFileOffset(f, itRVA), SEEK_SET);
+
+		return itSize;
+	}	
+	return 0;
+}
+
+DWORD getImportThunkRVA(FILE* f, char* dllName, char* funcName)
+{
+	if (strlen(dllName)==0 || strlen(funcName)==0) return 0;
+	
+	DWORD itSize = SeekImportTable(f);
+	DWORD numDLLs = itSize / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	
+	for (WORD i=0; i < numDLLs; i++)
+	{
+		IMAGE_IMPORT_DESCRIPTOR iid;
+		fread(&iid, sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, f);
+		DWORD fp = ftell(f);
+
+		char iidName[256];
+		fseek(f, getFileOffset(f, iid.Name), SEEK_SET);
+		fread(iidName, 256, 1, f);
+		
+		//find the right dll
+		if (stricmp(iidName, dllName) == 0) {
+			fseek(f, getFileOffset(f, iid.FirstThunk), SEEK_SET);
+			
+			//now find the function
+			for (WORD j=0;; j++)
+			{
+				DWORD thunkRVA;
+				fread(&thunkRVA, sizeof(DWORD), 1, f);
+				DWORD fp1 = ftell(f);
+				if (thunkRVA==0) break;
+				
+				char funcName1[256];
+				fseek(f, getFileOffset(f, thunkRVA) + sizeof(WORD), SEEK_SET);
+				fread(funcName1, 256, 1, f);
+				
+				if (stricmp(funcName1, funcName) == 0) {
+					return iid.FirstThunk + j*sizeof(DWORD);
+				}
+				
+				fseek(f, fp1, SEEK_SET);
+			}
+		}
+		
+		fseek(f, fp, SEEK_SET);
+	}
+
+	return 0;
+}
+
 // Returns a pointer to code section header
 IMAGE_SECTION_HEADER* GetCodeSectionHeader()
 {

@@ -32,8 +32,6 @@ DWORD LoadLibraryAddr[] = {
 	0x7c5768fb,   // Win2K 
 };
 
-DWORD LoadLibraryVistaAddr = 0x7c801d77;
-
 void MyMessageBox(char* fmt, DWORD value);
 void MyMessageBox2(char* fmt, char* value);
 
@@ -99,13 +97,9 @@ KitServer will NOT be attached to it.", fileName);
 	// the address of LoadLibrary will always be the same.
 	HMODULE krnl = GetModuleHandle("kernel32.dll");
 	DWORD loadLib = (DWORD)GetProcAddress(krnl, "LoadLibraryA");
-	// Actually this is what causes the crashes in Windows Vista: the
-	// address of LoadLibrary seems to change at each restart, so we
-	// use the address which is also used for loading D3D in PES6 if
-	// the Vista checkbox is checked
-	if (SendMessage(g_vistaFixCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED) {
-		loadLib = LoadLibraryVistaAddr;
-	}
+	// Well, this doesn't work for Vista, so we don't determine the
+	// address ourselves but use the one from the import table, for
+	// which we get the pointer with the getImportThunkRVA command
 
     /*
 	// get currently selected item in OS choices list
@@ -121,13 +115,15 @@ KitServer will NOT be attached to it.", fileName);
 	DWORD ep, ib;
 	DWORD dataOffset, dataVA;
 	DWORD codeOffset, codeVA;
-	DWORD loadLibAddr, kservAddr;
+	DWORD loadLibAddr, kservAddr, loadLibAddr1;
 	DWORD newEntryPoint;
 
 	FILE* f = fopen(fileName, "r+b");
 	if (f != NULL)
 	{
 		// Install
+		loadLibAddr1 = getImportThunkRVA(f, "kernel32.dll","LoadLibraryA");
+		
 		if (SeekEntryPoint(f))
 		{
 			fread(&ep, sizeof(DWORD), 1, f);
@@ -188,11 +184,13 @@ KitServer will NOT be attached to it.", fileName);
 				p[1] = loadLib;
 				memcpy(buf + 8, installDllPath, lstrlen(installDllPath)+1);
 				fwrite(buf, 0x20, 1, f);
-
+				
 				loadLibAddr = ib + dataVA + sizeof(DWORD);
 				//printf("loadLibAddr = %08x\n", loadLibAddr);
 				kservAddr = loadLibAddr + sizeof(DWORD);
 				//printf("kservAddr = %08x\n", kservAddr);
+				
+				loadLibAddr = ib + loadLibAddr1;
 			}
 			else
 			{
