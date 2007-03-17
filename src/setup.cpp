@@ -32,6 +32,8 @@ DWORD LoadLibraryAddr[] = {
 	0x7c5768fb,   // Win2K 
 };
 
+DWORD LoadLibraryVistaAddr = 0x7c801d77;
+
 void MyMessageBox(char* fmt, DWORD value);
 void MyMessageBox2(char* fmt, char* value);
 
@@ -97,7 +99,14 @@ KitServer will NOT be attached to it.", fileName);
 	// the address of LoadLibrary will always be the same.
 	HMODULE krnl = GetModuleHandle("kernel32.dll");
 	DWORD loadLib = (DWORD)GetProcAddress(krnl, "LoadLibraryA");
-	
+	// Actually this is what causes the crashes in Windows Vista: the
+	// address of LoadLibrary seems to change at each restart, so we
+	// use the address which is also used for loading D3D in PES6 if
+	// the Vista checkbox is checked
+	if (SendMessage(g_vistaFixCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+		loadLib = LoadLibraryVistaAddr;
+	}
+
     /*
 	// get currently selected item in OS choices list
 	int osIdx = (int)SendMessage(g_osListControl, CB_GETCURSEL, 0, 0);

@@ -17,6 +17,9 @@ extern HWND g_removeButtonControl;         // save settings button
 
 extern HWND g_statusTextControl;           // displays status messages
 
+extern HWND g_vistaFixCheckBox;
+
+
 // functions
 bool BuildControls(HWND parent);
 

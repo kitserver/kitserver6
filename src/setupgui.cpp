@@ -13,6 +13,9 @@ HWND g_removeButtonControl;         // save settings button
 
 HWND g_statusTextControl;           // displays status messages
 
+HWND g_vistaFixCheckBox;					// controlls whether the address of LoadLibrary
+									// is determined dynamically or a static value is chosen
+
 /**
  * build all controls
  */
@@ -119,9 +122,17 @@ bool BuildControls(HWND parent)
 			xstyle, "Button", "Install", style | WS_TABSTOP,
 			x, y, butW, butH,
 			parent, NULL, NULL, NULL);
+			
+	
+	butW = 60;
+	x -= butW + spacer;
+	g_vistaFixCheckBox = CreateWindowEx(
+			xstyle, "Button", "Vista-Fix", style | WS_TABSTOP | BS_AUTOCHECKBOX,
+			x, y, butW, butH,
+			parent, NULL, NULL, NULL);
 
 	x = spacer;
-	statW = WIN_WIDTH - spacer*4 - 160;
+	statW = WIN_WIDTH - spacer*4 - 200;
 
 	g_statusTextControl = CreateWindowEx(
 			xstyle, "Static", "", style,
@@ -137,7 +148,8 @@ bool BuildControls(HWND parent)
 		g_exeInfoControl == NULL ||
 		g_statusTextControl == NULL ||
 		g_installButtonControl == NULL ||
-		g_removeButtonControl == NULL)
+		g_removeButtonControl == NULL ||
+		g_vistaFixCheckBox == NULL)
 		return false;
 
 	// Get a handle to the stock font object
@@ -153,6 +165,7 @@ bool BuildControls(HWND parent)
 	SendMessage(g_statusTextControl, WM_SETFONT, (WPARAM)hObj, true);
 	SendMessage(g_installButtonControl, WM_SETFONT, (WPARAM)hObj, true);
 	SendMessage(g_removeButtonControl, WM_SETFONT, (WPARAM)hObj, true);
+	SendMessage(g_vistaFixCheckBox, WM_SETFONT, (WPARAM)hObj, true);
 
 	// disable the dropdown list and the buttons by default
 	EnableWindow(g_installButtonControl, FALSE);
