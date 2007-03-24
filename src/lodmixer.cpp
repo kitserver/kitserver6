@@ -82,6 +82,14 @@ DWORD dataArray[][DATALEN] = {
      0, 0, 0, 0, 0, 0, 0,
      0xf85064, 0xf85090
     },
+    // WE2007
+	{0x9648d0, 
+     0x8b0390, 0x8b0450, 0x8b0510, 0x8b05d0, 0x8b0670, 
+     0xd35da8, 0x3bdb3c0, 0,
+     0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0,
+     0xf7e464, 0xf7e490,
+    },
 };
 
 #define CODELEN 1
@@ -97,6 +105,10 @@ DWORD codeArray[][CODELEN] = {
     // PES6 1.10
     {
         0x6b79cf,
+    },
+    // WE2007
+    {
+        0x6b784f,
     },
 };
 
@@ -136,6 +148,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		switch (GetPESInfo()->GameVersion) {
             case gvPES6PC: //support for PES6 PC
             case gvPES6PC110: //support for PES6 PC 1.10
+            case gvWE2007PC: //support for WE2007 PC
 				break;
             default:
                 Log(&k_lodmixer,"Your game version is currently not supported!");

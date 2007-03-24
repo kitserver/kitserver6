@@ -16,6 +16,8 @@ extern PESINFO g_pesinfo;
 extern KLOAD_CONFIG g_config;
 int bootserverVersion=0;
 
+static const DWORD GAMECAM_SHIFT = 0x30;
+
 #define CODELEN 52
 
 enum {
@@ -96,6 +98,31 @@ DWORD codeArray[][CODELEN] = {
       0x408d90, 0x402723,
       0x8ad0f3, 0x8ad14b,
     },
+    // WE2007
+	{ 0x0, 0x0, 0,
+	  0x0, 0x0,
+	  0, 0,
+	  0x0, 0, 0, 
+	  0, 0,
+	  0, 0,
+	  0, 0, 
+	  0, 0,
+      0x0, 0x0,
+      0x0, 0x0,
+      0x0, 0x0,
+      0, 0,
+      0, 0,
+      0x0, 0x0, 0x0,
+      0x0, 0x0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0x0, 0x0,
+      0x0,
+      0x0,
+      0x0, 0x0,
+      0x0, 0x0,
+    },
 };
 
 // data addresses
@@ -117,6 +144,12 @@ DWORD dataArray[][DATALEN] = {
         0x3bdd980, 0x240, 0x3bd055c, 0x3be22c9, 0x1109488,
         0x112f24a,
     },
+    //WE2007
+    {
+        0x0, 0, 0x0, 0x0, 0x0,
+        0x0, 0x240, 0x0, 0x0, 0x0,
+        0x0,
+    },
 };
 
 BYTE _shortJumpHack[][2] = {
@@ -124,6 +157,8 @@ BYTE _shortJumpHack[][2] = {
     {0,0},
     //PES6 1.10
     {0xeb,0x4a},
+    //WE2007
+    {0x0,0x0},
 };
 
 BYTE _shortJumpHack2[][2] = {
@@ -131,6 +166,8 @@ BYTE _shortJumpHack2[][2] = {
     {0xeb,0x37},
     //PES6 1.10
     {0,0}, //later!
+    //WE2007
+    {0x0,0x0}, //later!
 };
 
 #define GPILEN 19
@@ -144,6 +181,13 @@ DWORD gpiArray[][GPILEN] = {
 		0,0,0,0
 	},
 	//PES6 1.10
+	{
+		0,0,0,0,0,
+		0,0,0,0,0,
+		0,0,0,0,0,
+		0,0,0,0
+	},
+	//WE2007
 	{
 		0,0,0,0,0,
 		0,0,0,0,0,
@@ -1576,7 +1620,15 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 			//TRACE2(&k_kload,"src = %x",src);
 		} else
 			src=0;
-	};
+	}
+    else if (*(DWORD*)(oldEBP+4+data[STACK_SHIFT]+GAMECAM_SHIFT)==code[C_CALL050]+3) {
+		src=*(DWORD*)(oldEBP+0x74+data[STACK_SHIFT]+GAMECAM_SHIFT);
+		if (src!=0 && !IsBadReadPtr((LPVOID)src,4)) {
+			src=*(DWORD*)(src+0x18);
+			//TRACE2(&k_kload,"src = %x",src);
+		} else
+			src=0;
+	}
 	
 	for (int i=0;i<(l_D3D_CreateTexture.num);i++)
 	if (l_D3D_CreateTexture.addr[i]!=0) {
@@ -1598,10 +1650,9 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 	DWORD protection = 0;
 	DWORD newProtection = PAGE_EXECUTE_READWRITE;
 	
-	if (vtable[VTAB_SETRENDERSTATE] != (DWORD)NewSetRenderState) {
-
-		if (!g_orgSetRenderState)
-			g_orgSetRenderState = (PFNSETRENDERSTATEPROC)vtable[VTAB_SETRENDERSTATE];
+	//if (vtable[VTAB_SETRENDERSTATE] != (DWORD)NewSetRenderState) {
+    if (!g_orgSetRenderState) {
+        g_orgSetRenderState = (PFNSETRENDERSTATEPROC)vtable[VTAB_SETRENDERSTATE];
 		if (VirtualProtect(vtable+VTAB_SETRENDERSTATE, 4, newProtection, &protection))
 		{
 			vtable[VTAB_SETRENDERSTATE] = (DWORD)NewSetRenderState;
@@ -1609,9 +1660,9 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 		}
 	};
 	
-	if (vtable[VTAB_SETTEXTURE] != (DWORD)NewSetTexture) {
-		if (!g_orgSetTexture)
-			g_orgSetTexture = (PFNSETTEXTUREPROC)vtable[VTAB_SETTEXTURE];
+	//if (vtable[VTAB_SETTEXTURE] != (DWORD)NewSetTexture) {
+    if (!g_orgSetTexture) {
+        g_orgSetTexture = (PFNSETTEXTUREPROC)vtable[VTAB_SETTEXTURE];
 		if (VirtualProtect(vtable+VTAB_SETTEXTURE, 4, newProtection, &protection))
 		{
 			vtable[VTAB_SETTEXTURE] = (DWORD)NewSetTexture;
@@ -1621,7 +1672,8 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 	
 	if (*ppTexture!=NULL) {
 		vtable = (DWORD*)(*((DWORD*)*ppTexture));
-		if (vtable[VTAB_UNLOCKRECT] != (DWORD)NewUnlockRect) {
+		//if (vtable[VTAB_UNLOCKRECT] != (DWORD)NewUnlockRect) {
+        if (!g_orgUnlockRect) {
 			g_orgUnlockRect=(PFNUNLOCKRECT)vtable[VTAB_UNLOCKRECT];
 			
 			DWORD protection = 0;

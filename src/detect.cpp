@@ -8,13 +8,16 @@
 char* GAME[] = { 
 	"PES6 PC",
 	"PES6 PC 1.10",
+    "WE-PES 2007 PC",
 };
 char* GAME_GUID[] = {
     "{20418978-752D-491c-AF1E-A2EDE086E000}",
     "{20418978-752D-491c-AF1E-A2EDE086E000}",
+    "{EEF9975D-2F76-42c6-AC44-8F84C6B4E68D}",
 };
 DWORD GAME_GUID_OFFSETS[] = { 
     0x77dca8, 
+    0x77eca8,
     0x77eca8,
 };
 

@@ -30,6 +30,6 @@ typedef struct _PESINFO {
 	char AFS_L_sound[256];
 } PESINFO;
 
-enum {gvPES6PC,gvPES6PC110};
+enum {gvPES6PC,gvPES6PC110,gvWE2007PC};
 
 #endif
