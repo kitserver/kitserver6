@@ -186,6 +186,8 @@ void NewBeginRenderPlayer();
 KEXPORT bool isEditMode();
 KEXPORT DWORD editPlayerId();
 KEXPORT bool isTrainingMode();
+KEXPORT bool isWatchReplayMode();
+KEXPORT bool isMLMode();
 KEXPORT PLAYER_RECORD* playerRecord(BYTE pos);
 KEXPORT DWORD getRecordPlayerId(BYTE pos);
 KEXPORT IDirect3DTexture8* GetTextureFromColl(DWORD texColl, DWORD which);

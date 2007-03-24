@@ -1947,6 +1947,18 @@ KEXPORT bool isTrainingMode()
 	return *(BYTE*)data[GAME_MODE] == 5;
 };
 
+KEXPORT bool isWatchReplayMode()
+{
+	if (isEditMode()) return false;
+	return *(BYTE*)data[GAME_MODE] == 10;
+};
+
+KEXPORT bool isMLMode()
+{
+	if (isEditMode()) return false;
+	return *(BYTE*)data[GAME_MODE] == 4;
+};
+
 KEXPORT PLAYER_RECORD* playerRecord(BYTE pos)
 {
 	if (pos>22) pos=1;
@@ -1958,9 +1970,12 @@ KEXPORT DWORD getRecordPlayerId(BYTE pos)
 	DWORD id=0;
 	if (pos>22) return 0;
 	
-	PLAYER_RECORD* rec = playerRecord(pos);
-	id=*(WORD*)(data[PLAYERDATA_BASE] + (rec->team*0x20 + rec->posInTeam)*0x348 + 0x2a);
-	
+	//if (!isWatchReplayMode()) {
+		PLAYER_RECORD* rec = playerRecord(pos);
+		id=*(WORD*)(data[PLAYERDATA_BASE] + (rec->team*0x20 + rec->posInTeam)*0x348 + 0x2a);
+	/*} else {
+		id=195;
+	};*/
 	return id;
 };
 
