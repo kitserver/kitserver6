@@ -21,6 +21,7 @@ all: dlls apps
 	copy keybind.exe output
 	copy filedec.exe output
 #	copy speedtest.exe output
+#	copy vista_test.exe output
 	copy soft\zlib123-dll\zlib1.dll output
 	copy soft\libpng-1.2.8-bin\libpng13.dll output
 	
@@ -39,10 +40,11 @@ all_apps: apps
 	copy keybind.exe output
 	copy filedec.exe output
 #	copy speedtest.exe output
+#	copy vista_test.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
 dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll
-apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe
+apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 release:
 	$(MAKE) EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
@@ -179,7 +181,6 @@ setupgui.obj: setupgui.cpp setupgui.h
 setup.obj: setup.cpp setup.h setupgui.h
 setup.exe: setup.obj detect.obj setupgui.obj imageutil.obj
 	$(LINK) $(LFLAGS) /out:setup.exe setup.obj detect.obj setupgui.obj imageutil.obj $(LIBS)
-setup.obj: setup.cpp setup.h setupgui.h
 
 lodcfg.exe: lodcfg.obj detect.obj lodcfgui.obj imageutil.obj
 	$(LINK) $(LFLAGS) /out:lodcfg.exe lodcfg.obj detect.obj lodcfgui.obj imageutil.obj $(LIBS)
@@ -212,6 +213,10 @@ filedec.exe: filedec.obj
 speedtest.obj: speedtest.cpp
 speedtest.exe: speedtest.obj
 	$(LINK) $(LFLAGS) /out:speedtest.exe speedtest.obj $(LIBS)
+	
+vista_test.obj: vista_test.cpp
+vista_test.exe: vista_test.obj
+	$(LINK) $(LFLAGS) /out:vista_test.exe vista_test.obj $(LIBS)
 	
 #diaggui.obj: diaggui.cpp diaggui.h
 #diag.exe: diag.obj diaggui.obj

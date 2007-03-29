@@ -1,7 +1,5 @@
 #include <windows.h>
 #include <stdio.h>
-#include "kserv.h"
-#include "shared.h"
 #include "setupgui.h"
 
 HWND g_exeListControl;              // displays list of executable files
