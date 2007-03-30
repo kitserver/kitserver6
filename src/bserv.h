@@ -24,19 +24,22 @@ static DWORD codeArray[][CODELEN] = {
     },
 };
 
-#define DATALEN 3
+#define DATALEN 6
 enum {
-    AFS_PAGELEN_TABLE, NUM_BALL_FILES, NOT_A_BALL_FILE
+    AFS_PAGELEN_TABLE, NUM_BALL_FILES, NOT_A_BALL_FILE,
+    TEAM_IDS, SAVED_TEAM_HOME, SAVED_TEAM_AWAY,
 };
 
 static DWORD dataArray[][DATALEN] = {
 	// PES6
 	{
-	 0x3b5cbc0, 49, 38
+	 0x3b5cbc0, 49, 38,
+	 0x3be0940, 0x1131fd4, 0x1131fd8,
     },
 	// PES6 1.10
 	{
-	 0x3b5dbc0, 49, 38
+	 0x3b5dbc0, 49, 38,
+	 0x3be1940, 0x1132fd4, 0x1132fd8,
     },
 };
 
@@ -106,4 +109,11 @@ typedef struct _BSERV_CFG {
     int selectedBall;
     BOOL previewEnabled;
 } BSERV_CFG;
+
+#define BALL_GAME_CHOICE 0
+#define BALL_SELECT 1
+#define BALL_HOME_TEAM 2
+
+#define HOME 0
+#define AWAY 1
 
