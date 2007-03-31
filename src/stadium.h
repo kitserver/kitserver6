@@ -3,7 +3,7 @@
 #include "afsreader.h"
 
 #define MODID 106
-#define NAMELONG "Stadium Server 6.3.4"
+#define NAMELONG "Stadium Server 6.5.0 Beta"
 #define NAMESHORT "STADIUM"
 
 #define DEFAULT_DEBUG 1
@@ -18,12 +18,6 @@
 #define KeyNextStadium 0x30
 #define KeySwitchGdbStadiums 0x31
 #define KeySwitchWeather 0x32
-
-typedef struct _MEMITEMINFO {
-	DWORD id;
-	AFSITEMINFO afsItemInfo;
-	DWORD address;
-} MEMITEMINFO;
 
 typedef struct _LCM {
     WORD homeTeamId;

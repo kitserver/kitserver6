@@ -132,11 +132,10 @@ static DWORD codeArray[][CODELEN] = {
     },
 };
 
-#define DATALEN 19
+#define DATALEN 18
 enum {
     NUM_FILES, NUM_STADS, STAD_FIRST, NOU_CAMP_SHIFT_ID, SHIFT, 
     ADBOARD_TEX_FIRST, NUM_ADBOARD_TEX, DELLA_ALPI_ADBOARDS,
-    AFS_PAGELEN_TABLE,
     TEAM_IDS, SAVED_TEAM_HOME, SAVED_TEAM_AWAY, DELLA_ALPI,
     STADIUM_TEXT_TABLE, STADIUM_TEXT_LEN, RANDOM_STADIUM_FLAG,
     ISVIEWSTADIUMMODE,
@@ -146,7 +145,6 @@ static DWORD dataArray[][DATALEN] = {
 	// PES6
 	{66, 38, 6941, 7611, 4, 
      6915, 25, 6923,
-     0x3b5cbc0,
      0x3be0940, 0x1131fd4, 0x1131fd8, 8001,
      0x1131fec, 61, 0x3be6d94,
      0x3a7ce20,
@@ -155,15 +153,12 @@ static DWORD dataArray[][DATALEN] = {
 	// PES6 1.10
 	{66, 38, 6941, 7611, 4, 
      6915, 25, 6923,
-     0x3b5dbc0,
      0x3be1940, 0x1132fd4, 0x1132fd8, 8001,
      0x1132fec, 61, 0x3be7d94,
      0x3a7de20,
      0x3a802ac, 0x3a80454,
     },
 };
-
-static DWORD* g_pageLenTable = NULL;
 
 static char* FILE_NAMES[] = {
     "1_day_fine\\crowd_a0.str",
@@ -254,7 +249,6 @@ static DWORD code[CODELEN];
 static DWORD data[DATALEN];
 
 static std::map<DWORD,bool> g_AFS_idMap;
-static std::map<DWORD,MEMITEMINFO*> g_AFS_offsetMap;
 static std::map<WORD,std::string> g_HomeStadiumMap;
 static std::map<std::string,STADINFO*> g_stadiumMap;
 static std::map<std::string,STADINFO*>::iterator g_stadiumMapIterator = NULL;
@@ -269,10 +263,7 @@ static BYTE savedStadiumChange[6];
 static BYTE savedAdvanceStadium[5];
 static bool savedChangeStadiumCode=false;
 
-static DWORD g_afsId = 0xffffffff;
-static DWORD g_fileId = 0xffffffff;
 static DWORD g_stadId = 0xffffffff;
-static char g_stadFileSpec[BUFLEN];
 static bool g_gameChoice = true;
 static bool g_homeTeamChoice = false;
 static bool isSelectMode=false;
@@ -280,11 +271,6 @@ static bool isSelectMode=false;
 void SafeRelease(LPVOID ppObj);
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
 void InitStadiumServer();
-bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval);
-void stadReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped);
-void stadAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped);
 DWORD stadGetString(DWORD param0, DWORD text);
 DWORD stadGetString2(DWORD ppText, DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD);
 DWORD stadWriteBuilt(char* dest, char* format, DWORD num);
@@ -296,8 +282,9 @@ int GetStadId(DWORD id);
 int GetFileId(DWORD id);
 static void InitStadiumMaps();
 static WORD GetTeamId(int which);
-DWORD FindAdboardsFile(char* filename);
-DWORD FindStadiumFile(int stadId, DWORD stadFileId, char* filename);
+void FindAdboardsFile(char* filename);
+void FindStadiumFile(int stadId, DWORD stadFileId, char* filename);
+void stadAfsReplace(GETFILEINFO* gfi);
 void CheckInput();
 
 void stadKeyboardProc(int code1, WPARAM wParam, LPARAM lParam);
@@ -562,8 +549,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		RegisterKModule(&k_stadium);
 		
 		HookFunction(hk_D3D_Create,(DWORD)InitStadiumServer);
-		HookFunction(hk_ReadFile,(DWORD)stadReadFile);
-		HookFunction(hk_AfterReadFile,(DWORD)stadAfterReadFile);
 
 		HookFunction(hk_DrawKitSelectInfo,(DWORD)stadShowMenu);
         HookFunction(hk_OnShowMenu,(DWORD)stadBeginUniSelect);
@@ -629,8 +614,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
         Log(&k_stadium, "ReadLCM unhooked.");
 
 		UnhookFunction(hk_D3D_Create,(DWORD)InitStadiumServer);
-		UnhookFunction(hk_ReadFile,(DWORD)stadReadFile);
-		UnhookFunction(hk_AfterReadFile,(DWORD)stadAfterReadFile);
 
 		UnhookFunction(hk_DrawKitSelectInfo,(DWORD)stadShowMenu);
         UnhookFunction(hk_OnShowMenu,(DWORD)stadBeginUniSelect);
@@ -648,13 +631,9 @@ void InitStadiumServer()
 
 	memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
 	memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
-
-    // reset stadium filename buffer
-    ZeroMemory(g_stadFileSpec, BUFLEN);
-
-    RegisterGetNumPagesCallback(stadGetNumPages);
     
-    Log(&k_stadium, "GetFileFromAFS hooked");
+    RegisterAfsReplaceCallback(stadAfsReplace);
+    Log(&k_stadium, "stadAfsReplace hooked");
 
 	char tmp[BUFLEN];
 	strcpy(tmp,GetPESInfo()->pesdir);
@@ -666,49 +645,21 @@ void InitStadiumServer()
         return;
     }
 
-    // read offsets for stadium files
+    // mark ids for stadium files
 	for (i=0; i<data[NUM_STADS]; i++) {
         for (j=0; j<data[NUM_FILES]; j++) {
             DWORD id = data[STAD_FIRST] + i*data[NUM_FILES] + j;
             id = (id > data[NOU_CAMP_SHIFT_ID])?(id + data[SHIFT]):id;
             // store id in id-map
             g_AFS_idMap[id] = true;
-
-            MEMITEMINFO* info = (MEMITEMINFO*)HeapAlloc(GetProcessHeap(), 
-                    HEAP_ZERO_MEMORY, sizeof(MEMITEMINFO));
-            if (!info) {
-                Log(&k_stadium, "InitStadiumServer: problem allocating MEMITEMINFO");
-                continue;
-            }
-            info->id = id;
-            ReadItemInfoById(f, id, &info->afsItemInfo, 0);
-            TRACE2(&k_stadium, "info->id = %08x", info->id);
-            TRACE2(&k_stadium, "dwOffset = %08x", info->afsItemInfo.dwOffset);
-            TRACE2(&k_stadium, "dwSize = %08x", info->afsItemInfo.dwSize);
-            // store in offset map
-            g_AFS_offsetMap[info->afsItemInfo.dwOffset] = info;
         }
     }
 
-    // read offsets for adboard textures
+    // mark ids for adboard textures
 	for (i=0; i<data[NUM_ADBOARD_TEX]; i++) {
         DWORD id = data[ADBOARD_TEX_FIRST] + i;
         // store id in id-map
         g_AFS_idMap[id] = true;
-
-        MEMITEMINFO* info = (MEMITEMINFO*)HeapAlloc(GetProcessHeap(), 
-                HEAP_ZERO_MEMORY, sizeof(MEMITEMINFO));
-        if (!info) {
-            Log(&k_stadium, "InitStadiumServer: problem allocating MEMITEMINFO");
-            continue;
-        }
-        info->id = id;
-        ReadItemInfoById(f, id, &info->afsItemInfo, 0);
-        TRACE2(&k_stadium, "info->id = %08x", info->id);
-        TRACE2(&k_stadium, "dwOffset = %08x", info->afsItemInfo.dwOffset);
-        TRACE2(&k_stadium, "dwSize = %08x", info->afsItemInfo.dwSize);
-        // store in offset map
-        g_AFS_offsetMap[info->afsItemInfo.dwOffset] = info;
     }
 
     fclose(f);
@@ -747,7 +698,7 @@ int GetStadiumBase(DWORD stadId)
     return base;
 }
 
-DWORD FindAdboardsFile(char* filename)
+void FindAdboardsFile(char* filename)
 {
 	LCM* lcm=(LCM*)data[TEAM_IDS];
     // force full stadium reload next time
@@ -755,7 +706,7 @@ DWORD FindAdboardsFile(char* filename)
     *randomStad = *randomStad | 0x01;
 
     if (g_gameChoice || isViewStadiumMode) {
-        return 0;
+        return;
     }
 
     //if (g_gameChoice && !(isViewStadiumMode && viewGdbStadiums)) {
@@ -781,17 +732,7 @@ DWORD FindAdboardsFile(char* filename)
 
     //sprintf(filename,"%sGDB\\stadiums\\Santiago Bernabeu\\%s", 
     //        GetPESInfo()->gdbDir, FILE_NAMES[ADBOARDS]);
-
-    HANDLE hfile;
-    DWORD fsize = 0;
-    hfile = CreateFile(filename, GENERIC_READ,FILE_SHARE_READ,NULL,
-        OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-    if (hfile!=INVALID_HANDLE_VALUE) {
-        fsize = GetFileSize(hfile,NULL);
-        CloseHandle(hfile);
-    }
-
-    return fsize;
+    return;
 }
 
 const char* GetStadFileName(int stadId, DWORD stadFileId)
@@ -799,14 +740,14 @@ const char* GetStadFileName(int stadId, DWORD stadFileId)
     return FILE_NAMES[stadFileId];
 }
 
-DWORD FindStadiumFile(int stadId, DWORD stadFileId, char* filename)
+void FindStadiumFile(int stadId, DWORD stadFileId, char* filename)
 {
     if (isViewStadiumMode) {
         if (!viewGdbStadiums) {
-            return 0; // not a gdb stadium - in "View Stadiums"
+            return; // not a gdb stadium - in "View Stadiums"
         }
     } else if (g_gameChoice) {
-        return 0; //game choice stadium - not in "View Stadiums"
+        return; //game choice stadium - not in "View Stadiums"
     }
 
     LogWithNumber(&k_stadium, "g_gameChoice = %d", g_gameChoice);
@@ -831,17 +772,7 @@ DWORD FindStadiumFile(int stadId, DWORD stadFileId, char* filename)
 
     //sprintf(filename,"%sGDB\\stadiums\\Santiago Bernabeu\\%s", 
     //        GetPESInfo()->gdbDir, FILE_NAMES[stadFileId]);
-
-    HANDLE hfile;
-    DWORD fsize = 0;
-    hfile = CreateFile(filename, GENERIC_READ,FILE_SHARE_READ,NULL,
-        OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-    if (hfile!=INVALID_HANDLE_VALUE) {
-        fsize = GetFileSize(hfile,NULL);
-        CloseHandle(hfile);
-    }
-
-    return fsize;
+    return;
 }
 
 void DumpBuffer(char* filename, LPVOID buf, DWORD len)
@@ -853,86 +784,9 @@ void DumpBuffer(char* filename, LPVOID buf, DWORD len)
     }
 }
 
-// determines item id, based on offset.
-MEMITEMINFO* FindMemItemInfoByOffset(DWORD offset)
+void stadAfsReplace(GETFILEINFO* gfi)
 {
-    //EnterCriticalSection(&g_cs);
-    MEMITEMINFO* info = MAP_FIND(g_AFS_offsetMap, offset);
-    //LeaveCriticalSection(&g_cs);
-    return info;
-}
-
-DWORD _dwOffset1;
-
-void stadReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
-{
-	// get current file pointer
-	_dwOffset1 = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);  
-    //LogWithNumber(&k_stadium, "OnReadFile: dwOffset = %08x", _dwOffset1);
-    
-	return;
-}
-bool abc=true;
-void stadAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
-{
-	// search for such offset
-	MEMITEMINFO* info = FindMemItemInfoByOffset(_dwOffset1);
-	//if (abc) MessageBox(0,"stadAfterReadFile works","2-1",0);
-	abc=false;
-
-	if (info != NULL && info->id == g_fileId && g_afsId == 1) {
-		//MessageBox(0,"REPLACEING NOW!","2-2",0);
-        LogWithNumber(&k_stadium,"OnReadFile: info->id = %d", info->id);
-        LogWithNumber(&k_stadium,"OnReadFile: lpBuffer = %08x", (DWORD)lpBuffer);
-        LogWithNumber(&k_stadium,"OnReadFile: nNumberOfBytesToRead = %08x", nNumberOfBytesToRead);
-
-        //bool switchStadium = false;
-        if (info->id >= data[STAD_FIRST] ) {
-            int stadId = GetStadId(info->id);
-            int fileId = GetFileId(info->id);
-            LogWithNumber(&k_stadium,"OnReadFile: stadium: %d", stadId);
-            LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[fileId]);
-        } else {
-            LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[ADBOARDS]);
-        }
-
-        if (strlen(g_stadFileSpec)>0) {
-            // stadium file available: load it into the buffer
-            HANDLE hfile;
-            DWORD fsize;
-            DWORD bytesread;
-            hfile = CreateFile(g_stadFileSpec,GENERIC_READ,FILE_SHARE_READ,NULL,
-                OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-            if (hfile!=INVALID_HANDLE_VALUE) {
-                fsize = GetFileSize(hfile,NULL);
-                ReadFile(hfile,lpBuffer,fsize,&bytesread,NULL);
-                LogWithNumber(&k_stadium,"OnReadFile: bytesread = %08x", bytesread);
-                CloseHandle(hfile);
-            }
-
-            g_stadFileSpec[0]='\0';
-        }
-
-        g_afsId = 0xffffffff;
-        g_fileId = 0xffffffff;
-    }
-
-	CheckViewStadiumMode();
-
-	return;
-}
-
-bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
-{
-    DWORD orgNumPages = 0;
-    DWORD fileSize = 0;
-    DWORD* pPageLenTable = NULL;
-
-    //LogWithTwoNumbers(&k_stadium,"stadGetNumPages: afsId=%d, fileId=%d", afsId, fileId); 
-
-    if (!bOthersHooked) {
+	if (!bOthersHooked) {
         MasterHookFunction(code[C_GETSTRING_CS], 2, stadGetString);
         Log(&k_stadium, "hooked GetString");
         MasterHookFunction(code[C_GETSTRING2_CS], 8, stadGetString2);
@@ -950,11 +804,16 @@ bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
 
         bOthersHooked = true;
     }
-
-    if (afsId == 1) { // 0_text.afs
+	
+	
+	DWORD afsId = 0, fileId = 0;
+	char filename[BUFLEN];
+	ZeroMemory(filename, BUFLEN);
+	fileId = splitFileId(gfi->fileId, &afsId);
+	
+	if (afsId == 1) { // 0_text.afs
         if (MAP_CONTAINS(g_AFS_idMap, fileId)) {
-            LogWithTwoNumbers(&k_stadium,"stadGetNumPages: afsId=%d, fileId=%d", afsId, fileId);
-            *retval = 0;
+			LogWithTwoNumbers(&k_stadium,"stadAfsReplace: afsId=%d, fileId=%d", afsId, fileId);
 
             if (fileId < data[STAD_FIRST]) {
                 // adboard textures
@@ -964,7 +823,8 @@ bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
                     // force Della Alpi adboards
                     //fileId = data[DELLA_ALPI_ADBOARDS];
 
-                    fileSize = FindAdboardsFile(g_stadFileSpec);
+                    FindAdboardsFile(filename);
+                    LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[ADBOARDS]);
                 }
             } else {
                 // stadium files
@@ -973,7 +833,7 @@ bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
                 int stadId = GetStadId(fileId);
                 int stadFileId = GetFileId(fileId);
 
-                LogWithTwoNumbers(&k_stadium,"stadGetNumPages: stadId=%d, stadFileId=%d", stadId, stadFileId);
+                LogWithTwoNumbers(&k_stadium,"stadAfsReplace: stadId=%d, stadFileId=%d", stadId, stadFileId);
 
                 // force Della Alpi stadium
                 //fileId = stadFileId + data[DELLA_ALPI];
@@ -983,38 +843,23 @@ bool stadGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
                     g_stadId = stadId;
                 }
                 
-                fileSize = FindStadiumFile(stadId, stadFileId, g_stadFileSpec);
+                FindStadiumFile(stadId, stadFileId, filename);
+                
+	            LogWithNumber(&k_stadium,"OnReadFile: stadium: %d", stadId);
+	            LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[fileId]);
             }
-
-            if (fileSize > 0) {
-                LogWithString(&k_stadium, "stadGetNumPages: found GDB stadium file: %s", g_stadFileSpec);
-
-                // find buffer size (in pages)
-                g_pageLenTable = (DWORD*)data[AFS_PAGELEN_TABLE];
-                pPageLenTable = (DWORD*)(g_pageLenTable[afsId] + 0x11c);
-                orgNumPages = pPageLenTable[fileId];
-                LogWithTwoNumbers(&k_stadium,"stadGetNumPages: had size: %08x pages (%08x bytes)", 
-                        orgNumPages, orgNumPages*0x800);
-
-                // adjust buffer size to fit GDB stadium file
-                DWORD numPages = fileSize / 0x800 + 1;
-                LogWithTwoNumbers(&k_stadium,"stadGetNumPages: new size: %08x pages (%08x bytes)", 
-                        numPages, numPages*0x800);
-
-                *retval = max(numPages, orgNumPages);
-                LogWithTwoNumbers(&k_stadium, "stadGetNumPages: returning size: %08x pages (%08x bytes)",
-                        *retval, *retval*0x800);
-            }
-
-            g_afsId = afsId;
-            g_fileId = fileId;
-
-            return (*retval > 0);
-        }
-    }
-
-    return false;
+			if (strlen(filename)>0) {
+            	loadReplaceFile(filename);
+                gfi->isProcessed = true;
+	        }
+		}
+	}
+	
+	CheckViewStadiumMode();
+	return;
 }
+
+
 
 void stadBeginUniSelect()
 {
