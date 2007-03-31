@@ -74,13 +74,14 @@ log.obj: log.cpp log.h
 crc32.obj: crc32.cpp crc32.h
 afsreader.obj: afsreader.cpp afsreader.h
 hook.obj: hook.cpp hook.h kload_config.obj
+afsreplace.obj: afsreplace.cpp afsreplace.h kload_config.obj hook.obj
 lodcfg.obj: lodcfg.h lodcfg.cpp lodcfgui.h
 lodcfgui.obj: lodcfgui.h lodcfgui.cpp
 hooklib.obj: hooklib.h hooklib.cpp
 
-kload.lib: kload.obj detect.obj d3dfont.obj imageutil.obj log.obj kload_config.obj hook.obj numpages.obj input.obj keycfg.obj hooklib.obj dxutil.obj
+kload.lib: kload.obj detect.obj d3dfont.obj imageutil.obj log.obj kload_config.obj hook.obj numpages.obj afsreplace.obj input.obj keycfg.obj hooklib.obj dxutil.obj
 kload.dll: kload.lib kload.res
-	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj d3dfont.obj dxutil.obj detect.obj imageutil.obj log.obj kload_config.obj hook.obj numpages.obj input.obj keycfg.obj hooklib.obj kload.res $(LIBS) d3dx8.lib winmm.lib
+	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj d3dfont.obj dxutil.obj detect.obj imageutil.obj log.obj kload_config.obj hook.obj numpages.obj afsreplace.obj input.obj keycfg.obj hooklib.obj kload.res $(LIBS) d3dx8.lib winmm.lib
 kload.obj: kload.cpp kload.h
 detect.obj: detect.cpp detect.h
 kload.res: 

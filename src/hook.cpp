@@ -10,6 +10,7 @@
 #include "numpages.h"
 #include "input.h"
 #include "keycfg.h"
+#include "afsreplace.h"
 
 extern KMOD k_kload;
 extern PESINFO g_pesinfo;
@@ -582,15 +583,18 @@ void HookOthers()
 		};
 	};
 
-    // hook num-pages
+    // hook num-pages and AfsReplace
     HookGetNumPages();
+    HookAfsReplace();
 	return;
 };
 
 void UnhookOthers()
 {
-    // hook GetNumPagesForFileInAFS
+    // hook GetNumPagesForFileInAFS and AfsReplace
     UnhookGetNumPages();
+    UnhookAfsReplace();
+    
 
 		// unhook code[C_UNPACK]
         bUnpackHooked =  !UnhookProc(bUnpackHooked, C_UNPACK, C_UNPACK_CS,
@@ -1266,6 +1270,8 @@ IDirect3D8* STDMETHODCALLTYPE NewDirect3DCreate8(UINT sdkVersion)
 
     Log(&k_kload,"calling InitGetNumPages()...");
     InitGetNumPages();
+    Log(&k_kload,"calling InitAfsReplace()...");
+    InitAfsReplace();
 
 	for (int i=0;i<(l_D3D_Create.num);i++)
 		if (l_D3D_Create.addr[i]!=0) {

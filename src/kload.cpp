@@ -12,6 +12,7 @@
 #include "detect.h"
 #include "kload.h"
 #include "keycfg.h"
+#include "afsreplace.h"
 
 #include <map>
 

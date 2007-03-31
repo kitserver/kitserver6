@@ -3,3 +3,4 @@
 #include "log.h"
 #include "hook.h"
 #include "kload.h"
+#include "afsreplace.h"
