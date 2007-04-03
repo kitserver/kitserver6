@@ -1,7 +1,7 @@
 // fserv.h
 
 #define MODID 103
-#define NAMELONG "Faceserver 6.4.0"
+#define NAMELONG "Faceserver 6.5.0"
 #define NAMESHORT "FSERV"
 
 #define DEFAULT_DEBUG 1
@@ -49,13 +49,18 @@ DWORD fIDsArray[][FIDSLEN] = {
 
 DWORD fIDs[FIDSLEN];
 
+#ifndef _ENCBUFFERHEADER_
+#define _ENCBUFFERHEADER_
 typedef struct _ENCBUFFERHEADER {
 	DWORD dwSig;
 	DWORD dwEncSize;
 	DWORD dwDecSize;
 	BYTE other[20];
 } ENCBUFFERHEADER;
+#endif
 
+#ifndef _INFOBLOCK_
+#define _INFOBLOCK_
 typedef struct _INFOBLOCK {
 	BYTE reserved1[0x54];
 	DWORD FileID; //0x54
@@ -63,6 +68,7 @@ typedef struct _INFOBLOCK {
 	DWORD src; //0x60
 	DWORD dest; //0x64
 } INFOBLOCK;
+#endif
 
 typedef struct _DATAOFID {
 	BYTE type;

@@ -16,9 +16,6 @@
 
 KMOD k_bserv={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 
-#define MAX_NUM_BALL_FILES 49
-
-AFSENTRY AFSArray[MAX_NUM_BALL_FILES];
 BSERV_CFG bserv_cfg;
 int selectedBall=-1;
 DWORD numBalls=0;
@@ -45,9 +42,6 @@ bool isPNGtexture=false;
 char currTextureName[BUFLEN];
 IDirect3DTexture8* g_lastBallTex;
 IDirect3DTexture8* g_gdbBallTexture;
-
-static DWORD g_afsId = 0xffffffff;
-static DWORD g_fileId = 0xffffffff;
 
 #define MAP_FIND(map,key) map[key]
 #define MAP_CONTAINS(map,key) (map.find(key)!=map.end())
@@ -114,21 +108,18 @@ void CheckInput();
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
 void InitBserv();
-void bservReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped);
-void bservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped);
-void bservUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD zero, DWORD* size2, DWORD result);
-void SaveAFSAddr(HANDLE file,DWORD FileNumber,AFSENTRY* afs,DWORD tmp);
-bool bservGetNumPages(DWORD afsId, DWORD fileId, DWORD* retval);
 void ReadBalls();
 void AddBall(LPTSTR sdisplay,LPTSTR smodel,LPTSTR stexture);
 void FreeBalls();
 void SetBall(DWORD id);
 void bservKeyboardProc(int code1, WPARAM wParam, LPARAM lParam);
+void bservBeginUniSelect();
 void BeginDrawBallLabel();
 void EndDrawBallLabel();
 void DrawBallLabel(IDirect3DDevice8* self);
+void bservAfsReplace(GETFILEINFO* gfi);
+void bservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size);
+
 DWORD LoadPNGTexture(BITMAPINFO** tex, char* filename);
 static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize);
 void ApplyAlphaChunk(RGBQUAD* palette, BYTE* memblk, DWORD size);
@@ -221,19 +212,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
 		memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
 		
-		char tmp[BUFLEN];
-		strcpy(tmp,GetPESInfo()->pesdir);
-		strcat(tmp,GetPESInfo()->AFS_0_text);
-		
-		HANDLE TempHandle=CreateFile(tmp,GENERIC_READ,3,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
-		DWORD HeapAddress=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,8);
-		
-		for (int i=0;i<data[NUM_BALL_FILES];i++)
-			SaveAFSAddr(TempHandle,i,&(AFSArray[i]),HeapAddress);
-		
-		HeapFree(GetProcessHeap(),HEAP_ZERO_MEMORY,(LPVOID)HeapAddress);
-		CloseHandle(TempHandle);
-		
 		strcpy(currTextureName,"\0");
 		
 		ReadBalls();
@@ -262,14 +240,12 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		g_userChoice = (selectedBall >= 0);
 
 		HookFunction(hk_D3D_Create,(DWORD)InitBserv);
-		HookFunction(hk_ReadFile,(DWORD)bservReadFile);
-		HookFunction(hk_AfterReadFile,(DWORD)bservAfterReadFile);
 		HookFunction(hk_D3D_CreateTexture,(DWORD)bservCreateTexture);
 		HookFunction(hk_D3D_UnlockRect,(DWORD)bservUnlockRect);
 		
-		HookFunction(hk_Unpack,(DWORD)bservUnpack);
 	    HookFunction(hk_Input,(DWORD)bservKeyboardProc);
 	    		
+		HookFunction(hk_BeginUniSelect, (DWORD)bservBeginUniSelect);
 	    HookFunction(hk_DrawKitSelectInfo,(DWORD)DrawBallLabel);
 	    HookFunction(hk_OnShowMenu,(DWORD)BeginDrawBallLabel);
 	    HookFunction(hk_OnHideMenu,(DWORD)EndDrawBallLabel);
@@ -294,11 +270,8 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		UnhookFunction(hk_D3D_CreateTexture,(DWORD)bservCreateTexture);
 		UnhookFunction(hk_D3D_UnlockRect,(DWORD)bservUnlockRect);
 		
-		UnhookFunction(hk_ReadFile,(DWORD)bservReadFile);
-		UnhookFunction(hk_AfterReadFile,(DWORD)bservAfterReadFile);
-		
-		UnhookFunction(hk_Unpack,(DWORD)bservUnpack);
 		UnhookFunction(hk_Input,(DWORD)bservKeyboardProc);
+		UnhookFunction(hk_BeginUniSelect, (DWORD)bservBeginUniSelect);
 		UnhookFunction(hk_DrawKitSelectInfo,(DWORD)DrawBallLabel);
 		UnhookFunction(hk_D3D_Reset,(DWORD)bservReset);
 		
@@ -329,59 +302,13 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 void InitBserv()
 {
     Log(&k_bserv, "InitBserv called.");
+    
+    RegisterAfsReplaceCallback(bservAfsReplace, bservUnpack, NULL);
+    
 	MasterHookFunction(code[C_SETBALLNAME_CS], 7, SetBallName);
 	
 	UnhookFunction(hk_D3D_Create,(DWORD)InitBserv);
 
-    RegisterGetNumPagesCallback(bservGetNumPages);
-
-	return;
-};
-
-DWORD _dwOffset1;
-
-void bservReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
-{
-	_dwOffset1 = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-	return;
-};
-
-void bservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
-{
-    //LogWithNumber(&k_bserv, "bservAfterReadFile: nNumberOfBytesToRead: %08x", nNumberOfBytesToRead);
-	int found=-1;
-	char tmp[BUFLEN];
-	
-	for (int i=0;i<data[NUM_BALL_FILES];i++) {
-        if (i == data[NOT_A_BALL_FILE]) continue;
-		if (AFSArray[i].Buffer==(DWORD)lpBuffer) AFSArray[i].Buffer=0;
-		if (AFSArray[i].AFSAddr==_dwOffset1) {found=i;break;};
-	};
-	if (found!=-1) {
-		AFSArray[found].Buffer=(DWORD)lpBuffer;
-		
-		if (found==g_fileId && g_afsId == 1) {
-			//replace the model
-			strcpy(tmp,GetPESInfo()->gdbDir);
-			strcat(tmp,"GDB\\balls\\mdl\\");
-			strcat(tmp,model);
-			
-			DWORD NBW=0;
-			HANDLE hfile = CreateFile(tmp,GENERIC_READ,FILE_SHARE_READ,NULL,
-                OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-            if (hfile!=INVALID_HANDLE_VALUE) {
-                DWORD fsize = GetFileSize(hfile,NULL);
-                ReadFile(hfile,lpBuffer,fsize,&NBW,NULL);
-                CloseHandle(hfile);
-                TRACE(&k_bserv,"Model was replaced!");
-            };
-            
-			g_afsId = 0xffffffff;
-        	g_fileId = 0xffffffff;
-		};
-	};
 	return;
 };
 
@@ -399,93 +326,46 @@ bool IsBallTexture(int id)
         (id > data[NOT_A_BALL_FILE] && id%2==0);
 }
 
-void bservUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD zero, DWORD* size2, DWORD result)
+void bservAfsReplace(GETFILEINFO* gfi)
 {
-	int found=-1;
-
-	updateHomeBall();
-	if (selectedBall<0) return;
+	if (gfi->isProcessed) return;
 	
-//Log(&k_bserv, "bservUnpack CALLED");
-	for (int i=0;i<data[NUM_BALL_FILES];i++) {
-        if (i == data[NOT_A_BALL_FILE]) continue;
-		if (AFSArray[i].Buffer==(addr1-0x20)) {found=i;break;};
-	};
+	DWORD afsId = 0, fileId = 0;
+	char filename[BUFLEN];
+	ZeroMemory(filename, BUFLEN);
+	fileId = splitFileId(gfi->fileId, &afsId);
 	
-//LogWithNumber(&k_bserv, "bservUnpack: found = %d", found);
-	if (found!=-1 && IsBallTexture(found)) {
-		//texture
-		gdbBallAddr=addr2;
-		gdbBallSize=*size2;
-		gdbBallCRC=GetCRC((BYTE*)gdbBallAddr,gdbBallSize);
-	};
-	return;
-};
-
-void SaveAFSAddr(HANDLE file,DWORD FileNumber,AFSENTRY* afs,DWORD tmp)
-{
-	DWORD NBW=0;
-	afs->FileNumber=FileNumber;
-	SetFilePointer(file,8*(FileNumber+1),0,0);
-	ReadFile(file,(LPVOID)tmp,8,&NBW,0);
-	afs->AFSAddr=*(DWORD*)tmp;
-	afs->FileSize=*(DWORD*)(tmp+4);
-	afs->Buffer=0;
-	return;
-};
-
-bool bservGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
-{
-	DWORD orgNumPages = 0;
-    DWORD numPages = 0;
-    DWORD fileSize = 0;
-    DWORD* pPageLenTable = NULL;
-    
-    char tmp[BUFLEN];
-    if (afsId == 1 && fileId < data[NUM_BALL_FILES] && fileId != data[NOT_A_BALL_FILE]) {
-        LogWithTwoNumbers(&k_bserv,"bservNumPages: 0x%x, 0x%x", afsId, fileId);
-        Log(&k_bserv, "bservNumPages: BALL FILE!");
-    }
-
-	updateHomeBall();
-	if (selectedBall>=0 && afsId == 1 && fileId<data[NUM_BALL_FILES] && IsBallModel(fileId)) {
-        // find buffer size (in pages)
-        DWORD* g_pageLenTable = (DWORD*)data[AFS_PAGELEN_TABLE];
-        pPageLenTable = (DWORD*)(g_pageLenTable[afsId] + 0x11c);
-        orgNumPages = pPageLenTable[fileId];
-
-		strcpy(tmp,GetPESInfo()->gdbDir);
-		strcat(tmp,"GDB\\balls\\mdl\\");
-		strcat(tmp,model);
-
-		HANDLE TempHandle=CreateFile(tmp,GENERIC_READ,3,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
-		if (TempHandle!=INVALID_HANDLE_VALUE) {
-			fileSize=GetFileSize(TempHandle,NULL);
-			CloseHandle(TempHandle);
-		} else {
-			fileSize=0;
-		};
+	if (afsId == 1 && fileId < data[NUM_BALL_FILES] && fileId != data[NOT_A_BALL_FILE]) {
+        LogWithTwoNumbers(&k_bserv,"BALL FILE!: 0x%x, 0x%x", afsId, fileId);
+        
+        updateHomeBall();
+        if (selectedBall >= 0) {
+        	if (IsBallModel(fileId)) {
+	        	// replace the model
+				strcpy(filename, GetPESInfo()->gdbDir);
+				strcat(filename, "GDB\\balls\\mdl\\");
+				strcat(filename, model);
 		
-		if (fileSize > 0) {
-            LogWithString(&k_bserv, "bservGetNumPages: found GDB ball model file: %s", tmp);
-            LogWithTwoNumbers(&k_bserv,"bservGetNumPages: had size: %08x pages (%08x bytes)", 
-                    orgNumPages, orgNumPages*0x800);
+				loadReplaceFile(filename);
+		        gfi->isProcessed = true;
+			} else if (IsBallTexture(fileId)) {
+				// texture will be replaced in CreateTexture, but some things from
+				// the Unpack function are needed
+				gfi->needsUnpack = true;
+			}
+    	}
+    }
+	return;
+}
 
-            // calculate buffer size to fit GDB ball model file
-            numPages = fileSize / 0x800 + 1;
-            LogWithTwoNumbers(&k_bserv,"bservGetNumPages: new size: %08x pages (%08x bytes)", 
-                    numPages, numPages*0x800);
-		};
-
-		g_afsId = afsId;
-		g_fileId = fileId;
-
-        *retval = max(numPages, orgNumPages);
-        LogWithTwoNumbers(&k_bserv, "bservGetNumPages: returning size: %08x pages (%08x bytes)",
-                *retval, *retval*0x800);
-        return true;
-    };
-    return false;
+void bservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
+{
+	//texture
+	gdbBallAddr = decBuf;
+	gdbBallSize = size;
+	gdbBallCRC = GetCRC((BYTE*)gdbBallAddr, gdbBallSize);
+	
+	return;
 }
 
 void ReadBalls()
@@ -705,11 +585,8 @@ void bservKeyboardProc(int code1, WPARAM wParam, LPARAM lParam)
 	return;
 };
 
-void BeginDrawBallLabel()
+void bservBeginUniSelect()
 {
-	isSelectMode=true;
-	dksiSetMenuTitle("Ball selection");
-	
 	updateHomeBall();
 	
 	if (autoRandomMode || noHomeBall) {
@@ -720,6 +597,13 @@ void BeginDrawBallLabel()
 			SetBall(selectedBall+1);
         }
 	}
+	return;
+}
+
+void BeginDrawBallLabel()
+{
+	isSelectMode=true;
+	dksiSetMenuTitle("Ball selection");
 	
 	SafeRelease( &g_preview_tex );
     g_newBall = true;

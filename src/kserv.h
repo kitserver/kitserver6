@@ -37,6 +37,7 @@ typedef struct _ENCBUFFERHEADER {
 	DWORD dwDecSize;
 	BYTE other[20];
 } ENCBUFFERHEADER;
+#define _ENCBUFFERHEADER_
 
 #define DEC_SIG_IMAGE 0x29857294
 #define DEC_SIG_MODEL 0x20040520
@@ -131,12 +132,6 @@ typedef struct _TEXIMGHEADER {
 	WORD height;
 	BYTE bps;
 } TEXIMGHEADER;
-
-typedef struct _MEMITEMINFO {
-	DWORD id;
-	AFSITEMINFO afsItemInfo;
-	DWORD address;
-} MEMITEMINFO;
 
 /*
 typedef struct _KITINFO {

@@ -63,9 +63,6 @@ typedef struct _TEXTURE_INFO {
 #define VTAB_DELETESTATEBLOCK 56
 #define VTAB_UNLOCKRECT 17
 
-typedef void (*PFNREADFILE)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
-
 typedef IDirect3D8* (STDMETHODCALLTYPE *PFNDIRECT3DCREATE8PROC)(UINT sdkVersion);
 
 /* IDirect3DDevice8 method-types */
@@ -115,14 +112,9 @@ typedef HRESULT (STDMETHODCALLTYPE *PFNUNLOCKRECT)(IDirect3DTexture8* self, UINT
 
 
 typedef DWORD  (*UNIDECRYPT)(DWORD, DWORD);
-typedef DWORD  (*UNIDECODE)(DWORD, DWORD);
-typedef void   (*CUNIDECODE)(DWORD, DWORD, DWORD);
-typedef DWORD  (*UNPACK)(DWORD, DWORD, DWORD, DWORD, DWORD*);
-typedef void   (*CUNPACK)(DWORD, DWORD, DWORD, DWORD, DWORD*, DWORD);
 typedef DWORD  (*CHECKTEAM)(DWORD);
 typedef DWORD  (*SETKITATTRIBUTES)(DWORD);
 typedef DWORD  (*FINISHKITPICK)(DWORD);
-typedef DWORD  (*ALLOCMEM)(DWORD, DWORD, DWORD);
 typedef DWORD  (*RESETFLAGS)(DWORD);
 typedef DWORD  (*GETTEAMINFO)(DWORD);
 typedef void   (*CGETTEAMINFO)(DWORD,DWORD);
@@ -131,8 +123,6 @@ typedef DWORD  (*ENDUNISELECT)();
 typedef DWORD  (*SETLODMIXERDATA)();
 typedef DWORD  (*GETPLAYERINFO_OLD)();
 typedef void   (*CGETPLAYERINFO_OLD)(DWORD,DWORD*,DWORD,DWORD*);
-typedef DWORD  (*ALLOCMEM)(DWORD,DWORD,DWORD);
-typedef bool   (*CALLOCMEM)(DWORD,DWORD,DWORD*);
 typedef HRESULT (STDMETHODCALLTYPE *CCREATETEXTURE)(IDirect3DDevice8*,UINT,UINT,UINT,DWORD,D3DFORMAT,
 				 D3DPOOL,IDirect3DTexture8**,DWORD,bool*);
 typedef void   (*FILEFROMAFS)(DWORD);
@@ -151,8 +141,6 @@ typedef void   (*CBEGINRENDERPLAYER)(DWORD);
 typedef void   (*ALLVOID)();
 
 void HookDirect3DCreate8();
-void HookReadFile();
-void UnhookReadFile();
 void HookOthers();
 void UnhookOthers();
 void UnhookKeyb();
@@ -167,11 +155,6 @@ DWORD NewGetClubTeamInfoML1(DWORD id);
 DWORD NewGetClubTeamInfoML2(DWORD id);
 DWORD NewGetNationalTeamInfo(DWORD id);
 DWORD NewGetNationalTeamInfoExitEdit(DWORD id);
-DWORD NewAllocMem(DWORD infoBlock, DWORD param2, DWORD size);
-DWORD NewUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD zero, DWORD* size2);
-KEXPORT DWORD MemUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD* size2);
-KEXPORT DWORD AFSMemUnpack(DWORD FileID, DWORD Buffer);
-DWORD NewUniDecode(DWORD addr, DWORD size);
 DWORD NewUniSplit(DWORD id);
 DWORD NewBeginUniSelect();
 DWORD NewEndUniSelect();
@@ -194,10 +177,6 @@ KEXPORT IDirect3DTexture8* GetTextureFromColl(DWORD texColl, DWORD which);
 KEXPORT void SetTextureToColl(DWORD texColl, DWORD which, IDirect3DTexture8* tex);
 KEXPORT IDirect3DTexture8* GetPlayerTexture(DWORD playerPos, DWORD texCollType, DWORD which, DWORD lodLevel);
 
-BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,
-  LPOVERLAPPED lpOverlapped);
-  
 IDirect3D8* STDMETHODCALLTYPE NewDirect3DCreate8(UINT sdkVersion);
 
 HRESULT STDMETHODCALLTYPE NewGetDeviceCaps(IDirect3D8* self, UINT Adapter,
@@ -264,20 +243,15 @@ enum HOOKS {
 	hk_D3D_Reset,
 	hk_D3D_CreateTexture,
 	hk_D3D_AfterCreateTexture,
-	hk_ReadFile,
 	hk_BeginUniSelect,
 	hk_EndUniSelect,
-	hk_Unpack,
-	hk_UniDecode,
 	hk_GetClubTeamInfo,
 	hk_GetNationalTeamInfo,
 	hk_GetClubTeamInfoML1,
 	hk_GetClubTeamInfoML2,
 	hk_GetNationalTeamInfoExitEdit,
-	hk_AllocMem,
 	hk_SetLodMixerData,
 	hk_GetPlayerInfoOld,
-	hk_BeforeUniDecode,
 	hk_FileFromAFS,
 	hk_BeforeFreeMemory,
 	hk_CalcAFSFaceID,
@@ -287,7 +261,6 @@ enum HOOKS {
 	hk_OnShowMenu,
 	hk_OnHideMenu,
 	hk_UniSplit,
-	hk_AfterReadFile,
 	hk_D3D_UnlockRect,
 	hk_PesGetTexture,
 	hk_BeginRenderPlayer,

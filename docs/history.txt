@@ -2,6 +2,12 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2007-04-??
+----------
+v6.5.0
+- ballserver: added home-ball and auto-random feature
+- stadiumserver: fixed 1mb limit
+
 2007-01-08
 ----------
 v6.4.0

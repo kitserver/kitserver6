@@ -149,11 +149,11 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		if (k_kload.debug<1) {
 			CloseLog();
 			DeleteFile(g_pesinfo.logName);
-		} else {
+		} else {/*
 			strcpy(tmp,GetPESInfo()->mydir);
 			strcat(tmp,"mlog.tmp");
 			OpenMLog(200,tmp);
-			TRACE(&k_kload,"Opened memory log.");
+			TRACE(&k_kload,"Opened memory log.");*/
 		};		
 		
 		LogWithString(&k_kload,"Game version: %s", GAME[g_pesinfo.GameVersion]);

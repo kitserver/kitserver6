@@ -805,6 +805,7 @@ void stadAfsReplace(GETFILEINFO* gfi)
         bOthersHooked = true;
     }
 	
+	if (gfi->isProcessed) return;
 	
 	DWORD afsId = 0, fileId = 0;
 	char filename[BUFLEN];
@@ -846,7 +847,7 @@ void stadAfsReplace(GETFILEINFO* gfi)
                 FindStadiumFile(stadId, stadFileId, filename);
                 
 	            LogWithNumber(&k_stadium,"OnReadFile: stadium: %d", stadId);
-	            LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[fileId]);
+	            LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[stadFileId]);
             }
 			if (strlen(filename)>0) {
             	loadReplaceFile(filename);

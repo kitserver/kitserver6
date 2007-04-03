@@ -47,6 +47,7 @@
 
 //#define MAP_FIND(map,key) (((*(map)).count(key)>0) ? (*(map))[key] : NULL)
 #define MAP_FIND(map,key) (((*(map)).find(key) != (*(map)).end()) ? (*(map))[key] : NULL)
+#define MAP_CONTAINS(map,key) (map.find(key)!=map.end())
 
 KMOD k_mydll={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 
@@ -262,11 +263,6 @@ BOOL g_modeSwitch = FALSE;
 WORD g_last_home = 0xff;
 WORD g_last_away = 0xff;
 
-// Kit afs-item IDs
-
-DWORD* g_AFS_id = NULL;
-MEMITEMINFO* g_AFS_memItemInfo = NULL;
-
 #define DATALEN 22
 #define CODELEN 21
 
@@ -372,8 +368,7 @@ DWORD codeArray[][CODELEN] = {
 DWORD code[CODELEN];
 DWORD data[DATALEN];
 
-std::hash_map<DWORD,MEMITEMINFO*> g_AFS_offsetMap;
-std::hash_map<DWORD,MEMITEMINFO*> g_AFS_addressMap;
+std::hash_map<DWORD,bool> g_AFS_idMap;
 
 // saves modified kitpack info
 std::hash_map<DWORD,TEAMKITINFO*> g_teamKitInfo;
@@ -383,7 +378,6 @@ std::hash_map<DWORD,TEAMKITINFO*>::iterator g_teamKitInfoIterator;
 int g_numTeams = 0; 
 
 TEAMBUFFERINFO g_teamInfo[256];
-AFSITEMINFO g_bibs;
 char g_afsFileName[BUFLEN];
 UINT g_triggerLoad3rdKit = 0;
 
@@ -1187,8 +1181,9 @@ typedef HRESULT (STDMETHODCALLTYPE *PFNENDSCENEPROC)(IDirect3DDevice8* self);
 typedef HRESULT (STDMETHODCALLTYPE *PFNGETSURFACELEVELPROC)(IDirect3DTexture8* self,
 UINT level, IDirect3DSurface8** ppSurfaceLevel);
 
-void  JuceUniDecode(DWORD, DWORD, DWORD );
-void  JuceUnpack(DWORD, DWORD, DWORD, DWORD, DWORD*, DWORD);
+void kservAfsReplace(GETFILEINFO* gfi);
+void kservUniDecode(DWORD decBuf);
+void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size);
 void  JuceSet2Dkits();
 void  JuceClear2Dkits();
 DWORD JuceGetTeamInfo(DWORD id, DWORD p1);
@@ -1207,8 +1202,6 @@ void resetLicensedOrdinals();
 void clearTeamKitInfo();
 void setTeamKitInfo();
 void ClearTextureMaps();
-
-void JuceReadFile(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 
 HRESULT STDMETHODCALLTYPE JuceCreateTexture(IDirect3DDevice8* self, UINT width, UINT height,
 UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, 
@@ -2984,63 +2977,6 @@ EXTERN_C _declspec(dllexport) void RestoreDeviceMethods()
 	Log(&k_mydll,"RestoreDeviceMethods: done.");
 }
 
-/**
- * Initialize array of MEMITEMINFO structures.
- */
-BOOL InitMemItemInfo(DWORD** ppIds, MEMITEMINFO** ppMemItemInfoArray, DWORD n, int first=data[FIRST_ID])
-{
-	ZeroMemory(g_afsFileName, sizeof(BUFLEN));
-	lstrcpy(g_afsFileName, GetPESInfo()->pesdir);
-	lstrcat(g_afsFileName, GetPESInfo()->AFS_0_text);
-
-	FILE* f = fopen(g_afsFileName, "rb");
-	if (f == NULL) {
-		Log(&k_mydll,"FATAL ERROR: failed to open 0_text.afs for reading.");
-		return FALSE;
-	}
-
-    *ppIds = (DWORD*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, n*sizeof(DWORD));
-    *ppMemItemInfoArray = (MEMITEMINFO*)HeapAlloc(GetProcessHeap(), 
-            HEAP_ZERO_MEMORY, n*sizeof(MEMITEMINFO));
-    DWORD* ids = *ppIds;
-    MEMITEMINFO* memItemInfo = *ppMemItemInfoArray;
-
-    if (!ids || !memItemInfo) {
-        Log(&k_mydll,"FATAL ERROR: unable to allocate memory for data structures");
-        fclose(f);
-        return FALSE;
-    }
-
-	int i;
-    for (i=0; i<n; i++) {
-        ids[i] = first + i;
-    }
-	for (i=0; i<n; i++) {
-		memItemInfo[i].id = ids[i];
-		ReadItemInfoById(f, ids[i], &memItemInfo[i].afsItemInfo, 0);
-		TRACE2(&k_mydll,"id = %d", memItemInfo[i].id);
-		TRACE2(&k_mydll,"offset = %08x", memItemInfo[i].afsItemInfo.dwOffset);
-
-        // store pointer in offset-map
-        g_AFS_offsetMap[memItemInfo[i].afsItemInfo.dwOffset] = memItemInfo + i;
-	}
-
-	fclose(f);
-    return TRUE;
-}
-
-void FreeMemItemInfo(DWORD** ppIds, MEMITEMINFO** ppMemItemInfoArray) 
-{
-    if (ppIds != NULL) {
-        HeapFree(GetProcessHeap(), 0, *ppIds);
-        *ppIds = NULL;
-    }
-    if (ppMemItemInfoArray != NULL) {
-        HeapFree(GetProcessHeap(), 0, *ppMemItemInfoArray);
-        *ppMemItemInfoArray = NULL;
-    }
-}
-
 void LoadKitMasks()
 {
 	char filename[BUFLEN];
@@ -3242,9 +3178,10 @@ void InitKserv()
         memcpy(code, codeArray[v], sizeof(code));
         memcpy(data, dataArray[v], sizeof(data));
 
-        if (!InitMemItemInfo(&g_AFS_id, &g_AFS_memItemInfo, data[LAST_ID]-data[FIRST_ID]+1)) {
-            return;
-        }
+		// mark the files we need to replace
+		for (int i=data[FIRST_ID]; i <= data[LAST_ID]; i++) {
+    		g_AFS_idMap[i] = true;
+		}
 
         // Load GDB database
         gdb = gdbLoad(GetPESInfo()->gdbDir);
@@ -3259,8 +3196,6 @@ void InitKserv()
         
         // load kit masks
         LoadKitMasks();
-		
-		HookFunction(hk_ReadFile,(DWORD)JuceReadFile);
 
         // hook BeginUniSelect
 		HookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
@@ -3273,7 +3208,10 @@ void InitKserv()
 		HookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
 
         // hook UniDecode
-		HookFunction(hk_UniDecode,(DWORD)JuceUniDecode);
+		RegisterUniDecodeCallback(kservUniDecode);
+		
+		// hook replacing functions
+		RegisterAfsReplaceCallback(kservAfsReplace, kservUnpack, NULL);
 
         /*
 		// hook GetNationalTeamInfo
@@ -3288,9 +3226,6 @@ void InitKserv()
 		HookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
         */
 		
-        // hook Unpack
-        HookFunction(hk_Unpack,(DWORD)JuceUnpack);
-
         // hook edit mode entrance
         MasterHookFunction(code[C_GETTEAMINFO_CS], 2, JuceGetTeamInfo);
 
@@ -3367,17 +3302,12 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		Log(&k_mydll,"DLL detaching...");
-		
-		UnhookFunction(hk_ReadFile,(DWORD)JuceReadFile);
 
         // unhook BeginUniSelect
 		UnhookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
 
         // unhook EndUniSelect
 		UnhookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
-
-        // unhook UniDecode
-		UnhookFunction(hk_UniDecode,(DWORD)JuceUniDecode);
 
         /*
 		// unhook GetNationalTeamInfo
@@ -3391,9 +3321,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		// unhook GetNationalTeamInfoExitEdit
 		UnhookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
         */
-		
-        // unhook Unpack
-        UnhookFunction(hk_Unpack,(DWORD)JuceUnpack);
 
 		/* uninstall keyboard hook */
 		UninstallKeyboardHook();
@@ -3422,8 +3349,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 
 		//SAFE_DELETE( g_font );
 		//TRACE(&k_mydll,"g_font SAFE_DELETEd.");
-
-		FreeMemItemInfo(&g_AFS_id, &g_AFS_memItemInfo);
 
         DeleteCriticalSection(&g_cs);
 	}
@@ -5001,238 +4926,6 @@ IDirect3DBaseTexture8* pTexture)
 }
 
 /**
- * Checks if offset matches any of the kits offsets.
- */
-BOOL IsKitOffset(DWORD offset)
-{
-	BOOL result = false;
-
-	// first check: bibs
-	if (g_bibs.dwOffset == offset)
-		return true;
-
-	// rough approximation (boundary) check:
-	if (offset < g_teamInfo[0].ga.dwOffset || g_teamInfo[g_numTeams-1].vg.dwOffset < offset)
-		return false;
-
-	// precise check: check every kit
-	for (int i=0; i<g_numTeams; i++) 
-	{
-		if (g_teamInfo[i].ga.dwOffset == offset) return true;
-		if (g_teamInfo[i].gb.dwOffset == offset) return true;
-		if (g_teamInfo[i].pa.dwOffset == offset) return true;
-		if (g_teamInfo[i].pb.dwOffset == offset) return true;
-		if (g_teamInfo[i].vg.dwOffset == offset) return true;
-	}
-
-	return false;
-}
-
-// determines item id, based on offset.
-MEMITEMINFO* FindMemItemInfoByOffset(DWORD offset)
-{
-    EnterCriticalSection(&g_cs);
-    MEMITEMINFO* memItemInfo = g_AFS_offsetMap[offset];
-    LeaveCriticalSection(&g_cs);
-    return memItemInfo;
-}
-
-// determines item id, based on offset.
-MEMITEMINFO* FindMemItemInfoByAddress(DWORD address)
-{
-    EnterCriticalSection(&g_cs);
-    MEMITEMINFO* memItemInfo = g_AFS_addressMap[address];
-    g_AFS_addressMap.erase(address);
-    LeaveCriticalSection(&g_cs);
-    return memItemInfo;
-}
-
-/**
- * Monitors the file pointer.
- */
-void JuceReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
-{
-	// get current file pointer
-	DWORD dwOffset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);  
-
-	// search for such offset
-	MEMITEMINFO* memItemInfo = FindMemItemInfoByOffset(dwOffset);
-	if (memItemInfo != NULL) {
-		// there is an itemInfo with such offset
-		// associate a memory location with it - for future use
-		memItemInfo->address = (DWORD)lpBuffer;
-        g_AFS_addressMap[memItemInfo->address] = memItemInfo;
-
-        TRACE2(&k_mydll,"JuceReadFile: memItemInfo->id = %d", memItemInfo->id);
-        TRACE2(&k_mydll,"JuceReadFile: memItemInfo->afsItemInfo.dwOffset = %08x", memItemInfo->afsItemInfo.dwOffset);
-        TRACE2(&k_mydll,"JuceReadFile: lpBuffer = %08x", (DWORD)lpBuffer);
-	}
-
-	return;
-}
-
-/**
- * This function calls the unpack function for non-kits.
- * Parameters:
- *   addr1   - address of the encoded buffer (without header)
- *   addr2   - address of the decoded buffer
- *   size1   - size of the encoded buffer (minus header)
-  *  zero    - always zero
- *   size2   - pointer to size of the decoded buffer
- */
-void JuceUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD zero, DWORD* size2, DWORD result)
-{
-    TRACE(&k_mydll,"JuceUnpack: CALLED.");
-    if (!g_kit_loading_enabled) return;
-	/*
-	TRACE2(&k_mydll,"JuceUnpack: addr1 = %08x", addr1);
-	TRACE2(&k_mydll,"JuceUnpack: addr2 = %08x", addr2);
-	TRACE2(&k_mydll,"JuceUnpack: size1 = %08x", size1);
-	TRACE2(&k_mydll,"JuceUnpack: size2 = %08x", size2);
-	*/
-    TRACE2(&k_mydll,"JuceUnpack: addr = %08x", addr1 - 0x20);
-    bool replaced = FALSE;
-
-    //BYTE* strips = (BYTE*)data[TEAM_STRIPS];
-    //LogWithTwoNumbers(&k_mydll,"strip = %02x %02x", strips[0], strips[1]);
-
-
-    MEMITEMINFO* memItemInfo = FindMemItemInfoByAddress(addr1 - 0x20);
-    if (memItemInfo) {
-        LogWithNumber(&k_mydll,"JuceUnpack: Loading id = %d", memItemInfo->id);
-
-        if (!IsNumOrFontTexture(memItemInfo->id)) {
-            Log(&k_mydll,"JuceUnpack: SEVERE WARNING!: this is NOT a num/font texture.");
-            //clearTeamKitInfo();
-            return;
-        }
-
-		// find corresponding file
-		BITMAPINFO* tex = NULL;
-		DWORD texSize = 0;
-
-		char filename[BUFLEN];
-		ZeroMemory(filename, BUFLEN);
-        DWORD texType = IsNumbersTexture(memItemInfo->id) ?
-            FindImageFileForId(memItemInfo->id, "", filename) :
-            FindImageFileForId(memItemInfo->id, "", filename, NULL);
-
-        switch (texType) {
-            case TEXTYPE_PNG:
-                LogWithString(&k_mydll,"JuceUnpack: PNG Image file = %s", filename);
-                texSize = LoadPNGTexture(&tex, filename);
-                if (texSize > 0) {
-                    Apply4BitDIBTexture((TEXIMGPACKHEADER*)result, tex, TRUE);
-                    FreePNGTexture(tex);
-                    replaced = TRUE;
-                }
-                break;
-            case TEXTYPE_BMP:
-                LogWithString(&k_mydll,"JuceUnpack: BMP Image file = %s", filename);
-                texSize = LoadTexture(&tex, filename);
-                if (texSize > 0) {
-                    Apply4BitDIBTexture((TEXIMGPACKHEADER*)result, tex, TRUE);
-                    FreeTexture(tex);
-                    replaced = TRUE;
-                }
-                break;
-        }
-
-        TEXIMGPACKHEADER* pack = (TEXIMGPACKHEADER*)result;
-        TEXIMGHEADER* top = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[0]);
-        if (replaced && pack->numFiles == 3 && top->width == 256 && top->height == 128) {
-            // looks like an numbers image.
-            // In this case we need to load 2 more images
-            // to substitute palettes for shorts
-
-            // for home shorts
-            TEXIMGHEADER* palAtex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[1]);
-
-            int id1 = memItemInfo->id;
-            int fileType = (memItemInfo->id - data[FIRST_ID]) % FILES_PER_TEAM;
-            switch (fileType) {
-                //case GA_NUMBERS: id1 = memItemInfo->id - GA_NUMBERS + GA_UNKNOWN1; break;
-                //case GB_NUMBERS: id1 = memItemInfo->id - GB_NUMBERS + GA_UNKNOWN1; break;
-                //case PA_NUMBERS: id1 = memItemInfo->id - PA_NUMBERS + PA_SHORTS; break;
-                //case PB_NUMBERS: id1 = memItemInfo->id - PB_NUMBERS + PA_SHORTS; break;
-                case GA_NUMBERS: id1 = memItemInfo->id - GA_NUMBERS + GA_KIT; break;
-                case GB_NUMBERS: id1 = memItemInfo->id - GB_NUMBERS + GA_KIT; break;
-                case PA_NUMBERS: id1 = memItemInfo->id - PA_NUMBERS + PA_SHIRT; break;
-                case PB_NUMBERS: id1 = memItemInfo->id - PB_NUMBERS + PA_SHIRT; break;
-            }
-            string kitFolderKey1 = GetKitFolderKey(id1);
-
-            ZeroMemory(filename, BUFLEN);
-            texType = FindShortsPalImageFileForId(memItemInfo->id, kitFolderKey1, filename);
-            switch (texType) {
-                case TEXTYPE_PNG:
-                    LogWithString(&k_mydll,"JuceUnpack: PNG Image file = %s", filename);
-                    texSize = LoadPNGTexture(&tex, filename);
-                    if (texSize > 0) {
-                        Apply4BitDIBPalette(palAtex, tex);
-                        FreePNGTexture(tex);
-                    }
-                    break;
-                case TEXTYPE_BMP:
-                    LogWithString(&k_mydll,"JuceUnpack: BMP Image file = %s", filename);
-                    texSize = LoadTexture(&tex, filename);
-                    if (texSize > 0) {
-                        Apply4BitDIBPalette(palAtex, tex);
-                        FreeTexture(tex);
-                    }
-                    break;
-            }
-
-            // for away shorts
-            TEXIMGHEADER* palBtex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[2]);
-
-            int id2 = memItemInfo->id;
-            switch (fileType) {
-                //case GA_NUMBERS: id2 = memItemInfo->id - GA_NUMBERS + GB_UNKNOWN1; break;
-                //case GB_NUMBERS: id2 = memItemInfo->id - GB_NUMBERS + GB_UNKNOWN1; break;
-                //case PA_NUMBERS: id2 = memItemInfo->id - PA_NUMBERS + PB_SHORTS; break;
-                //case PB_NUMBERS: id2 = memItemInfo->id - PB_NUMBERS + PB_SHORTS; break;
-                case GA_NUMBERS: id2 = memItemInfo->id - GA_NUMBERS + GB_KIT; break;
-                case GB_NUMBERS: id2 = memItemInfo->id - GB_NUMBERS + GB_KIT; break;
-                case PA_NUMBERS: id2 = memItemInfo->id - PA_NUMBERS + PB_SHIRT; break;
-                case PB_NUMBERS: id2 = memItemInfo->id - PB_NUMBERS + PB_SHIRT; break;
-            }
-            string kitFolderKey2 = GetKitFolderKey(id2);
-
-            ZeroMemory(filename, BUFLEN);
-            texType = FindShortsPalImageFileForId(memItemInfo->id, kitFolderKey2, filename);
-            switch (texType) {
-                case TEXTYPE_PNG:
-                    LogWithString(&k_mydll,"JuceUnpack: PNG Image file = %s", filename);
-                    texSize = LoadPNGTexture(&tex, filename);
-                    if (texSize > 0) {
-                        Apply4BitDIBPalette(palBtex, tex);
-                        FreePNGTexture(tex);
-                    }
-                    break;
-                case TEXTYPE_BMP:
-                    LogWithString(&k_mydll,"JuceUnpack: BMP Image file = %s", filename);
-                    texSize = LoadTexture(&tex, filename);
-                    if (texSize > 0) {
-                        Apply4BitDIBPalette(palBtex, tex);
-                        FreeTexture(tex);
-                    }
-                    break;
-            }
-        }
-
-		//ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)(addr1 - 0x20);
-		//DumpData((BYTE*)result, header->dwDecSize);
-		//DumpImagePack((TEXIMGPACKHEADER*)result);
-    }
-
-    TRACE(&k_mydll,"JuceUnpack: done.");
-
-	return;
-}
-
-/**
  * Simple file-check routine.
  */
 BOOL FileExists(char* filename)
@@ -6705,19 +6398,25 @@ void JuceClear2Dkits()
     return;
 }
 
-/**
- * This function calls kit BIN decode function
- * Parameters:
- *   addr   - address of the encoded buffer header
- *   size   - size of the encoded buffer
- * Return value:
- *   address of the decoded buffer
- */
-void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
+void kservAfsReplace(GETFILEINFO* gfi)
+{
+	if (gfi->isProcessed) return;
+	
+	DWORD afsId = 0, fileId = 0;
+	fileId = splitFileId(gfi->fileId, &afsId);
+	
+	if (afsId == 1 && MAP_CONTAINS(g_AFS_idMap, fileId)) {
+		// we want to get control over the unpacked file
+		gfi->needsUnpack = true;
+		gfi->isProcessed = true;
+	}
+	return;
+}
+	
+// this function gets called on each call to UniDecode
+void kservUniDecode(DWORD decBuf)
 {
 	Log(&k_mydll,"JuceUniDecode: CALLED.");
-	LogWithNumber(&k_mydll,"JuceUniDecode: addr = %08x", addr);
-	LogWithNumber(&k_mydll,"JuceUniDecode: result = %08x", result);
 
     g_currentAfsId = 0;
     g_unidecode_flag = true;
@@ -6731,48 +6430,46 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
     }
     _last_homeId = homeId;
     _last_awayId = awayId;
+    
+	return;
+}
 
-	TEXIMGPACKHEADER* orgKit = (TEXIMGPACKHEADER*)result;
-	// save decoded uniforms as BMPs
-	//DumpUniforms(orgKit);
-    if (!g_kit_loading_enabled || g_edit_mode) return;
+// this function is only called for files we marked above
+void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
+{
+	if (gfi->isProcessed) return;
+		
+	if (!g_kit_loading_enabled) return;
+	
+	DWORD afsId = 0, fileId = 0;
+	fileId = splitFileId(gfi->fileId, &afsId);
+	
+	// the former UniDecode
+	if (IsKitTexture(fileId)) {
+		// the former UniDecode -> kits
+		
+		if (g_edit_mode) return;
+			
+		LogWithNumber(&k_mydll,"JuceUniDecode: decBuf = %08x", decBuf);
 
-	/*
-	// save encoded buffer as raw data
-	ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)addr1;
-	DumpData((BYTE*)addr1, header->dwEncSize + sizeof(ENCBUFFERHEADER));
-	*/
+		// remember current id
+        g_currentAfsId = fileId;
 
-	// save decoded buffer as raw data
-	//ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)addr;
-	//DumpData((BYTE*)result, header->dwDecSize);
-
-	MEMITEMINFO* memItemInfo = FindMemItemInfoByAddress(addr);
-	if (memItemInfo != NULL) {
-        // remember current id
-        g_currentAfsId = memItemInfo->id;
-
-        LogWithNumber(&k_mydll,"JuceUniDecode: Loading id = %d", memItemInfo->id);
-        if (memItemInfo->id == data[TRAINING_KIT]) {
+        LogWithNumber(&k_mydll,"JuceUniDecode: Loading id = %d", fileId);
+        if (fileId == data[TRAINING_KIT]) {
             return;
         }
 
-		g_kitID = memItemInfo->id;
-
-        if (!IsKitTexture(memItemInfo->id)) {
-            Log(&k_mydll,"JuceUniDecode: SEVERE WARNING!: this is NOT a kit texture.");
-            clearTeamKitInfo();
-            return;
-        }
+		g_kitID = fileId;
 
         // STEP1: check if either BMP or PNG file exists
         char filename[BUFLEN];
         // flag to apply mask
         BOOL needsMask = FALSE;
-        DWORD texType = FindImageFileForId(memItemInfo->id, "", filename, &needsMask);
+        DWORD texType = FindImageFileForId(fileId, "", filename, &needsMask);
         if (texType != TEXTYPE_NONE) {
             LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
-            _texture_to_id[result] = memItemInfo->id;
+            _texture_to_id[decBuf] = fileId;
         }
 
         BITMAPINFO* tex = NULL;
@@ -6784,18 +6481,18 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
                 LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
                 texSize = LoadPNGTexture(&tex, filename);
                 if (texSize > 0) {
-                    if (IsShortsOrSocks(memItemInfo->id)) {
+                    if (IsShortsOrSocks(fileId)) {
                         if (needsMask) {
-                            //MaskKitTexture(tex, memItemInfo->id);
+                            //MaskKitTexture(tex, fileId);
                         } 
-                    } else if (IsShirt(memItemInfo->id)) {
+                    } else if (IsShirt(fileId)) {
                         if (IsAllInOneTexture(tex)) {
                             // this is all-in-one texture loaded in place
                             // of shirt texture. apply the mask.
-                            //MaskKitTexture(tex, memItemInfo->id);
+                            //MaskKitTexture(tex, fileId);
                         }
                     }
-                    ApplyDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                    ApplyDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                     FreePNGTexture(tex);
                 }
                 break;
@@ -6803,38 +6500,38 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
                 LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
                 texSize = LoadTexture(&tex, filename);
                 if (texSize > 0) {
-                    if (IsShortsOrSocks(memItemInfo->id)) {
+                    if (IsShortsOrSocks(fileId)) {
                         if (needsMask) {
-                            //MaskKitTexture(tex, memItemInfo->id);
+                            //MaskKitTexture(tex, fileId);
                         } 
-                    } else if (IsShirt(memItemInfo->id)) { 
+                    } else if (IsShirt(fileId)) { 
                         if (IsAllInOneTexture(tex)) {
                             // this is all-in-one texture loaded in place
                             // of shirt texture. apply the mask.
-                            //MaskKitTexture(tex, memItemInfo->id);
+                            //MaskKitTexture(tex, fileId);
                         }
                     }
-                    ApplyDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                    ApplyDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                     FreeTexture(tex);
                 }
                 break;
 
         } // end switch
 
-        DoMipMap(memItemInfo->id, (TEXIMGPACKHEADER*)result, 0, "-mip1", MaskKitTextureMip1);
-        DoMipMap(memItemInfo->id, (TEXIMGPACKHEADER*)result, 1, "-mip2", MaskKitTextureMip2);
+        DoMipMap(fileId, (TEXIMGPACKHEADER*)decBuf, 0, "-mip1", MaskKitTextureMip1);
+        DoMipMap(fileId, (TEXIMGPACKHEADER*)decBuf, 1, "-mip2", MaskKitTextureMip2);
         */
 
         // if goalkeeper, extra steps needed:
-        if (IsGK(memItemInfo->id)) {
+        if (IsGK(fileId)) {
             // check for gloves
-            texType = FindImageFileForId(memItemInfo->id, "-gloves", filename, &needsMask);
+            texType = FindImageFileForId(fileId, "-gloves", filename, &needsMask);
             switch (texType) {
                 case TEXTYPE_PNG:
                     LogWithString(&k_mydll,"JuceUniDecode: Gloves file = %s", filename);
                     texSize = LoadPNGTexture(&tex, filename);
                     if (texSize > 0) {
-                        ApplyGlovesDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                        ApplyGlovesDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                         FreePNGTexture(tex);
                     }
                     break;
@@ -6842,7 +6539,7 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
                     LogWithString(&k_mydll,"JuceUniDecode: Gloves file = %s", filename);
                     texSize = LoadTexture(&tex, filename);
                     if (texSize > 0) {
-                        ApplyGlovesDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                        ApplyGlovesDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                         FreeTexture(tex);
                     }
                     break;
@@ -6850,16 +6547,16 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
 
             /*
             // load GK shorts
-            texType = FindImageFileForId(memItemInfo->id + 1, "", filename, &needsMask);
+            texType = FindImageFileForId(fileId + 1, "", filename, &needsMask);
             switch (texType) {
                 case TEXTYPE_PNG:
                     LogWithString(&k_mydll,"JuceUniDecode: GK shorts file = %s", filename);
                     texSize = LoadPNGTexture(&tex, filename);
                     if (texSize > 0) {
                         if (needsMask) {
-                            MaskKitTexture(tex, memItemInfo->id + 1);
+                            MaskKitTexture(tex, fileId + 1);
                         }
-                        OrDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                         FreePNGTexture(tex);
                     }
                     break;
@@ -6868,28 +6565,28 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
                     texSize = LoadTexture(&tex, filename);
                     if (texSize > 0) {
                         if (needsMask) {
-                            MaskKitTexture(tex, memItemInfo->id + 1);
+                            MaskKitTexture(tex, fileId + 1);
                         }
-                        OrDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                         FreeTexture(tex);
                     }
                     break;
             }
 
-            //DoMipMap(memItemInfo->id + 1, (TEXIMGPACKHEADER*)result, 0, "-mip1", MaskKitTextureMip1);
-            //DoMipMap(memItemInfo->id + 1, (TEXIMGPACKHEADER*)result, 1, "-mip2", MaskKitTextureMip2);
+            //DoMipMap(fileId + 1, (TEXIMGPACKHEADER*)decBuf, 0, "-mip1", MaskKitTextureMip1);
+            //DoMipMap(fileId + 1, (TEXIMGPACKHEADER*)decBuf, 1, "-mip2", MaskKitTextureMip2);
 
             // load GK socks
-            texType = FindImageFileForId(memItemInfo->id + 2, "", filename, &needsMask);
+            texType = FindImageFileForId(fileId + 2, "", filename, &needsMask);
             switch (texType) {
                 case TEXTYPE_PNG:
                     LogWithString(&k_mydll,"JuceUniDecode: GK socks file = %s", filename);
                     texSize = LoadPNGTexture(&tex, filename);
                     if (texSize > 0) {
                         if (needsMask) {
-                            MaskKitTexture(tex, memItemInfo->id + 2);
+                            MaskKitTexture(tex, fileId + 2);
                         }
-                        OrDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                         FreePNGTexture(tex);
                     }
                     break;
@@ -6898,30 +6595,162 @@ void JuceUniDecode(DWORD addr, DWORD size, DWORD result)
                     texSize = LoadTexture(&tex, filename);
                     if (texSize > 0) {
                         if (needsMask) {
-                            MaskKitTexture(tex, memItemInfo->id + 2);
+                            MaskKitTexture(tex, fileId + 2);
                         }
-                        OrDIBTexture((TEXIMGPACKHEADER*)result, tex);
+                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
                         FreeTexture(tex);
                     }
                     break;
             }
             */
 
-            //DoMipMap(memItemInfo->id + 2, (TEXIMGPACKHEADER*)result, 0, "-mip1", MaskKitTextureMip1);
-            //DoMipMap(memItemInfo->id + 2, (TEXIMGPACKHEADER*)result, 1, "-mip2", MaskKitTextureMip2);
+            //DoMipMap(fileId + 2, (TEXIMGPACKHEADER*)decBuf, 0, "-mip1", MaskKitTextureMip1);
+            //DoMipMap(fileId + 2, (TEXIMGPACKHEADER*)decBuf, 1, "-mip2", MaskKitTextureMip2);
+        }
+        
+        TRACE(&k_mydll,"JuceUniDecode done");
+	}
+	
+	else if (part == 0) {
+		// UniDecode, but not a kit texture
+		Log(&k_mydll,"JuceUniDecode: SEVERE WARNING!: this is NOT a kit texture.");
+        clearTeamKitInfo();
+        return;
+	}
+	
+	else if (IsNumOrFontTexture(fileId)) {
+		// the former Unpack -> numbers and fonts
+		TRACE(&k_mydll,"JuceUnpack: CALLED.");
+
+	    bool replaced = FALSE;
+	
+	    //BYTE* strips = (BYTE*)data[TEAM_STRIPS];
+	    //LogWithTwoNumbers(&k_mydll,"strip = %02x %02x", strips[0], strips[1]);
+		
+        LogWithNumber(&k_mydll,"JuceUnpack: Loading id = %d", fileId);
+
+		// find corresponding file
+		BITMAPINFO* tex = NULL;
+		DWORD texSize = 0;
+
+		char filename[BUFLEN];
+		ZeroMemory(filename, BUFLEN);
+        DWORD texType = IsNumbersTexture(fileId) ?
+            FindImageFileForId(fileId, "", filename) :
+            FindImageFileForId(fileId, "", filename, NULL);
+
+        switch (texType) {
+            case TEXTYPE_PNG:
+                LogWithString(&k_mydll,"JuceUnpack: PNG Image file = %s", filename);
+                texSize = LoadPNGTexture(&tex, filename);
+                if (texSize > 0) {
+                    Apply4BitDIBTexture((TEXIMGPACKHEADER*)decBuf, tex, TRUE);
+                    FreePNGTexture(tex);
+                    replaced = TRUE;
+                }
+                break;
+            case TEXTYPE_BMP:
+                LogWithString(&k_mydll,"JuceUnpack: BMP Image file = %s", filename);
+                texSize = LoadTexture(&tex, filename);
+                if (texSize > 0) {
+                    Apply4BitDIBTexture((TEXIMGPACKHEADER*)decBuf, tex, TRUE);
+                    FreeTexture(tex);
+                    replaced = TRUE;
+                }
+                break;
         }
 
+        TEXIMGPACKHEADER* pack = (TEXIMGPACKHEADER*)decBuf;
+        TEXIMGHEADER* top = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[0]);
+        if (replaced && pack->numFiles == 3 && top->width == 256 && top->height == 128) {
+            // looks like an numbers image.
+            // In this case we need to load 2 more images
+            // to substitute palettes for shorts
+
+            // for home shorts
+            TEXIMGHEADER* palAtex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[1]);
+
+            int id1 = fileId;
+            int fileType = (fileId - data[FIRST_ID]) % FILES_PER_TEAM;
+            switch (fileType) {
+                //case GA_NUMBERS: id1 = fileId - GA_NUMBERS + GA_UNKNOWN1; break;
+                //case GB_NUMBERS: id1 = fileId - GB_NUMBERS + GA_UNKNOWN1; break;
+                //case PA_NUMBERS: id1 = fileId - PA_NUMBERS + PA_SHORTS; break;
+                //case PB_NUMBERS: id1 = fileId - PB_NUMBERS + PA_SHORTS; break;
+                case GA_NUMBERS: id1 = fileId - GA_NUMBERS + GA_KIT; break;
+                case GB_NUMBERS: id1 = fileId - GB_NUMBERS + GA_KIT; break;
+                case PA_NUMBERS: id1 = fileId - PA_NUMBERS + PA_SHIRT; break;
+                case PB_NUMBERS: id1 = fileId - PB_NUMBERS + PA_SHIRT; break;
+            }
+            string kitFolderKey1 = GetKitFolderKey(id1);
+
+            ZeroMemory(filename, BUFLEN);
+            texType = FindShortsPalImageFileForId(fileId, kitFolderKey1, filename);
+            switch (texType) {
+                case TEXTYPE_PNG:
+                    LogWithString(&k_mydll,"JuceUnpack: PNG Image file = %s", filename);
+                    texSize = LoadPNGTexture(&tex, filename);
+                    if (texSize > 0) {
+                        Apply4BitDIBPalette(palAtex, tex);
+                        FreePNGTexture(tex);
+                    }
+                    break;
+                case TEXTYPE_BMP:
+                    LogWithString(&k_mydll,"JuceUnpack: BMP Image file = %s", filename);
+                    texSize = LoadTexture(&tex, filename);
+                    if (texSize > 0) {
+                        Apply4BitDIBPalette(palAtex, tex);
+                        FreeTexture(tex);
+                    }
+                    break;
+            }
+
+            // for away shorts
+            TEXIMGHEADER* palBtex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[2]);
+
+            int id2 = fileId;
+            switch (fileType) {
+                //case GA_NUMBERS: id2 = fileId - GA_NUMBERS + GB_UNKNOWN1; break;
+                //case GB_NUMBERS: id2 = fileId - GB_NUMBERS + GB_UNKNOWN1; break;
+                //case PA_NUMBERS: id2 = fileId - PA_NUMBERS + PB_SHORTS; break;
+                //case PB_NUMBERS: id2 = fileId - PB_NUMBERS + PB_SHORTS; break;
+                case GA_NUMBERS: id2 = fileId - GA_NUMBERS + GB_KIT; break;
+                case GB_NUMBERS: id2 = fileId - GB_NUMBERS + GB_KIT; break;
+                case PA_NUMBERS: id2 = fileId - PA_NUMBERS + PB_SHIRT; break;
+                case PB_NUMBERS: id2 = fileId - PB_NUMBERS + PB_SHIRT; break;
+            }
+            string kitFolderKey2 = GetKitFolderKey(id2);
+
+            ZeroMemory(filename, BUFLEN);
+            texType = FindShortsPalImageFileForId(fileId, kitFolderKey2, filename);
+            switch (texType) {
+                case TEXTYPE_PNG:
+                    LogWithString(&k_mydll,"JuceUnpack: PNG Image file = %s", filename);
+                    texSize = LoadPNGTexture(&tex, filename);
+                    if (texSize > 0) {
+                        Apply4BitDIBPalette(palBtex, tex);
+                        FreePNGTexture(tex);
+                    }
+                    break;
+                case TEXTYPE_BMP:
+                    LogWithString(&k_mydll,"JuceUnpack: BMP Image file = %s", filename);
+                    texSize = LoadTexture(&tex, filename);
+                    if (texSize > 0) {
+                        Apply4BitDIBPalette(palBtex, tex);
+                        FreeTexture(tex);
+                    }
+                    break;
+            }
+        }
+
+		//ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)(addr1 - 0x20);
+		//DumpData((BYTE*)decBuf, header->dwDecSize);
+		//DumpImagePack((TEXIMGPACKHEADER*)decBuf);
+	
+	    TRACE(&k_mydll,"JuceUnpack: done.");
 	}
-
-	// save decoded uniforms as BMPs
-	//DumpUniforms(orgKit);
-
-	// dump palette
-	//DumpData((BYTE*)g_palette, 0x400);
 	
-    TRACE(&k_mydll,"JuceUniDecode done");
-	
-	return;
+	return;	
 }
 
 /* Writes an indexed BMP file (with palette) */

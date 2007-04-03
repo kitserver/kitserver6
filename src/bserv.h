@@ -1,7 +1,7 @@
 // bserv.h
 
 #define MODID 101
-#define NAMELONG "Ballserver 6.4.0"
+#define NAMELONG "Ballserver 6.5.0"
 #define NAMESHORT "BSERV"
 
 #define DEFAULT_DEBUG 1
@@ -63,25 +63,22 @@ static DWORD data[DATALEN];
 //#define KeyPrevBall 0x39
 //#define KeyNextBall 0x30
 
-typedef struct _AFSENTRY {
-	DWORD FileNumber;
-	DWORD AFSAddr;
-	DWORD FileSize;
-	DWORD Buffer;
-} AFSENTRY;
-
 typedef struct _BALLS {
 	LPTSTR display;
 	LPTSTR model;
 	LPTSTR texture;
 } BALLS;
 
-typedef struct _ENCBUFFERHEADER {
-	DWORD dwSig;
-	DWORD dwEncSize;
-	DWORD dwDecSize;
-	BYTE other[20];
-} ENCBUFFERHEADER;
+#ifndef _INFOBLOCK_
+#define _INFOBLOCK_
+typedef struct _INFOBLOCK {
+	BYTE reserved1[0x54];
+	DWORD FileID; //0x54
+	BYTE reserved2[8];
+	DWORD src; //0x60
+	DWORD dest; //0x64
+} INFOBLOCK;
+#endif
 
 typedef struct _DECBUFFERHEADER {
 	DWORD dwSig;

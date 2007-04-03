@@ -27,12 +27,6 @@ GETHAIRTRANSP orgGetHairTransp=NULL;
 EDITCOPYPLAYERDATA orgEditCopyPlayerData=NULL;
 RANDSEL_PLAYERS randSelPlayersAddr=NULL;
 
-BYTE* replaceData=NULL;
-DWORD replacePESbuffer=0;
-DWORD replaceDataSize=0;
-bool isReplacing=false;
-DWORD replaceOrgFileID=0;
-
 DWORD StartsStdFaces[4];
 WORD* randSelIDs=NULL;
 
@@ -87,11 +81,7 @@ DWORD CalcHairFile(BYTE Caller);
 
 DWORD GetNextSpecialAfsFileIdForFace(DWORD FaceID, BYTE Skincolor);
 
-DWORD fservNewFileFromAFS();
-void fservAfterFileFromAFS(INFOBLOCK* infoBlock);
-bool fservGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval);
-void fservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped);
+void fservAfsReplace(GETFILEINFO* gfi);
 void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber);
 void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused);
 void fservCopyPlayerData(DWORD p1, DWORD p2, DWORD p3);
@@ -185,8 +175,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		
 		UnhookFunction(hk_ProcessPlayerData,(DWORD)fservProcessPlayerData);
 		UnhookFunction(hk_D3D_Present,(DWORD)PrintPlayerInfo);
-		UnhookFunction(hk_AfterReadFile,(DWORD)fservAfterReadFile);
-		UnhookFunction(hk_FileFromAFS,(DWORD)fservAfterFileFromAFS);
 		
 		DWORD protection=0, newProtection=PAGE_EXECUTE_READWRITE;
 		if (fIDs[FIX_DWORDFACEID] != 0) {
@@ -218,7 +206,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		bEditCopyPlayerDataHooked=UnhookProcAtAddr(bEditCopyPlayerDataHooked,fIDs[C_EDITCOPYPLAYERDATA],
 			fIDs[C_EDITCOPYPLAYERDATA_CS],"C_EDITCOPYPLAYERDATA","C_EDITCOPYPLAYERDATA_CS");
 			
-		MasterUnhookFunction(fIDs[C_NEWFILEFROMAFS_CS],fservNewFileFromAFS);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA2],fservEditCopyPlayerData2);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA3],fservEditCopyPlayerData3);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA4],fservEditCopyPlayerData4);
@@ -258,10 +245,8 @@ void InitFserv()
 	Log(&k_fserv,"InitFserv");
 	HookFunction(hk_ProcessPlayerData,(DWORD)fservProcessPlayerData);
 	HookFunction(hk_D3D_Present,(DWORD)PrintPlayerInfo);
-	HookFunction(hk_AfterReadFile,(DWORD)fservAfterReadFile);
-	HookFunction(hk_FileFromAFS,(DWORD)fservAfterFileFromAFS);
 	
-	RegisterGetNumPagesCallback(fservGetNumPages);
+	RegisterAfsReplaceCallback(fservAfsReplace);
 	
 	for (int i=0;i<4;i++) {
 		StartsStdFaces[i]=fIDs[STARTW+i];
@@ -346,7 +331,6 @@ void InitFserv()
 	bEditCopyPlayerDataHooked=HookProcAtAddr(fIDs[C_EDITCOPYPLAYERDATA],fIDs[C_EDITCOPYPLAYERDATA_CS],
 		(DWORD)fservEditCopyPlayerData,"C_EDITCOPYPLAYERDATA","C_EDITCOPYPLAYERDATA_CS");
 			
-	MasterHookFunction(fIDs[C_NEWFILEFROMAFS_CS],0,fservNewFileFromAFS);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA2],1,fservEditCopyPlayerData2);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA3],1,fservEditCopyPlayerData3);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA4],3,fservEditCopyPlayerData4);
@@ -555,147 +539,58 @@ DWORD GetIDForHairName(char* sfile)
 	return 0xFFFFFFFF;
 };
 
-DWORD fservNewFileFromAFS()
-{	
-	DWORD oldESI, res;
-	__asm mov oldESI, esi
-	
-	INFOBLOCK* infoBlock=(INFOBLOCK*)oldESI;
-	DWORD FaceID=0, HairID=0, NBW=0;
+void fservAfsReplace(GETFILEINFO* gfi)
+{
+	DWORD FaceID = 0, HairID = 0;
 	char filename[BUFLEN];
-	HANDLE file=NULL;
+	ZeroMemory(filename, BUFLEN);
 	
-	//TRACE2(&k_fserv,"fservNewFileFromAFS for %x",infoBlock->FileID);
-	
-	replaceDataSize=0;
-	isReplacing=false;
-	
-	THREEDWORDS* threeDWORDs=GetSpecialAfsFileInfo(infoBlock->FileID);
-	if (threeDWORDs==NULL)
-			goto Processed;
+	THREEDWORDS* threeDWORDs = GetSpecialAfsFileInfo(gfi->fileId);
+	if (threeDWORDs == NULL) return;
  	
  	switch (threeDWORDs->dw1) {
  	case AFSSIG_FACEDATA:
  	case AFSSIG_HAIRDATA:
  		//get data from the cache
- 		goto Processed;
+ 		return;
  		break;
  		
  	case AFSSIG_FACE:
 		//replace the data for face
-		LogWithNumber(&k_fserv,"Processing file id %x",infoBlock->FileID);
-		FaceID=threeDWORDs->dw2;
-		LogWithNumber(&k_fserv,"FaceID is %d",FaceID);
-		strcpy(filename,GetPESInfo()->gdbDir);
-		strcat(filename,"GDB\\faces\\");
-		if (g_Faces[FaceID]!=NULL)
-			strcat(filename,g_Faces[FaceID]);
-		else {
+		LogWithNumber(&k_fserv,"Processing file id %x", gfi->fileId);
+		FaceID = threeDWORDs->dw2;
+		LogWithNumber(&k_fserv, "FaceID is %d",FaceID);
+		if (g_Faces[FaceID] != NULL) {
+			sprintf(filename, "%sGDB\\faces\\%s", GetPESInfo()->gdbDir, g_Faces[FaceID]);
+		} else {
 			Log(&k_fserv,"FAILED! No file is assigned to this parameter combination!");
-			goto Processed;
-		};
-		goto LoadFileNow;
+			return;
+		}
 		break;
 		
 	case AFSSIG_HAIR:
  		//replace the data for hair
 		HairID=threeDWORDs->dw2;
 		LogWithNumber(&k_fserv,"Processing hair id %d",HairID);
-		strcpy(filename,GetPESInfo()->gdbDir);
-		strcat(filename,"GDB\\hair\\");
-		if (g_Hair[HairID]!=NULL)
-			strcat(filename,g_Hair[HairID]);
-		else {
+		if (g_Hair[HairID] != NULL) {
+			sprintf(filename, "%sGDB\\hair\\%s", GetPESInfo()->gdbDir, g_Hair[HairID]);
+		} else {
 			Log(&k_fserv,"FAILED! No file is assigned to this parameter combination!");
-			goto Processed;
+			return;
 		};
-		goto LoadFileNow;
 		break;
 		
 	default:
-		goto Processed;
+		return;
 		break;
-	};
+	}
 	
-	
-	LoadFileNow:
-	
-	//load data from a file
-	LogWithString(&k_fserv,"Loading file %s ...",filename);
-	file=CreateFile(filename,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,NULL);
-	if (file!=INVALID_HANDLE_VALUE) {
-		replaceDataSize=GetFileSize(file,NULL);
-		replaceData=(BYTE*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,replaceDataSize);
-		ReadFile(file,replaceData,replaceDataSize,&NBW,NULL);
-		CloseHandle(file);
-	} else {
-		Log(&k_fserv,"Loading file FAILED!!!");
-	};
-	
-	Processed:
-	if (replaceData != NULL && replaceDataSize>0) {
-		//let PES load the first face for skin color 1
-		replaceOrgFileID=infoBlock->FileID;
-		infoBlock->FileID=fIDs[STARTW]+0x10000;
-		isReplacing=true;
-	};
-	
-	__asm mov esi, oldESI
-	res=MasterCallNext();
+	//let PES load the first face for skin color 1
+	gfi->fileId = fIDs[STARTW] + 0x10000;
+	loadReplaceFile(filename);
 
-	return res;
-};
-
-void fservAfterFileFromAFS(INFOBLOCK* infoBlock)
-{
-	if (isReplacing) {
-		replacePESbuffer=infoBlock->src;
-		//infoBlock->FileID=replaceOrgFileID;
-	};
-};
-
-bool fservGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
-{
-	DWORD orgNumPages = 0;
-    DWORD numPages = 0;
-    DWORD* pPageLenTable = NULL;
-    
-	if (isReplacing) {
-        // find buffer size (in pages)
-        DWORD* g_pageLenTable = (DWORD*)fIDs[AFS_PAGELEN_TABLE];
-        pPageLenTable = (DWORD*)(g_pageLenTable[afsId] + 0x11c);
-        orgNumPages = pPageLenTable[fileId];
-
-        // calculate buffer size to fit replacing data size
-        numPages = replaceDataSize / 0x800 + 1;
-        TRACE2X(&k_fserv,"fservGetNumPages: new size: %08x pages (%08x bytes)", 
-                numPages, numPages*0x800);
-
-        *retval = max(numPages, orgNumPages);
-        
-        return true;
-    };
-    return false;
-};
-
-void fservAfterReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
-{
-	if (isReplacing && (DWORD)lpBuffer==replacePESbuffer) {
-		if (replaceData != NULL) {
-			memcpy(lpBuffer,replaceData,replaceDataSize);
-			Log(&k_fserv,"Data was replaced!");
-			//Free our buffer
-			HeapFree(GetProcessHeap(),0,replaceData);
-			replaceData=NULL;
-		};
-		isReplacing=false;
-		replaceDataSize=0;
-		replacePESbuffer=0;
-	};
 	return;
-};
+}
 
 void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 {

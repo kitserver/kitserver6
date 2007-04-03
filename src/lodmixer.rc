@@ -19,7 +19,7 @@ BEGIN
 		BEGIN
 			VALUE "FileDescription", "LOD Mixer 6 Module\0"
 			VALUE "FileVersion", "6.5.0\0"
-			VALUE "LegalCopyright", "Copyright © 2005,2006,2007 Juce\0"
+			VALUE "LegalCopyright", "Copyright © 2005-2007 Juce\0"
 			VALUE "Comments", "Add-on component for PES6,WE2007: \
 better graphics quality by changing Level-Of-Detail and other aspects.\0"
 		END

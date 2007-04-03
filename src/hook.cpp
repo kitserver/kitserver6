@@ -19,13 +19,10 @@ int bootserverVersion=0;
 
 static const DWORD GAMECAM_SHIFT = 0x30;
 
-#define CODELEN 52
+#define CODELEN 45
 
 enum {
-	C_UNIDECODE, C_UNIDECODE_CS,C_UNIDECODE_CS2,
-	C_UNPACK, C_UNPACK_CS,
-	C_ALLOCMEM, C_ALLOCMEM_CS,
-	C_READFILE_CS, C_GETCLUBTEAMINFO, C_GETNATIONALTEAMINFO, 
+	C_GETCLUBTEAMINFO, C_GETNATIONALTEAMINFO, 
 	C_GETCLUBTEAMINFO_CS, C_GETNATIONALTEAMINFO_CS,
 	C_GETCLUBTEAMINFO_CS2, C_GETNATIONALTEAMINFO_CS2,
 	C_GETCLUBTEAMINFO_CS_ML1, C_GETNATIONALTEAMINFO_CS_EXIT_EDIT,
@@ -50,10 +47,8 @@ enum {
 // Code addresses.
 DWORD codeArray[][CODELEN] = { 
     // PES6
-	{ 0x8cd500, 0x8b1983, 0,
-	  0x8cd490, 0x65b176,
-	  0, 0,
-	  0x44c014, 0, 0, //maybe 0x865240 (0x9690a5), 0x8654d0 (0x9690b8)
+	{
+	  0, 0, //maybe 0x865240 (0x9690a5), 0x8654d0 (0x9690b8)
 	  0, 0,
 	  0, 0,
 	  0, 0, 
@@ -75,10 +70,8 @@ DWORD codeArray[][CODELEN] = {
       0x8acf93, 0x8acfeb,
     },
     // PES6 1.10
-	{ 0x8cd5f0, 0x8b1a63, 0,
-	  0x8cd580, 0x65b216,
-	  0, 0,
-	  0x44c064, 0, 0, 
+	{
+	  0, 0, 
 	  0, 0,
 	  0, 0,
 	  0, 0, 
@@ -100,10 +93,8 @@ DWORD codeArray[][CODELEN] = {
       0x8ad0f3, 0x8ad14b,
     },
     // WE2007
-	{ 0x0, 0x0, 0,
-	  0x0, 0x0,
-	  0, 0,
-	  0x0, 0, 0, 
+	{
+	  0, 0, 
 	  0, 0,
 	  0, 0,
 	  0, 0, 
@@ -201,13 +192,6 @@ DWORD code[CODELEN];
 DWORD data[DATALEN];
 DWORD gpi[GPILEN];
 
-typedef struct _ENCBUFFERHEADER {
-	DWORD dwSig;
-	DWORD dwEncSize;
-	DWORD dwDecSize;
-	BYTE other[20];
-} ENCBUFFERHEADER;
-
 /* function pointers */
 PFNGETDEVICECAPSPROC g_orgGetDeviceCaps = NULL;
 PFNCREATEDEVICEPROC g_orgCreateDevice = NULL;
@@ -243,7 +227,6 @@ CD3DFont* g_font16 = NULL;
 CD3DFont* g_font20 = NULL;
 
 BYTE g_codeFragment[5] = {0,0,0,0,0};
-BYTE g_rfCode[6];
 BYTE g_gpiJmpCode[4];
 BYTE g_FreeMemoryJmpCode[4];
 DWORD g_savedProtection = 0;
@@ -258,15 +241,11 @@ DWORD lastAddedDrawKitSelectInfo=0xFFFFFFFF;
 DWORD* OnShowMenuFuncs=NULL;
 DWORD* OnHideMenuFuncs=NULL;
 
-bool bUniDecodeHooked = false;
-bool bUnpackHooked = false;
-bool bReadFileHooked = false;
 bool bGetNationalTeamInfoHooked = false;
 bool bGetNationalTeamInfoExitEditHooked = false;
 bool bGetClubTeamInfoHooked = false;
 bool bBeginUniSelectHooked = false;
 bool bEndUniSelectHooked = false;
-bool bAllocMemHooked=false;
 bool bSetLodMixerDataHooked = false;
 bool bGetPlayerInfoOldHooked = false;
 bool bGetPlayerInfoOldJmpHooked = false;
@@ -279,14 +258,10 @@ bool bPesGetTextureHooked = false;
 bool bBeginRenderPlayerHooked = false;
 bool bBeginRenderPlayerJumpHackHooked = false;
 
-
-UNIDECODE UniDecode = NULL;
-UNPACK Unpack = NULL;
 GETTEAMINFO GetNationalTeamInfo = NULL;
 GETTEAMINFO GetClubTeamInfo = NULL;
 BEGINUNISELECT BeginUniSelect = NULL;
 ENDUNISELECT EndUniSelect = NULL;
-ALLOCMEM AllocMem=NULL;
 SETLODMIXERDATA SetLodMixerData = NULL;
 SETLODMIXERDATA SetLodMixerData2 = NULL;
 GETPLAYERINFO_OLD oGetPlayerInfo = NULL;
@@ -302,20 +277,15 @@ CALLLINE l_D3D_Present={0,NULL};
 CALLLINE l_D3D_Reset={0,NULL};
 CALLLINE l_D3D_CreateTexture={0,NULL};
 CALLLINE l_D3D_AfterCreateTexture={0,NULL};
-CALLLINE l_ReadFile={0,NULL};
 CALLLINE l_BeginUniSelect={0,NULL};
 CALLLINE l_EndUniSelect={0,NULL};
-CALLLINE l_Unpack={0,NULL};
-CALLLINE l_UniDecode={0,NULL};
 CALLLINE l_GetClubTeamInfo={0,NULL};
 CALLLINE l_GetNationalTeamInfo={0,NULL};
 CALLLINE l_GetClubTeamInfoML1={0,NULL};
 CALLLINE l_GetClubTeamInfoML2={0,NULL};
 CALLLINE l_GetNationalTeamInfoExitEdit={0,NULL};
-CALLLINE l_AllocMem={0,NULL};
 CALLLINE l_SetLodMixerData={0,NULL};
 CALLLINE l_GetPlayerInfoOld={0,NULL};
-CALLLINE l_BeforeUniDecode={0,NULL};
 CALLLINE l_FileFromAFS={0,NULL};
 CALLLINE l_BeforeFreeMemory={0,NULL};
 CALLLINE l_ProcessPlayerData={0,NULL};
@@ -324,7 +294,6 @@ CALLLINE l_Input={0,NULL};
 CALLLINE l_OnShowMenu={0,NULL};
 CALLLINE l_OnHideMenu={0,NULL};
 CALLLINE l_UniSplit={0,NULL};
-CALLLINE l_AfterReadFile={0,NULL};
 CALLLINE l_D3D_UnlockRect={0,NULL};
 CALLLINE l_PesGetTexture={0,NULL};
 CALLLINE l_BeginRenderPlayer={0,NULL};
@@ -369,42 +338,6 @@ void HookDirect3DCreate8()
 	return;
 };
 
-void HookReadFile()
-{
-	// hook code[C_READFILE]
-	if (code[C_READFILE_CS] != 0)
-	{
-	    BYTE* bptr = (BYTE*)code[C_READFILE_CS];
-	    // save original code for CALL ReadFile
-	    memcpy(g_rfCode, bptr, 6);
-	
-	    DWORD protection = 0;
-	    DWORD newProtection = PAGE_EXECUTE_READWRITE;
-	    if (VirtualProtect(bptr, 8, newProtection, &protection)) {
-	        bptr[0] = 0xe8; bptr[5] = 0x90; // NOP
-	        DWORD* ptr = (DWORD*)(code[C_READFILE_CS] + 1);
-	        ptr[0] = (DWORD)NewReadFile - (DWORD)(code[C_READFILE_CS] + 5);
-	        bReadFileHooked = true;
-	        Log(&k_kload,"ReadFile HOOKED at code[C_READFILE_CS]");
-	    }
-	}
-	return;
-};
-
-void UnhookReadFile()
-{
-	// unhook ReadFile
-	if (bReadFileHooked)
-	{
-		BYTE* bptr = (BYTE*)code[C_READFILE_CS];
-		memcpy(bptr, g_rfCode, 6);
-		Log(&k_kload,"ReadFile UNHOOKED");
-	}
-	ClearLine(&l_ReadFile);
-	ClearLine(&l_AfterReadFile);
-	return;
-};
-
 void HookOthers()
 {
 	bBeginUniSelectHooked = HookProc(C_BEGINUNISELECT, C_BEGINUNISELECT_CS, (DWORD)NewBeginUniSelect,
@@ -413,13 +346,6 @@ void HookOthers()
     bEndUniSelectHooked = HookProc(C_ENDUNISELECT, C_ENDUNISELECT_CS, (DWORD)NewEndUniSelect,
         "C_ENDUNISELECT", "C_ENDUNISELECT_CS");
         
-	bUnpackHooked = HookProc(C_UNPACK, C_UNPACK_CS, (DWORD)NewUnpack,"C_UNPACK", "C_UNPACK_CS");
-	
-    bUniDecodeHooked = HookProc(C_UNIDECODE, C_UNIDECODE_CS, (DWORD)NewUniDecode,
-        	"C_UNIDECODE", "C_UNIDECODE_CS") &&
-		HookProc(C_UNIDECODE, C_UNIDECODE_CS2, (DWORD)NewUniDecode,
-	        "C_UNIDECODE", "C_UNIDECODE_CS2");
-
     // hook code[C_GETNATIONALTEAMINFO]
     bGetNationalTeamInfoHooked = 
         HookProc(C_GETNATIONALTEAMINFO, C_GETNATIONALTEAMINFO_CS, (DWORD)NewGetNationalTeamInfo,
@@ -445,10 +371,6 @@ void HookOthers()
     	C_GETNATIONALTEAMINFO_CS_EXIT_EDIT, (DWORD)NewGetNationalTeamInfoExitEdit,
             "C_GETNATIONALTEAMINFO", "C_GETNATIONALTEAMINFO_CS_EXIT_EDIT");
 
-	// hook AllocMem
-	bAllocMemHooked=HookProc(C_ALLOCMEM,C_ALLOCMEM_CS,(DWORD)NewAllocMem,
-		"C_ALLOCMEM","C_ALLOCMEM_CS");
-		
 	// hook code[C_LODMIXER_HOOK_ORG] + code[C_LODMIXER_HOOK_ORG2]
 	bSetLodMixerDataHooked = HookProc(C_LODMIXER_HOOK_ORG, C_LODMIXER_HOOK_CS, 
 	        (DWORD)NewSetLodMixerData,"C_LODMIXER_HOOK_ORG", "C_LODMIXER_HOOK_CS") &&
@@ -596,11 +518,6 @@ void UnhookOthers()
     UnhookAfsReplace();
     
 
-		// unhook code[C_UNPACK]
-        bUnpackHooked =  !UnhookProc(bUnpackHooked, C_UNPACK, C_UNPACK_CS,
-        	"C_UNPACK", "C_UNPACK_CS");
-		ClearLine(&l_Unpack);
-
 		// unhook code[C_GETNATIONALTEAMINFO]
         bGetNationalTeamInfoHooked = !(
             UnhookProc(bGetNationalTeamInfoHooked, 
@@ -637,15 +554,6 @@ void UnhookOthers()
 	    	C_GETNATIONALTEAMINFO,C_GETNATIONALTEAMINFO_CS_EXIT_EDIT,
 	            "C_GETNATIONALTEAMINFO", "C_GETNATIONALTEAMINFO_CS_EXIT_EDIT");
 
-		// unhook code[C_UNIDECODE]
-        bUniDecodeHooked = !(UnhookProc(bUniDecodeHooked, C_UNIDECODE, C_UNIDECODE_CS, 
-                    "C_UNIDECODE", "C_UNIDECODE_CS") &&
-			UnhookProc(bUniDecodeHooked, C_UNIDECODE, C_UNIDECODE_CS2, 
-                    "C_UNIDECODE", "C_UNIDECODE_CS2"));
-               
-		ClearLine(&l_BeforeUniDecode);
-		ClearLine(&l_UniDecode);
-
 		// unhook code[C_BEGINUNISELECT]
         bBeginUniSelectHooked = 
             !UnhookProc(bBeginUniSelectHooked, C_BEGINUNISELECT, C_BEGINUNISELECT_CS, 
@@ -657,11 +565,6 @@ void UnhookOthers()
             !UnhookProc(bEndUniSelectHooked, C_ENDUNISELECT, C_ENDUNISELECT_CS, 
                     "C_ENDUNISELECT", "C_ENDUNISELECT_CS");
 		ClearLine(&l_EndUniSelect);
-		
-		// unhook AllocMem
-		bAllocMemHooked=!UnhookProc(bAllocMemHooked,C_ALLOCMEM,C_ALLOCMEM_CS,
-			"C_ALLOCMEM","C_ALLOCMEM_CS");
-		ClearLine(&l_AllocMem);
 		
 		// unhook code[C_LODMIXER_HOOK_ORG]
 		bSetLodMixerDataHooked = !(UnhookProc(bSetLodMixerDataHooked,C_LODMIXER_HOOK_ORG,
@@ -904,126 +807,6 @@ DWORD NewGetNationalTeamInfoExitEdit(DWORD id)
 	return result;
 };
 
-/**
- * This function is seemingly responsible for allocating memory
- * for decoded buffer (when unpacking BIN files)
- * Parameters:
- *   infoBlock  - address of some information block
- *                What is of interest of in that block: infoBlock[60]
- *                contains an address of encoded (src) BIN.
- *   param2     - unknown param. Possibly count of buffers to allocate
- *   size       - size in bytes of the block needed.
- * Returns:
- *   address of newly allocated buffer. Also, this address is stored
- *   at infoBlock[64] location, which is IMPORTANT.
- */
-DWORD NewAllocMem(DWORD infoBlock, DWORD param2, DWORD size)
-{
-	CALLOCMEM NextCall=NULL;
-	DWORD size2=size;
-	bool doAllocMem=true;
-	
-	for (int i=0;i<(l_AllocMem.num);i++)
-	if (l_AllocMem.addr[i]!=0) {
-		NextCall=(CALLOCMEM)l_AllocMem.addr[i];
-		doAllocMem&=NextCall(infoBlock, param2, &size2);
-	};
-
-	DWORD result=0;
-	if (doAllocMem)
-		AllocMem(infoBlock, param2, size2);
-	return result;
-};
-
-/**
- * This function calls the unpack function for non-kits.
- * Parameters:
- *   addr1   - address of the encoded buffer (without header)
- *   addr2   - address of the decoded buffer
- *   size1   - size of the encoded buffer (minus header)
- *   zero    - always zero
- *   size2   - pointer to size of the decoded buffer
- */
-DWORD NewUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD zero, DWORD* size2)
-{
-	// call target function
-	DWORD result = Unpack(addr1, addr2, size1, zero, size2);
-	
-	CUNPACK NextCall=NULL;
-	for (int i=0;i<(l_Unpack.num);i++)
-	if (l_Unpack.addr[i]!=0) {
-		NextCall=(CUNPACK)l_Unpack.addr[i];
-		NextCall(addr1, addr2, size1, zero, size2, result);
-	};
-	
-	return result;
-};
-
-KEXPORT DWORD MemUnpack(DWORD addr1, DWORD addr2, DWORD size1, DWORD* size2)
-{
-	return Unpack(addr1, addr2, size1, 0, size2);
-};
-
-KEXPORT DWORD AFSMemUnpack(DWORD FileID, DWORD Buffer)
-{
-	ENCBUFFERHEADER *e;
-	char tmp[BUFLEN];
-	DWORD FileInfo[2];
-	DWORD NBW=0;
-	
-	strcpy(tmp,g_pesinfo.pesdir);
-	strcat(tmp,g_pesinfo.AFS_0_text);
-	
-	HANDLE file=CreateFile(tmp,GENERIC_READ,3,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
-	if (file==INVALID_HANDLE_VALUE) return 0;
-	SetFilePointer(file,8*(FileID+1),0,0);
-	ReadFile(file,&(FileInfo[0]),8,&NBW,0);
-	
-	LPVOID srcbuf=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,FileInfo[1]);
-	SetFilePointer(file,FileInfo[0],0,0);
-	ReadFile(file,srcbuf,FileInfo[1],&NBW,0);
-	CloseHandle(file);
-	e=(ENCBUFFERHEADER*)srcbuf;
-
-	DWORD result=Unpack((DWORD)srcbuf+0x20, Buffer, e->dwEncSize, 0, &(e->dwDecSize));
-	
-	HeapFree(GetProcessHeap(),0,srcbuf);
-	
-	return result;
-};
-
-/**
- * This function calls kit BIN decode function
- * Parameters:
- *   addr   - address of the encoded buffer header
- *   size   - size of the encoded buffer
- * Return value:
- *   address of the decoded buffer
- */
-DWORD NewUniDecode(DWORD addr, DWORD size)
-{
-	CUNIDECODE NextCall=NULL;
-	for (int i=0;i<(l_BeforeUniDecode.num);i++)
-	if (l_BeforeUniDecode.addr[i]!=0) {
-		NextCall=(CUNIDECODE)l_BeforeUniDecode.addr[i];
-		NextCall(addr,size,0);
-	};
-
-//Log(&k_kload,"NewUniDecode called.");
-	
-	// call the hooked function
-	DWORD result = UniDecode(addr, size);
-	
-	NextCall=NULL;
-	for (i=0;i<(l_UniDecode.num);i++)
-	if (l_UniDecode.addr[i]!=0) {
-		NextCall=(CUNIDECODE)l_UniDecode.addr[i];
-		NextCall(addr,size,result);
-	};
-	
-	return result;
-};
-
 DWORD NewUniSplit(DWORD id)
 {
 	DWORD oldESI, oldEBX, oldEBP;
@@ -1214,45 +997,6 @@ void NewProcessPlayerData()
 	//Log(&k_kload,"NewProcessPlayerData done.");
 	return;
 };
-bool abc=true;
-/**
- * Monitors the file pointer.
- */
-BOOL STDMETHODCALLTYPE NewReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
-{
-	PFNREADFILE NextCall=NULL;
-	//if (abc) MessageBox(0,"Before ReadFile call chain","1-1",0);
-	for (int i=0;i<(l_ReadFile.num);i++)
-	if (l_ReadFile.addr[i]!=0) {
-		NextCall=(PFNREADFILE)l_ReadFile.addr[i];
-		NextCall(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-	};
-
-    //Log(&k_kload, "NewReadFile called.");
-	//if (abc) MessageBox(0,"Before ReadFile","1-2",0);
-	// call original function		
-	BOOL result=ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-	//if (abc) MessageBox(0,"After ReadFile","1-3",0);
-	
-	char temp[BUFLEN];
-	sprintf(temp,"Number of calls: %d",l_AfterReadFile.num);
-	//if (abc) MessageBox(0,temp,"",0);
-	
-	for (i=0;i<(l_AfterReadFile.num);i++)
-	if (l_AfterReadFile.addr[i]!=0) {
-		NextCall=(PFNREADFILE)l_AfterReadFile.addr[i];
-		sprintf(temp,"Call address: %x",l_AfterReadFile.addr[i]);
-		//if (abc) MessageBox(0,temp,"",0);
-		NextCall(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-	};
-	//if (abc) MessageBox(0,"After AfterReadFile call chain","1-4",0);
-		
-	//if (abc) MessageBox(0,"You should have seen 4 messages about ReadFile now.","1-5",0);
-	abc=false;
-	
-	return result;
-}
 
 /**
  * Tracker for Direct3DCreate8 function.
@@ -1307,7 +1051,6 @@ IDirect3D8* STDMETHODCALLTYPE NewDirect3DCreate8(UINT sdkVersion)
 		}
     }
 
-    HookReadFile();
     HookOthers();
     if (g_hKeyboardHook == NULL) {
 		g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, hInst, GetCurrentThreadId());
@@ -2291,20 +2034,15 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_D3D_Reset: cl = &l_D3D_Reset; break;
 		case hk_D3D_CreateTexture: cl = &l_D3D_CreateTexture; break;
 		case hk_D3D_AfterCreateTexture: cl = &l_D3D_AfterCreateTexture; break;
-		case hk_ReadFile: cl = &l_ReadFile; break;
 		case hk_BeginUniSelect: cl = &l_BeginUniSelect; break;
 		case hk_EndUniSelect: cl = &l_EndUniSelect; break;
-		case hk_Unpack: cl = &l_Unpack; break;
-		case hk_UniDecode: cl = &l_UniDecode; break;
 		case hk_GetClubTeamInfo: cl = &l_GetClubTeamInfo; break;
 		case hk_GetNationalTeamInfo: cl = &l_GetNationalTeamInfo; break;
 		case hk_GetClubTeamInfoML1: cl = &l_GetClubTeamInfoML1; break;
 		case hk_GetClubTeamInfoML2: cl = &l_GetClubTeamInfoML2; break;
 		case hk_GetNationalTeamInfoExitEdit: cl = &l_GetNationalTeamInfoExitEdit; break;
-		case hk_AllocMem: cl = &l_AllocMem; break;
 		case hk_SetLodMixerData: cl = &l_SetLodMixerData; break;
 		case hk_GetPlayerInfoOld: cl = &l_GetPlayerInfoOld; break;
-		case hk_BeforeUniDecode: cl = &l_BeforeUniDecode; break;
 		case hk_FileFromAFS: cl = &l_FileFromAFS; break;
 		case hk_BeforeFreeMemory: cl = &l_BeforeFreeMemory; break;
 		case hk_ProcessPlayerData: cl = &l_ProcessPlayerData; break;
@@ -2313,7 +2051,6 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_OnShowMenu: cl = &l_OnShowMenu; break;
 		case hk_OnHideMenu: cl = &l_OnHideMenu; break;
 		case hk_UniSplit: cl = &l_UniSplit; break;
-		case hk_AfterReadFile: cl = &l_AfterReadFile; break;
 		case hk_D3D_UnlockRect: cl = &l_D3D_UnlockRect; break;
 		case hk_PesGetTexture: cl = &l_PesGetTexture; break;
 		case hk_BeginRenderPlayer: cl = &l_BeginRenderPlayer; break;
@@ -2331,11 +2068,8 @@ void InitAddresses(int v)
 	// assign pointers	
 	BeginUniSelect = (BEGINUNISELECT)code[C_BEGINUNISELECT];
 	EndUniSelect = (ENDUNISELECT)code[C_ENDUNISELECT];
-	Unpack = (UNPACK)code[C_UNPACK];
-	UniDecode = (UNIDECODE)code[C_UNIDECODE];
 	GetNationalTeamInfo = (GETTEAMINFO)code[C_GETNATIONALTEAMINFO];
 	GetClubTeamInfo = (GETTEAMINFO)code[C_GETCLUBTEAMINFO];
-	AllocMem=(ALLOCMEM)code[C_ALLOCMEM];
 	SetLodMixerData = (SETLODMIXERDATA)code[C_LODMIXER_HOOK_ORG];
 	SetLodMixerData2 = (SETLODMIXERDATA)code[C_LODMIXER_HOOK_ORG2];
 	oGetPlayerInfo = (GETPLAYERINFO_OLD)code[C_GETPLAYERINFO_OLD];
