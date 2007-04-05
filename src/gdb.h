@@ -30,6 +30,10 @@ using namespace std;
 #define KITDESCRIPTION   0x10000
 #define SHIRT_NUMBER_LOCATION 0x20000
 #define SHORTS_MAIN_COLOR 0x40000
+#define SHIRT_FOLDER 0x80000
+#define SHORTS_FOLDER 0x100000
+#define SOCKS_FOLDER 0x200000
+#define OVERLAY_FILE 0x400000
 
 // GDB data structures
 ///////////////////////////////
@@ -66,6 +70,10 @@ typedef struct _Kit {
     char shirtPaletteFile[MAXFILENAME];
     StringCStrMap* shortsPaletteFiles;
     DWORD attDefined;
+    char shirtFolder[256];
+    char shortsFolder[256];
+    char socksFolder[256];
+    char overlayFile[MAXFILENAME];
 } Kit;
 
 typedef map<string,Kit*> StringKitMap;

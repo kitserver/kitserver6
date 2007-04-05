@@ -115,12 +115,12 @@ GDB* gdbLoad(char* dir)
                 (*(gdb->uni))[teamId] = kitCol;
 
                 // find kits for this team
-                gdbFindKitsForTeam(gdb, teamId);
+                //gdbFindKitsForTeam(gdb, teamId);
             }
         }
     }
     fclose(map);
-    GDB_DEBUG_CLOSE(klog);
+    //GDB_DEBUG_CLOSE(klog);
     return gdb;
 }
 
@@ -380,6 +380,30 @@ void gdbLoadConfig(GDB* gdb, Kit* kit)
                 strncpy(kit->description, value, MAXFILENAME);
                 kit->attDefined |= KITDESCRIPTION;
             }
+            else if (lstrcmp(key, "shirtFolder")==0)
+            {
+                ZeroMemory(kit->shirtFolder, 256);
+                strncpy(kit->shirtFolder, value, 256);
+                kit->attDefined |= SHIRT_FOLDER;
+            }
+			else if (lstrcmp(key, "shortsFolder")==0)
+            {
+                ZeroMemory(kit->shortsFolder, 256);
+                strncpy(kit->shortsFolder, value, 256);
+                kit->attDefined |= SHORTS_FOLDER;
+            }
+			else if (lstrcmp(key, "socksFolder")==0)
+            {
+                ZeroMemory(kit->socksFolder, 256);
+                strncpy(kit->socksFolder, value, 256);
+                kit->attDefined |= SOCKS_FOLDER;
+            }
+            else if (lstrcmp(key, "overlay")==0)
+            {
+                ZeroMemory(kit->overlayFile, MAXFILENAME);
+                strncpy(kit->overlayFile, value, MAXFILENAME);
+                kit->attDefined |= OVERLAY_FILE;
+            }
 
             // legacy attributes. Unsupported or irrelevant
             /*
@@ -501,5 +525,6 @@ int getKeyValuePair(char* buf, char* key, char* value)
 void gdbUnload(GDB* gdb)
 {
     //TODO
+    GDB_DEBUG_CLOSE(klog);
 }
 

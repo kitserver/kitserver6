@@ -251,11 +251,15 @@ string g_awaySocksKeyPL;
 #define GK_TYPE 0
 #define PL_TYPE 1
 #define GET_HOME_SHIRT_KEY(typ) ((typ==GK_TYPE)?g_homeShirtKeyGK:g_homeShirtKeyPL)
-#define GET_HOME_SHORTS_KEY(typ) ((typ==GK_TYPE)?g_homeShortsKeyGK:g_homeShortsKeyPL)
-#define GET_HOME_SOCKS_KEY(typ) ((typ==GK_TYPE)?g_homeSocksKeyGK:g_homeSocksKeyPL)
+#define GET_HOME_SHORTS_KEY(typ) ((typ==GK_TYPE)?g_homeShirtKeyGK:g_homeShirtKeyPL)
+#define GET_HOME_SOCKS_KEY(typ) ((typ==GK_TYPE)?g_homeShirtKeyGK:g_homeShirtKeyPL)
+//#define GET_HOME_SHORTS_KEY(typ) ((typ==GK_TYPE)?g_homeShortsKeyGK:g_homeShortsKeyPL)
+//#define GET_HOME_SOCKS_KEY(typ) ((typ==GK_TYPE)?g_homeSocksKeyGK:g_homeSocksKeyPL)
 #define GET_AWAY_SHIRT_KEY(typ) ((typ==GK_TYPE)?g_awayShirtKeyGK:g_awayShirtKeyPL)
-#define GET_AWAY_SHORTS_KEY(typ) ((typ==GK_TYPE)?g_awayShortsKeyGK:g_awayShortsKeyPL)
-#define GET_AWAY_SOCKS_KEY(typ) ((typ==GK_TYPE)?g_awaySocksKeyGK:g_awaySocksKeyPL)
+#define GET_AWAY_SHORTS_KEY(typ) ((typ==GK_TYPE)?g_awayShirtKeyGK:g_awayShirtKeyPL)
+#define GET_AWAY_SOCKS_KEY(typ) ((typ==GK_TYPE)?g_awayShirtKeyGK:g_awayShirtKeyPL)
+//#define GET_AWAY_SHORTS_KEY(typ) ((typ==GK_TYPE)?g_awayShortsKeyGK:g_awayShortsKeyPL)
+//#define GET_AWAY_SOCKS_KEY(typ) ((typ==GK_TYPE)?g_awaySocksKeyGK:g_awaySocksKeyPL)
 
 // global kit selection type
 int typ = PL_TYPE;
@@ -1236,6 +1240,10 @@ DWORD FindImageFileForId(DWORD id, char* suffix, char* filename);
 DWORD FindImageFileForId(DWORD id, char* suffix, char* filename, BOOL* needsMask);
 BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOOL* needsMask);
 DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename);
+DWORD FindMaskFileForId(DWORD id, char* filename);
+DWORD FindOverlayFileForId(DWORD id, char* filename);
+
+char* getKitFoldername(string& kitFolderKey, WORD teamId, int kitType, int kitPart);
 
 /* function pointers */
 PFNCREATETEXTUREPROC g_orgCreateTexture = NULL;
@@ -1300,9 +1308,9 @@ KITPACKINFO* GetKitPackInfoById(WORD id, int which);
 
 typedef string (*CYCLEPROC)(WORD teamId, string key);
 
-void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal);
-void TryLoad2DkitTexture(WORD teamId, int strip, string currKey, string* key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal);
-void TryLoadSamePal2DkitTexture(WORD teamId, int strip, string currKey, string* key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, PALETTEENTRY* cmpPal);
+void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, int kitType, int kitPart);
+void TryLoad2DkitTexture(WORD teamId, int strip, string currKey, string* key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, int kitType, int kitPart);
+void TryLoadSamePal2DkitTexture(WORD teamId, int strip, string currKey, string* key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, PALETTEENTRY* cmpPal, int kitType, int kitPart);
 BOOL IsSamePalette(PALETTEENTRY* a, PALETTEENTRY* b);
 PALETTEENTRY* MakePaletteCopy(PALETTEENTRY* src);
 
@@ -1313,6 +1321,11 @@ PALETTEENTRY g_home_socks_pal[0x100];
 PALETTEENTRY g_away_shirt_pal[0x100];
 PALETTEENTRY g_away_shorts_pal[0x100];
 PALETTEENTRY g_away_socks_pal[0x100];
+
+char nullString[8] = "(null)\0";
+enum {
+	KITPART_SHIRT, KITPART_SHORTS, KITPART_SOCKS, KITPART_NUMBERS, KITPART_FONT,
+};
 
 
 //////////////////////////////////////////////////////////////
@@ -1972,7 +1985,7 @@ void GetTeamStrips(BYTE* strips)
 /**
  * Load a texture from a specific kit folder.
  */
-void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal) 
+void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, int kitType, int kitPart) 
 {
     MAKE_BUFFER(keyBuf);
     sprintf(keyBuf, "%d|%s|%s", teamId, kitFolder, filename);
@@ -1981,8 +1994,11 @@ void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirec
     //LogWithNumber(&k_mydll,"g_kitTextureMap[key] = %08x", (DWORD)g_kitTextureMap[key]);
     if (!g_kitTextureMap[key]) {
         MAKE_BUFFER(folder);
+        //gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
-        sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFolder);
+		string kitFolder1 = kitFolder;
+    	char* kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, kitPart);
+        sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFoldername);
         CreateGDBTextureFromFolder(folder, filename, ppTex, pPal);
         if (*ppTex) {
             // store texture in the texture cache
@@ -1996,6 +2012,7 @@ void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirec
 
 void PrintHomeKitCollection()
 {
+	gdbFindKitsForTeam(gdb, GetTeamId(HOME));
     KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(HOME));
     if (col) {
         for (StringKitMap::iterator it = (*(col->players)).begin(); 
@@ -2008,6 +2025,7 @@ void PrintHomeKitCollection()
 
 void PrintAwayKitCollection()
 {
+	gdbFindKitsForTeam(gdb, GetTeamId(AWAY));
     KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(AWAY));
     if (col) {
         for (StringKitMap::iterator it = (*(col->players)).begin(); 
@@ -2018,24 +2036,24 @@ void PrintAwayKitCollection()
     }
 }
 
-void TryLoad2DkitTexture(WORD teamId, string oldKey, string& key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
+void TryLoad2DkitTexture(WORD teamId, string oldKey, string& key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, int kitType, int kitPart)
 {
     // check for "(null)"
     if (key == "(null)") {
         return; // no textures available
     }
     // make sure we try all existing textures
-    Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal);
+    Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal, kitType, kitPart);
     string seenKey = key;
     while (!*ppTex) {
         key = proc(teamId, oldKey);
-        Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal);
+        Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal, kitType, kitPart);
         if (key == seenKey) break; // full cycle
 
     }
 }
 
-void TryLoadSamePal2DkitTexture(WORD teamId, string oldKey, string& key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, PALETTEENTRY* cmpPal)
+void TryLoadSamePal2DkitTexture(WORD teamId, string oldKey, string& key, CYCLEPROC proc, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, PALETTEENTRY* cmpPal, int kitType, int kitPart)
 {
     // check for "(null)"
     if (key == "(null)") {
@@ -2043,11 +2061,11 @@ void TryLoadSamePal2DkitTexture(WORD teamId, string oldKey, string& key, CYCLEPR
     }
     // make sure we try all existing textures
     key = proc(teamId, oldKey);
-    Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal);
+    Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal, kitType, kitPart);
     string seenKey = key;
     while (!*ppTex || !IsSamePalette(pPal, cmpPal)) {
         key = proc(teamId, oldKey);
-        Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal);
+        Load2DkitTexture(teamId, key.c_str(), filename, ppTex, pPal, kitType, kitPart);
         if (key == seenKey) break; // full cycle
 
     }
@@ -2125,7 +2143,7 @@ void Load2Dkits()
                 GET_HOME_SHIRT_KEY(typ) = GetNextHomeShirtKey(id, oldKey);
                 LogWithString(&k_mydll,"New home shirt: {%s}", (char*)GET_HOME_SHIRT_KEY(typ).c_str());
 
-                TryLoad2DkitTexture(id, oldKey, GET_HOME_SHIRT_KEY(typ), (CYCLEPROC)GetNextHomeShirtKey, "shirt.png", &g_home_shirt_tex, g_home_shirt_pal);
+                TryLoad2DkitTexture(id, oldKey, GET_HOME_SHIRT_KEY(typ), (CYCLEPROC)GetNextHomeShirtKey, "shirt.png", &g_home_shirt_tex, g_home_shirt_pal, typ, KITPART_SHIRT);
                 //TryLoad2DkitTexture(id, oldKey, GET_HOME_SHIRT_KEY(typ), (CYCLEPROC)GetNextHomeShirtKey, "shorts.png", &g_home_shorts_tex, g_home_shorts_pal);
                 //TryLoad2DkitTexture(id, oldKey, GET_HOME_SHIRT_KEY(typ), (CYCLEPROC)GetNextHomeShirtKey, "socks.png", &g_home_socks_tex, g_home_socks_pal);
 
@@ -2187,9 +2205,9 @@ void Load2Dkits()
             */
         }
 
-        Load2DkitTexture(id, GET_HOME_SHIRT_KEY(typ).c_str(), "shirt.png", &g_home_shirt_tex, g_home_shirt_pal);
-        Load2DkitTexture(id, GET_HOME_SHIRT_KEY(typ).c_str(), "shorts.png", &g_home_shorts_tex, g_home_shorts_pal);
-        Load2DkitTexture(id, GET_HOME_SHIRT_KEY(typ).c_str(), "socks.png", &g_home_socks_tex, g_home_socks_pal);
+        Load2DkitTexture(id, GET_HOME_SHIRT_KEY(typ).c_str(), "shirt.png", &g_home_shirt_tex, g_home_shirt_pal, typ, KITPART_SHIRT);
+        Load2DkitTexture(id, GET_HOME_SHIRT_KEY(typ).c_str(), "shorts.png", &g_home_shorts_tex, g_home_shorts_pal, typ, KITPART_SHORTS);
+        Load2DkitTexture(id, GET_HOME_SHIRT_KEY(typ).c_str(), "socks.png", &g_home_socks_tex, g_home_socks_pal, typ, KITPART_SOCKS);
         //Load2DkitTexture(id, GET_HOME_SHORTS_KEY(typ).c_str(), "shorts.png", &g_home_shorts_tex, g_home_shorts_pal);
         //Load2DkitTexture(id, GET_HOME_SOCKS_KEY(typ).c_str(), "socks.png", &g_home_socks_tex, g_home_socks_pal);
 
@@ -2218,7 +2236,7 @@ void Load2Dkits()
                 GET_AWAY_SHIRT_KEY(typ) = GetNextAwayShirtKey(id, oldKey);
                 LogWithString(&k_mydll,"New away shirt: {%s}", (char*)GET_AWAY_SHIRT_KEY(typ).c_str());
 
-                TryLoad2DkitTexture(id, oldKey, GET_AWAY_SHIRT_KEY(typ), (CYCLEPROC)GetNextAwayShirtKey, "shirt.png", &g_away_shirt_tex, g_away_shirt_pal);
+                TryLoad2DkitTexture(id, oldKey, GET_AWAY_SHIRT_KEY(typ), (CYCLEPROC)GetNextAwayShirtKey, "shirt.png", &g_away_shirt_tex, g_away_shirt_pal, typ, KITPART_SHIRT);
 
                 /*
                 //make sure shorts and socks are of the same palette
@@ -2278,9 +2296,9 @@ void Load2Dkits()
             */
         }
 
-        Load2DkitTexture(id, GET_AWAY_SHIRT_KEY(typ).c_str(), "shirt.png", &g_away_shirt_tex, g_away_shirt_pal);
-        Load2DkitTexture(id, GET_AWAY_SHIRT_KEY(typ).c_str(), "shorts.png", &g_away_shorts_tex, g_away_shorts_pal);
-        Load2DkitTexture(id, GET_AWAY_SHIRT_KEY(typ).c_str(), "socks.png", &g_away_socks_tex, g_away_socks_pal);
+        Load2DkitTexture(id, GET_AWAY_SHIRT_KEY(typ).c_str(), "shirt.png", &g_away_shirt_tex, g_away_shirt_pal, typ, KITPART_SHIRT);
+        Load2DkitTexture(id, GET_AWAY_SHIRT_KEY(typ).c_str(), "shorts.png", &g_away_shorts_tex, g_away_shorts_pal, typ, KITPART_SHORTS);
+        Load2DkitTexture(id, GET_AWAY_SHIRT_KEY(typ).c_str(), "socks.png", &g_away_socks_tex, g_away_socks_pal, typ, KITPART_SOCKS);
         //Load2DkitTexture(id, GET_AWAY_SHORTS_KEY(typ).c_str(), "shorts.png", &g_away_shorts_tex, g_away_shorts_pal);
         //Load2DkitTexture(id, GET_AWAY_SOCKS_KEY(typ).c_str(), "socks.png", &g_away_socks_tex, g_away_socks_pal);
 
@@ -2345,6 +2363,7 @@ int GetTemplateType(int which)
     Kit* kit = NULL;
     WORD teamId = GetTeamId(which);
     if (teamId != 0xffff) {
+    	gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (!col) return FALSE;
         switch (which) {
@@ -3130,6 +3149,7 @@ void DrawKitLabel()
         string& key1 = GET_HOME_SHIRT_KEY(typ);
         string key2 = (key1.length()>0) ? key1 : (typ==PL_TYPE)?"pa":"ga";
         // check for description attribute
+        gdbFindKitsForTeam(gdb, GetTeamId(HOME));
         KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(HOME)); 
         if (col) {
             Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key2):MAP_FIND(col->goalkeepers,key2);
@@ -3145,6 +3165,7 @@ void DrawKitLabel()
         string& key3 = GET_AWAY_SHIRT_KEY(typ);
         string key4 = (key3.length()>0) ? key3 : (typ==PL_TYPE)?"pb":"gb";
         // check for description attribute
+        gdbFindKitsForTeam(gdb, GetTeamId(AWAY));
         KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(AWAY)); 
         if (col) {
             Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key4):MAP_FIND(col->goalkeepers,key4);
@@ -3441,7 +3462,7 @@ void CreateGDBTextureFromFolder(char* foldername, char* filename, IDirect3DTextu
     namesToTry.push_back("all.png");
     namesToTry.push_back(altFilename);
     namesToTry.push_back("all.bmp");
-
+    
     for (vector<string>::iterator vit=namesToTry.begin(); vit!=namesToTry.end(); vit++) {
         sprintf(name, "%sGDB\\%s\\%s", GetPESInfo()->gdbDir, foldername, vit->c_str());
         LogWithString(&k_mydll,"CreateGDBTextureFromFolder: Loading texture: %s", name);
@@ -3456,6 +3477,7 @@ void CreateGDBTextureFromFolder(char* foldername, char* filename, IDirect3DTextu
 
 string GetNextHomeShirtKey(WORD teamId, string currKey)
 {
+	gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3504,6 +3526,7 @@ string GetNextHomeShirtKey(WORD teamId, string currKey)
 
 string GetNextHomeShortsKey(WORD teamId, string currKey)
 {
+	gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3552,6 +3575,7 @@ string GetNextHomeShortsKey(WORD teamId, string currKey)
 
 string GetNextHomeSocksKey(WORD teamId, string currKey)
 {
+	gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3600,6 +3624,7 @@ string GetNextHomeSocksKey(WORD teamId, string currKey)
 
 string GetNextAwayShirtKey(WORD teamId, string currKey)
 {
+	gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3648,6 +3673,7 @@ string GetNextAwayShirtKey(WORD teamId, string currKey)
 
 string GetNextAwayShortsKey(WORD teamId, string currKey)
 {
+	gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3696,6 +3722,7 @@ string GetNextAwayShortsKey(WORD teamId, string currKey)
 
 string GetNextAwaySocksKey(WORD teamId, string currKey)
 {
+	gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -4705,7 +4732,193 @@ void kservUnlockRect(IDirect3DTexture8* self,UINT Level)
         if (texit) _textureBindings.erase(texit);
     }
 }
-    
+
+// copy all the pixels where the color c is in the mask file from src to dest
+void applyKitMask(D3DLOCKED_RECT* dest, D3DLOCKED_RECT* src, char* maskfilename, D3DSURFACE_DESC* desc, DWORD c)
+{
+	UINT width = desc->Width;
+	UINT height = desc->Height;
+	
+	BITMAPINFO* maskTex = NULL;
+	LoadPNGTexture(&maskTex, maskfilename);
+	if (!maskTex) return;
+	
+	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)maskTex;
+	UINT maskW = bih->biWidth;
+	UINT maskH = bih->biHeight;
+	BYTE* mask = (BYTE*)maskTex + bih->biSize + 0x400;
+	DWORD index = -1;
+	for (int i=0; i<256; i++) {
+		if ((((DWORD*)((BYTE*)maskTex + bih->biSize))[i] & 0xffffff) == c) {
+			index = i;
+			break;
+		}
+	}
+
+	BYTE* pDestRow = (BYTE*)dest->pBits;
+	BYTE* pSrcRow = (BYTE*)src->pBits;
+	for (int y=0; y<height; y++) {
+		DWORD* pDestPixel = (DWORD*)pDestRow;
+		DWORD* pSrcPixel = (DWORD*)pSrcRow;
+		for (int x=0; x<width; x++) {
+			if (mask[(height-y-1)*maskH*maskW/height + x*maskW/width] == index) {
+				*pDestPixel = *pSrcPixel;
+			}
+			pDestPixel++;
+			pSrcPixel++;
+		}
+		pDestRow += dest->Pitch;
+		pSrcRow += src->Pitch;
+	}
+	
+	pngdib_p2d_free_dib(NULL,(BITMAPINFOHEADER*)maskTex);
+	return;
+}
+
+void applyOverlay(D3DLOCKED_RECT* dest, char* overlayfilename, D3DSURFACE_DESC* desc)
+{
+	int i, x, y;
+	
+	D3DXIMAGE_INFO ovImageInfo;
+	if (D3DXGetImageInfoFromFile(overlayfilename, &ovImageInfo) != D3D_OK) return;
+	
+	UINT ovWidth = ovImageInfo.Width;
+	UINT ovHeight = ovImageInfo.Height;
+
+	BITMAPINFO* ovTex = NULL;
+	if (ovImageInfo.ImageFileFormat == D3DXIFF_PNG) {
+		LogWithNumber(&k_mydll, "%d bytes loaded", LoadPNGTexture(&ovTex, overlayfilename));
+	} else if (ovImageInfo.ImageFileFormat == D3DXIFF_BMP) {
+		LogWithNumber(&k_mydll, "%d bytes loaded", LoadTexture(&ovTex, overlayfilename));
+	} else {
+		return;
+	}
+	if (!ovTex) return;
+		
+	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)ovTex;
+	BYTE* byOverlay = (BYTE*)ovTex + bih->biSize;
+	DWORD* dwOverlay = (DWORD*)ovTex + bih->biSize;
+	DWORD index = -1;
+	BYTE* pDestRow = NULL;
+	BYTE* pSrcRow = NULL;
+	DWORD pixel = 0;
+
+	UINT width = desc->Width;
+	UINT height = desc->Height;
+	IDirect3DTexture8* pOvTexture = NULL;
+	D3DLOCKED_RECT rectOv;
+	
+	WORD bitCount = bih->biBitCount;
+	if (bitCount != 8 && bitCount != 24 && bitCount != 32) goto freeOv3;
+	
+	// create overlay texture
+	if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+            GetActiveDevice(), overlayfilename, 
+            width, height,
+            1, desc->Usage, desc->Format, desc->Pool,
+            D3DX_DEFAULT, D3DX_DEFAULT,
+            0, NULL, NULL, &pOvTexture))) {
+		goto freeOv3;
+	}
+	if (!SUCCEEDED(pOvTexture->LockRect(0, &rectOv, NULL, 0))) goto freeOv2;
+
+	if (bitCount == 8) {
+		for (i=0; i<256; i++) {
+			pixel = ((DWORD*)((BYTE*)ovTex + bih->biSize))[i];
+			// allow a difference of 3 for each byte to 0xff00ff (good if color reduction
+			// to 256 colors doesn't keep this value)
+			if (((pixel&0xff0000)>=0xfc0000) && ((pixel&0x00ff00)<=0x000400) && ((pixel&0x0000ff)>=0x0000fc)) {
+				index = i;
+				break;
+			}
+		}
+		LogWithNumber(&k_mydll, "Index: %d", index);		
+	}
+
+	pDestRow = (BYTE*)dest->pBits;
+	pSrcRow = (BYTE*)rectOv.pBits;
+	for (y=0; y<height; y++) {
+		DWORD* pDestPixel = (DWORD*)pDestRow;
+		DWORD* pSrcPixel = (DWORD*)pSrcRow;
+		for (x=0; x<width; x++) {
+			pixel = (height-y-1)*ovHeight*ovWidth/height + x*ovWidth/width;
+			switch (bitCount) {
+			case 8:
+				if (byOverlay[pixel + 0x400] != index) {
+					*pDestPixel = *pSrcPixel;
+				}
+				break;
+			case 24:
+				//3 bits only
+				if (byOverlay[3*pixel]!=0xff || byOverlay[3*pixel+1]!=0 || byOverlay[3*pixel+2]!=0xff) {
+					*pDestPixel = *pSrcPixel;
+				}
+				break;
+			case 32:
+				if (*dwOverlay & 0xffffff != 0xff00ff) {
+					*pDestPixel = *pSrcPixel;
+				}
+				break;
+			}
+			pDestPixel++;
+			pSrcPixel++;
+		}
+		pDestRow += dest->Pitch;
+		pSrcRow += rectOv.Pitch;
+	}
+		
+	freeOv1:
+	pOvTexture->UnlockRect(0);
+	freeOv2:
+	pOvTexture->Release();
+	freeOv3:
+	if (ovImageInfo.ImageFileFormat == D3DXIFF_PNG) {
+		FreePNGTexture(ovTex);
+	} else {
+		FreeTexture(ovTex);
+	}
+		
+	return;
+}
+	
+
+void mixKits(IDirect3DTexture8* pShirtTexture, IDirect3DTexture8* pShortsTexture,
+	IDirect3DTexture8* pSocksTexture, char* overlayfilename, char* maskfilename, int level)
+{
+	if (!pShirtTexture) return;
+	if (!pShortsTexture && !pSocksTexture) return;
+	
+	D3DLOCKED_RECT rectShirt;
+	D3DLOCKED_RECT rectShorts;
+	D3DLOCKED_RECT rectSocks;
+	D3DSURFACE_DESC desc;
+	
+	if (!SUCCEEDED(pShirtTexture->LockRect(level, &rectShirt, NULL, 0))) return;
+	pShirtTexture->GetLevelDesc(level, &desc);
+
+	if (pShortsTexture && SUCCEEDED(pShortsTexture->LockRect(level, &rectShorts, NULL, 0))) {
+		Log(&k_mydll, "Replacing shorts now...");
+		//blue
+		applyKitMask(&rectShirt, &rectShorts, maskfilename, &desc, 0x0000ff);
+		pSocksTexture->UnlockRect(level);
+	}
+	
+	if (pShortsTexture && SUCCEEDED(pSocksTexture->LockRect(level, &rectSocks, NULL, 0))) {
+		Log(&k_mydll, "Replacing socks now...");
+		//yellow
+		applyKitMask(&rectShirt, &rectSocks, maskfilename, &desc, 0xffff00);
+		pSocksTexture->UnlockRect(level);
+	}
+	
+	if (overlayfilename != NULL) {
+		Log(&k_mydll, "Applying overlay...");
+		applyOverlay(&rectShirt, overlayfilename, &desc);
+	}
+	
+	pShirtTexture->UnlockRect(level);
+	return;
+}
+
 /**
  * Tracker for IDirect3DDevice8::CreateTexture method.
  */
@@ -4725,17 +4938,35 @@ DWORD src, bool* IsProcessed)
             LogWithNumber(&k_mydll,"JuceCreateTexture: src = %08x", src);
 
             BOOL needsMask;
-            char filename[BUFLEN] = {0};
-            DWORD texType = FindImageFileForId(g_currentAfsId, "", filename, &needsMask);
-            if (texType != TEXTYPE_NONE) {
+            char filename1[BUFLEN] = {0};
+            char filename2[BUFLEN] = {0};
+            char filename3[BUFLEN] = {0};
+            char maskfilename[BUFLEN] = {0};
+            char overlayfilename[BUFLEN] = {0};
+            int fileType = (g_currentAfsId - data[FIRST_ID]) % FILES_PER_TEAM;
+            int fileTypeBase = fileType / 3;
+            // shirt
+            DWORD texType1 = FindImageFileForId(g_currentAfsId, "", filename1, &needsMask);
+            // shorts
+            DWORD id = g_currentAfsId - fileType + fileTypeBase * 2;
+            DWORD texType2 = FindImageFileForId(id | 0x80000000, "", filename2, &needsMask);
+			// socks
+			id = g_currentAfsId - fileType + fileTypeBase * 2 + 1;
+            DWORD texType3 = FindImageFileForId(id | 0x80000000, "", filename3, &needsMask);
+            // mask
+            FindMaskFileForId(g_currentAfsId, maskfilename);
+            // overlay
+            DWORD overlayTexType = FindOverlayFileForId(g_currentAfsId, overlayfilename);
+            
+            if (texType1 != TEXTYPE_NONE) {
                 // replacement texture file exists
                 // step 1: get some information about it
-                D3DXIMAGE_INFO imageInfo;
-                D3DXGetImageInfoFromFile(filename, &imageInfo);
+                D3DXIMAGE_INFO imageInfo1, imageInfo2, imageInfo3;
+                D3DXGetImageInfoFromFile(filename1, &imageInfo1);
 
                 // step 2: check whether the system supports such texture dimensions
-                UINT texWidth = imageInfo.Width/2;
-                UINT texHeight = imageInfo.Height/2;
+                UINT texWidth = imageInfo1.Width/2;
+                UINT texHeight = imageInfo1.Height/2;
                 UINT texLevels = levels;
                 D3DFORMAT texFormat = format;
                 if (g_config.enable_HD_kits) {
@@ -4748,6 +4979,39 @@ DWORD src, bool* IsProcessed)
                                     &texFormat, pool))) {
                         Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
                     }
+                    
+                    // eventually enlarge the replacing texure for shorts or socks
+					if (texType2 != TEXTYPE_NONE) {
+                		D3DXGetImageInfoFromFile(filename2, &imageInfo2);
+                		texWidth = max(imageInfo2.Width/2, texWidth);
+                		texHeight = max(imageInfo2.Height/2, texHeight);
+                		
+                		LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                            texWidth, texHeight);
+	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
+	                                    self, &texWidth, &texHeight,
+	                                    &texLevels, usage, 
+	                                    &texFormat, pool))) {
+	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+	                    }
+					}
+					if (texType3 != TEXTYPE_NONE) {
+                		D3DXGetImageInfoFromFile(filename3, &imageInfo3);
+                		texWidth = max(imageInfo3.Width/2, texWidth);
+                		texHeight = max(imageInfo3.Height/2, texHeight);
+                		
+                		LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                            texWidth, texHeight);
+	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
+	                                    self, &texWidth, &texHeight,
+	                                    &texLevels, usage, 
+	                                    &texFormat, pool))) {
+	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+	                    }
+					}
+ 
                     // ensure minimum size: 256x128
                     texWidth = (texWidth<256)?256:texWidth;
                     texHeight = (texHeight<128)?128:texHeight;
@@ -4763,14 +5027,53 @@ DWORD src, bool* IsProcessed)
                 // step 3: create the texture that was requested, but change
                 // the dimensions of it according to the replacement texture.
                 // Also create the replacement texture for later usage.
-                IDirect3DTexture8* pRepTexture;
+                IDirect3DTexture8* pRepTexture = NULL;
+                IDirect3DTexture8* pShortsTexture = NULL;
+                IDirect3DTexture8* pSocksTexture = NULL;
+                
                 DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename, 
+                                self, filename1, 
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
+                                	
+					// shorts
+					if (texType2 != TEXTYPE_NONE && stricmp(filename1, filename2)!=0) {
+						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename2, 
+                                texWidth, texHeight,
+                                levels, usage, texFormat, pool,
+                                D3DX_DEFAULT, D3DX_DEFAULT,
+                                0, NULL, NULL, &pShortsTexture))) {
+							pShortsTexture = NULL;
+						}
+					}
+					// socks
+					if (texType3 != TEXTYPE_NONE && stricmp(filename1, filename3)!=0) {
+						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename3, 
+                                texWidth, texHeight,
+                                levels, usage, texFormat, pool,
+                                D3DX_DEFAULT, D3DX_DEFAULT,
+                                0, NULL, NULL, &pSocksTexture))) {
+							pSocksTexture = NULL;
+						}
+					}
+					
+					// now mix the kits
+					for (int i=0; i<2; i++) {
+						if (overlayTexType == TEXTYPE_NONE) {
+							mixKits(pRepTexture, pShortsTexture, pSocksTexture, NULL, maskfilename, i);
+						} else {
+							mixKits(pRepTexture, pShortsTexture, pSocksTexture, overlayfilename, maskfilename, i);
+						}
+					}
+					
+					// free shorts and socks textures
+					if (pShortsTexture) pShortsTexture->Release();
+					if (pSocksTexture) pSocksTexture->Release();
 
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     res = OrgCreateTexture(self, texWidth, texHeight,
@@ -4787,7 +5090,7 @@ DWORD src, bool* IsProcessed)
 
                 } else {
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
-                    LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename);
+                    LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename1);
                 }
             } else {
                 LogWithNumber(&k_mydll, "JuceCreateTexture: Image file not found for id = %d", g_currentAfsId);
@@ -4806,17 +5109,35 @@ DWORD src, bool* IsProcessed)
             LogWithNumber(&k_mydll,"JuceCreateTexture: AFS id = %d", mit->second);
 
             BOOL needsMask;
-            char filename[BUFLEN] = {0};
-            DWORD texType = FindImageFileForId(mit->second, "", filename, &needsMask);
-            if (texType != TEXTYPE_NONE) {
+            char filename1[BUFLEN] = {0};
+            char filename2[BUFLEN] = {0};
+            char filename3[BUFLEN] = {0};
+            char maskfilename[BUFLEN] = {0};
+            char overlayfilename[BUFLEN] = {0};
+            int fileType = (mit->second - data[FIRST_ID]) % FILES_PER_TEAM;
+            int fileTypeBase = fileType / 3;
+            // shirt
+            DWORD texType1 = FindImageFileForId(mit->second, "", filename1, &needsMask);
+            // shorts
+            DWORD id = mit->second - fileType + fileTypeBase * 2;
+            DWORD texType2 = FindImageFileForId(id | 0x80000000, "", filename2, &needsMask);
+			// socks
+			id = mit->second - fileType + fileTypeBase * 2 + 1;
+            DWORD texType3 = FindImageFileForId(id | 0x80000000, "", filename3, &needsMask);
+            // mask
+            FindMaskFileForId(mit->second, maskfilename);
+            // overlay
+            DWORD overlayTexType = FindOverlayFileForId(mit->second, overlayfilename);
+            
+            if (texType1 != TEXTYPE_NONE) {
                 // replacement texture file exists
                 // step 1: get some information about it
-                D3DXIMAGE_INFO imageInfo;
-                D3DXGetImageInfoFromFile(filename, &imageInfo);
+                D3DXIMAGE_INFO imageInfo1, imageInfo2, imageInfo3;
+                D3DXGetImageInfoFromFile(filename1, &imageInfo1);
 
                 // step 2: check whether the system supports such texture dimensions
-                UINT texWidth = imageInfo.Width;
-                UINT texHeight = imageInfo.Height;
+                UINT texWidth = imageInfo1.Width;
+                UINT texHeight = imageInfo1.Height;
                 UINT texLevels = levels;
                 D3DFORMAT texFormat = format;
                 if (g_config.enable_HD_kits) {
@@ -4829,11 +5150,44 @@ DWORD src, bool* IsProcessed)
                                     &texFormat, pool))) {
                         Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
                     }
+                    
+                    // eventually enlarge the replacing texure for shorts or socks
+					if (texType2 != TEXTYPE_NONE) {
+                		D3DXGetImageInfoFromFile(filename2, &imageInfo2);
+                		texWidth = max(imageInfo2.Width, texWidth);
+                		texHeight = max(imageInfo2.Height, texHeight);
+                		
+                		LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                            texWidth, texHeight);
+	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
+	                                    self, &texWidth, &texHeight,
+	                                    &texLevels, usage, 
+	                                    &texFormat, pool))) {
+	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+	                    }
+					}
+					if (texType3 != TEXTYPE_NONE) {
+                		D3DXGetImageInfoFromFile(filename3, &imageInfo3);
+                		texWidth = max(imageInfo3.Width, texWidth);
+                		texHeight = max(imageInfo3.Height, texHeight);
+                		
+                		LogWithTwoNumbers(&k_mydll, 
+                            "JuceCreateTexture: checking texture dimensions: (%d,%d)",
+                            texWidth, texHeight);
+	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
+	                                    self, &texWidth, &texHeight,
+	                                    &texLevels, usage, 
+	                                    &texFormat, pool))) {
+	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+	                    }
+					}
+ 
                     // ensure minimum size: 512x256
                     texWidth = (texWidth<512)?512:texWidth;
                     texHeight = (texHeight<256)?256:texHeight;
                     LogWithTwoNumbers(&k_mydll, 
-                            "JuceCreateTexture: using (%d,%d)",
+                            "JuceCreateTexture: check complete. Using (%d,%d)",
                             texWidth, texHeight);
                 } else {
                     texWidth = 512;
@@ -4844,14 +5198,51 @@ DWORD src, bool* IsProcessed)
                 // step 3: create the texture that was requested, but change
                 // the dimensions of it according to the replacement texture.
                 // Also create the replacement texture for later usage.
-                IDirect3DTexture8* pRepTexture;
+                IDirect3DTexture8* pRepTexture = NULL;
+                IDirect3DTexture8* pShortsTexture = NULL;
+                IDirect3DTexture8* pSocksTexture = NULL;
+                
                 DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename, 
+                                self, filename1, 
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
+                                	
+					// shorts
+					if (texType2 != TEXTYPE_NONE && stricmp(filename1, filename2)!=0) {
+						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename2, 
+                                texWidth, texHeight,
+                                levels, usage, texFormat, pool,
+                                D3DX_DEFAULT, D3DX_DEFAULT,
+                                0, NULL, NULL, &pShortsTexture))) {
+							pShortsTexture = NULL;
+						}
+					}
+					// socks
+					if (texType3 != TEXTYPE_NONE && stricmp(filename1, filename3)!=0) {
+						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename3, 
+                                texWidth, texHeight,
+                                levels, usage, texFormat, pool,
+                                D3DX_DEFAULT, D3DX_DEFAULT,
+                                0, NULL, NULL, &pSocksTexture))) {
+							pSocksTexture = NULL;
+						}
+					}
+					
+					// now mix the kits
+					if (overlayTexType == TEXTYPE_NONE) {
+						mixKits(pRepTexture, pShortsTexture, pSocksTexture, NULL, maskfilename, 0);
+					} else {
+						mixKits(pRepTexture, pShortsTexture, pSocksTexture, overlayfilename, maskfilename, 0);
+					}
+					
+					// free shorts and socks textures
+					if (pShortsTexture) pShortsTexture->Release();
+					if (pSocksTexture) pSocksTexture->Release();
 
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     res = OrgCreateTexture(self, texWidth, texHeight,
@@ -4867,7 +5258,7 @@ DWORD src, bool* IsProcessed)
                     return res;
 
                 } else {
-                    LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename);
+                    LogWithString(&k_mydll, "JuceCreateTexture: FAILED to create a texture from %s", filename1);
                 }
             } else {
                 LogWithNumber(&k_mydll, "JuceCreateTexture: Image file not found for id = %d", mit->second);
@@ -4952,8 +5343,9 @@ string GetKitFolderKey(DWORD id)
 {
     //LogWithNumber(&k_mydll,"GetKitFolderKey: fileType = %d", fileType);
     
-    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
-    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+    WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - data[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = ((id & 0x7fffffff) - data[FIRST_ID]) % FILES_PER_TEAM;
+    if (id & 0x80000000) fileType += FILES_PER_TEAM;
     return GetKitFolderKeyByTeamId(teamId, fileType);
 }
 
@@ -5106,9 +5498,13 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
         return FALSE;
     }
 
-    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
-    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - data[FIRST_ID]) / FILES_PER_TEAM);
+	int fileType = ((id & 0x7fffffff) - data[FIRST_ID]) % FILES_PER_TEAM;
+	if (id & 0x80000000) {
+		fileType += FILES_PER_TEAM;
+    }
 
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (!col) {
         // no kit collection for this team 
@@ -5121,77 +5517,107 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
 
     string kitKey = GetKitFolderKey(id);
 //LogWithString(&k_mydll, "kitKey = {%s}", (char*)kitKey.c_str());
+	int kitType = GK_TYPE;
+	int kitPart = KITPART_SHIRT;
 
     switch (fileType) {
         case GA_KIT:
-            sprintf(fileClue1,"%s\\shirt", kitKey.c_str());
+            strcpy(fileClue1,"\\shirt");
             break;
         case GA_UNKNOWN1:
-            sprintf(fileClue1,"%s\\shorts", kitKey.c_str());
+            strcpy(fileClue1,"\\shorts");
+            kitPart = KITPART_SHORTS;
             break;
         case GA_UNKNOWN2:
-            sprintf(fileClue1,"%s\\socks", kitKey.c_str());
+            strcpy(fileClue1,"\\socks");
+            kitPart = KITPART_SOCKS;
             break;
         case GA_NUMBERS:
             kit = MAP_FIND(col->goalkeepers,kitKey);
-            sprintf(fileClue1,"%s\\%s", kitKey.c_str(), (kit)?kit->numbersFile:"");
+            sprintf(fileClue1,"\\%s",(kit)?kit->numbersFile:"");
+			kitPart = KITPART_NUMBERS;
             break;
         case GA_FONT:
-            sprintf(fileClue1,"%s\\font", kitKey.c_str());
+            strcpy(fileClue1,"\\font");
+            kitPart = KITPART_FONT;
             break;
         case GB_KIT:
-            sprintf(fileClue1,"%s\\shirt", kitKey.c_str());
+            strcpy(fileClue1,"\\shirt");
             break;
         case GB_UNKNOWN1:
-            sprintf(fileClue1,"%s\\shorts", kitKey.c_str());
+            strcpy(fileClue1,"\\shorts");
+            kitPart = KITPART_SHORTS;
             break;
         case GB_UNKNOWN2:
-            sprintf(fileClue1,"%s\\socks", kitKey.c_str());
+            strcpy(fileClue1,"\\socks");
+            kitPart = KITPART_SOCKS;
             break;
         case GB_NUMBERS:
             kit = MAP_FIND(col->goalkeepers,kitKey);
-            sprintf(fileClue1,"%s\\%s", kitKey.c_str(), (kit)?kit->numbersFile:"");
+            sprintf(fileClue1,"\\%s", (kit)?kit->numbersFile:"");
+            kitPart = KITPART_NUMBERS;
             break;
         case GB_FONT:
-            sprintf(fileClue1,"%s\\font", kitKey.c_str());
+            strcpy(fileClue1,"\\font");
+            kitPart = KITPART_FONT;
             break;
         case PA_SHIRT:
-            sprintf(fileClue1,"%s\\shirt", kitKey.c_str());
+            strcpy(fileClue1,"\\shirt");
+            kitType = PL_TYPE;
             break;
         case PA_SHORTS:
-            sprintf(fileClue1,"%s\\shorts", kitKey.c_str());
+            strcpy(fileClue1,"\\shorts");
+            kitType = PL_TYPE;
+            kitPart = KITPART_SHORTS;
             break;
         case PA_SOCKS:
-            sprintf(fileClue1,"%s\\socks", kitKey.c_str());
+            strcpy(fileClue1,"\\socks");
+            kitType = PL_TYPE;
+            kitPart = KITPART_SOCKS;
             break;
         case PA_NUMBERS:
             kit = MAP_FIND(col->players,kitKey);
-            sprintf(fileClue1,"%s\\%s", kitKey.c_str(), (kit)?kit->numbersFile:"");
+            sprintf(fileClue1,"\\%s", (kit)?kit->numbersFile:"");
+            kitType = PL_TYPE;
+            kitPart = KITPART_NUMBERS;
             break;
         case PA_FONT:
-            sprintf(fileClue1,"%s\\font", kitKey.c_str());
+            strcpy(fileClue1,"\\font");
+            kitType = PL_TYPE;
+            kitPart = KITPART_FONT;
             break;
         case PB_SHIRT:
-            sprintf(fileClue1,"%s\\shirt", kitKey.c_str());
+            strcpy(fileClue1,"\\shirt");
+            kitType = PL_TYPE;
             break;
         case PB_SHORTS:
-            sprintf(fileClue1,"%s\\shorts", kitKey.c_str());
+            strcpy(fileClue1,"\\shorts");
+            kitType = PL_TYPE;
+            kitPart = KITPART_SHORTS;
             break;
         case PB_SOCKS:
-            sprintf(fileClue1,"%s\\socks", kitKey.c_str());
+            strcpy(fileClue1,"\\socks");
+            kitType = PL_TYPE;
+            kitPart = KITPART_SOCKS;
             break;
         case PB_NUMBERS:
             kit = MAP_FIND(col->players,kitKey);
-            sprintf(fileClue1,"%s\\%s", kitKey.c_str(), (kit)?kit->numbersFile:"");
+            sprintf(fileClue1,"\\%s", (kit)?kit->numbersFile:"");
+            kitType = PL_TYPE;
+            kitPart = KITPART_NUMBERS;
             break;
         case PB_FONT:
-            sprintf(fileClue1,"%s\\font", kitKey.c_str());
+            strcpy(fileClue1,"\\font");
+            kitType = PL_TYPE;
+            kitPart = KITPART_FONT;
             break;
     }
+    char* kitFoldername = getKitFoldername(kitKey, teamId, kitType, kitPart);
 
     char filename1[BUFLEN];
     ZeroMemory(filename1, BUFLEN);
-    sprintf(filename1, "%sGDB\\uni\\%s\\%s%s%s", GetPESInfo()->gdbDir, col->foldername, fileClue1, suffix, ext);
+    sprintf(filename1, "%sGDB\\uni\\%s\\%s%s%s%s", GetPESInfo()->gdbDir, col->foldername,
+    					kitFoldername, fileClue1, suffix, ext);
 
     if (FileExists(filename1)) {
         lstrcpy(filename, filename1);
@@ -5205,28 +5631,29 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
             case GA_KIT:
             case GA_UNKNOWN1:
             case GA_UNKNOWN2:
-                sprintf(fileClue2,"%s\\all", kitKey.c_str());
+                strcpy(fileClue2,"\\all");
                 break;
             case GB_KIT:
             case GB_UNKNOWN1:
             case GB_UNKNOWN2:
-                sprintf(fileClue2,"%s\\all", kitKey.c_str());
+                strcpy(fileClue2,"\\all");
                 break;
             case PA_SHIRT:
             case PA_SHORTS:
             case PA_SOCKS:
-                sprintf(fileClue2,"%s\\all", kitKey.c_str());
+                strcpy(fileClue2,"\\all");
                 break;
             case PB_SHIRT:
             case PB_SHORTS:
             case PB_SOCKS:
-                sprintf(fileClue2,"%s\\all", kitKey.c_str());
+                strcpy(fileClue2,"\\all");
                 break;
         }
 
         char filename2[BUFLEN];
         ZeroMemory(filename2, BUFLEN);
-        sprintf(filename2, "%sGDB\\uni\\%s\\%s%s%s", GetPESInfo()->gdbDir, col->foldername, fileClue2, suffix, ext);
+        sprintf(filename2, "%sGDB\\uni\\%s\\%s%s%s%s", GetPESInfo()->gdbDir, col->foldername,
+        						kitFoldername, fileClue2, suffix, ext);
 
         if (FileExists(filename2)) {
             lstrcpy(filename, filename2);
@@ -5268,11 +5695,13 @@ DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename
     WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
     int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
 
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
+    	string idKitFolderKey = GetKitFolderKey(id);
         Kit* kit = (fileType < PA_SHIRT) ?
-            MAP_FIND(col->goalkeepers,GetKitFolderKey(id)) :
-            MAP_FIND(col->players,GetKitFolderKey(id));
+            MAP_FIND(col->goalkeepers, idKitFolderKey) :
+            MAP_FIND(col->players, idKitFolderKey);
         if (!kit) {
             return TEXTYPE_NONE;
         }
@@ -5280,7 +5709,8 @@ DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename
         char* palFile = MAP_FIND(kit->shortsPaletteFiles,kitFolderKey);
         char filename1[BUFLEN];
         ZeroMemory(filename1, BUFLEN);
-        sprintf(filename1, "%s%s\\%s", GetPESInfo()->gdbDir, kit->foldername, palFile);
+        char* kitFoldername = getKitFoldername(idKitFolderKey, teamId, (fileType < PA_SHIRT)?GK_TYPE:PL_TYPE, KITPART_NUMBERS);
+        sprintf(filename1, "%sGDB\\uni\\%s\\%s\\%s", GetPESInfo()->gdbDir, col->foldername, kitFoldername, palFile);
         LogWithString(&k_mydll,"FindShortsPal: filename1 = {%s}", filename1);
 
         if (FileExists(filename1)) {
@@ -5296,6 +5726,101 @@ DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename
     }
     return TEXTYPE_NONE;
 }
+
+DWORD FindMaskFileForId(DWORD id, char* filename)
+{
+    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+
+    gdbFindKitsForTeam(gdb, teamId);
+    KitCollection* col = MAP_FIND(gdb->uni,teamId);
+    if (col) {
+    	string idKitFolderKey = GetKitFolderKey(id);
+        Kit* kit = (fileType < PA_SHIRT) ?
+            MAP_FIND(col->goalkeepers, idKitFolderKey) :
+            MAP_FIND(col->players, idKitFolderKey);
+        if (!kit) {
+            goto useStandard;
+        }
+        if (!(kit->attDefined & MASK_FILE)) goto useStandard;
+        int n = lstrlen(kit->maskFile);
+		char* ext = (n>3)?(kit->maskFile)+n-4:"";
+        // only png
+        if (lstrcmpi(ext, ".png") != 0) goto useStandard;	
+        
+        char filename1[BUFLEN];
+        ZeroMemory(filename1, BUFLEN);
+        sprintf(filename1, "%s%s\\%s", GetPESInfo()->gdbDir, kit->foldername, kit->maskFile);
+        
+        // see as relative path first
+        if (FileExists(filename1)) {
+        	lstrcpy(filename, filename1);
+        	return TEXTYPE_PNG;
+        }
+        
+        // then, look in mask directory
+        sprintf(filename1, "%sGDB\\uni\\masks\\%s", GetPESInfo()->gdbDir, kit->maskFile);
+		if (FileExists(filename1)) {
+        	lstrcpy(filename, filename1);
+        	return TEXTYPE_PNG;
+        }
+    }
+    
+    useStandard:
+    // use standard mask 
+    sprintf(filename, "%sGDB\\uni\\masks\\mask.png", GetPESInfo()->gdbDir);
+    return TEXTYPE_PNG;
+}
+
+DWORD FindOverlayFileForId(DWORD id, char* filename)
+{
+    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+
+    gdbFindKitsForTeam(gdb, teamId);
+    KitCollection* col = MAP_FIND(gdb->uni,teamId);
+    if (col) {
+    	string idKitFolderKey = GetKitFolderKey(id);
+        Kit* kit = (fileType < PA_SHIRT) ?
+            MAP_FIND(col->goalkeepers, idKitFolderKey) :
+            MAP_FIND(col->players, idKitFolderKey);
+        if (!kit) {
+			return TEXTYPE_NONE;
+        }
+        if (!(kit->attDefined & OVERLAY_FILE)) return TEXTYPE_NONE;
+        char filename1[BUFLEN];
+        ZeroMemory(filename1, BUFLEN);
+        sprintf(filename1, "%s%s\\%s", GetPESInfo()->gdbDir, kit->foldername, kit->overlayFile);
+        
+        // see as relative path first
+        if (FileExists(filename1)) {
+            lstrcpy(filename, filename1);
+            int n = lstrlen(filename);
+            char* ext = (n>3)?filename+n-4:"";
+            if (lstrcmpi(ext, ".png")==0) {
+                return TEXTYPE_PNG;
+            } else if (lstrcmpi(ext, ".bmp")==0) {
+                return TEXTYPE_BMP;
+            }
+        }
+        
+        // then, look in overlay directory
+        sprintf(filename1, "%sGDB\\uni\\overlay\\%s", GetPESInfo()->gdbDir, kit->overlayFile);
+		if (FileExists(filename1)) {
+            lstrcpy(filename, filename1);
+            int n = lstrlen(filename);
+            char* ext = (n>3)?filename+n-4:"";
+            if (lstrcmpi(ext, ".png")==0) {
+                return TEXTYPE_PNG;
+            } else if (lstrcmpi(ext, ".bmp")==0) {
+                return TEXTYPE_BMP;
+            }
+        }
+    }
+
+    return TEXTYPE_NONE;
+}
+
 
 BOOL IsNumOrFontTexture(DWORD id)
 {
@@ -5727,7 +6252,7 @@ void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* saved)
  *   id   - team id
  * Return value:
  *   address of the KITPACKINFO structure
- */
+ *//*
 void JuceGetClubTeamInfo(DWORD id,DWORD result)
 {
 	TRACE2(&k_mydll,"JuceGetClubTeamInfo: CALLED for id = %003d.", id);
@@ -5788,7 +6313,7 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
 	}
 	return;
 }
-
+*/
 void restoreLicensedOrdinals()
 {
 	Log(&k_mydll,"restoreLicensedOrdinals: putting back 4 and 6");
@@ -5833,7 +6358,7 @@ void clearTeamKitInfo()
     // disable kit loading
     g_kit_loading_enabled = false;
 }
-
+/*
 void DoMipMap(DWORD id, TEXIMGPACKHEADER* pack, int ordinal, char* fileSuffix, MASKFUNCPROC maskFunc)
 {
     // STEP1: check if either BMP or PNG file exists
@@ -5887,7 +6412,7 @@ void DoMipMap(DWORD id, TEXIMGPACKHEADER* pack, int ordinal, char* fileSuffix, M
 
     } // end switch
 }
-
+*/
 void JuceSet2Dkits()
 {
     g_display2Dkits = TRUE;
@@ -5895,6 +6420,7 @@ void JuceSet2Dkits()
     // initialize home iterators
     WORD teamId = GetTeamId(HOME);
     if (teamId != 0xffff) {
+    	gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (col) {
             g_homeShirtIteratorPL = (*(col->players)).begin();
@@ -5915,6 +6441,7 @@ void JuceSet2Dkits()
     // initialize away iterators
     teamId = GetTeamId(AWAY);
     if (teamId != 0xffff) {
+    	gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (col) {
             g_awayShirtIteratorPL = (*(col->players)).begin();
@@ -6118,6 +6645,7 @@ void setTeamKitInfo()
             LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", home);
 		}
 
+        gdbFindKitsForTeam(gdb, home);
         KitCollection* col = MAP_FIND(gdb->uni,home);
         if (col) {
             Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKeyByTeamId(home, GA_KIT));
@@ -6180,6 +6708,7 @@ void setTeamKitInfo()
             LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", away);
 		}
 
+        gdbFindKitsForTeam(gdb, away);
         KitCollection* col = MAP_FIND(gdb->uni,away);
         if (col) {
             Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKeyByTeamId(away, GA_KIT));
@@ -7130,3 +7659,36 @@ void VerifyTeams()
 	}
 }
 
+char* getKitFoldername(string& kitFolderKey, WORD teamId, int kitType, int kitPart)
+{
+	if (kitType < GK_TYPE || kitType > PL_TYPE) return nullString;
+	if (kitPart < KITPART_SHIRT || kitPart > KITPART_FONT) return nullString;
+	if (kitFolderKey == nullString) return nullString;
+	
+	gdbFindKitsForTeam(gdb, teamId);
+	KitCollection* col = MAP_FIND(gdb->uni, teamId);
+	if (!col) return nullString;
+
+	Kit* kit = (kitType==GK_TYPE) ?
+		MAP_FIND(col->goalkeepers, kitFolderKey) :
+		MAP_FIND(col->players, kitFolderKey);
+	if (!kit) return nullString;
+
+	switch (kitPart) {
+	case KITPART_SHIRT:
+	//if this was enabled, numbers and font were in the directory of the shirt
+	//case KITPART_NUMBERS:
+	//case KITPART_FONT:
+		return (kit->attDefined & SHIRT_FOLDER)?kit->shirtFolder : (char*)kitFolderKey.c_str();
+	case KITPART_SHORTS:
+		return (kit->attDefined & SHORTS_FOLDER)?kit->shortsFolder : (char*)kitFolderKey.c_str();
+	case KITPART_SOCKS:
+		return (kit->attDefined & SOCKS_FOLDER)?kit->socksFolder : (char*)kitFolderKey.c_str();
+	case KITPART_NUMBERS:
+	case KITPART_FONT:
+		// numbers and font are always in the same directory
+		return (char*)kitFolderKey.c_str();
+	}
+			
+	return nullString;
+}
