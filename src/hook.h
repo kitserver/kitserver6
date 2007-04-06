@@ -125,7 +125,6 @@ typedef DWORD  (*GETPLAYERINFO_OLD)();
 typedef void   (*CGETPLAYERINFO_OLD)(DWORD,DWORD*,DWORD,DWORD*);
 typedef HRESULT (STDMETHODCALLTYPE *CCREATETEXTURE)(IDirect3DDevice8*,UINT,UINT,UINT,DWORD,D3DFORMAT,
 				 D3DPOOL,IDirect3DTexture8**,DWORD,bool*);
-typedef void   (*FILEFROMAFS)(DWORD);
 typedef void   (*FREEMEMORY)(DWORD);
 typedef bool   (*CFREEMEMORY)(DWORD);
 typedef void   (*CALCAFSFACEID)(DWORD,DWORD,DWORD*);
@@ -161,7 +160,6 @@ DWORD NewEndUniSelect();
 DWORD NewSetLodMixerData(DWORD dummy);
 DWORD NewGetPlayerInfoOld();
 KEXPORT DWORD GetPlayerInfo(DWORD PlayerNumber,DWORD Mode);
-void NewFileFromAFS(DWORD retAddr, DWORD infoBlock);
 void NewFreeMemory(DWORD addr);
 void NewProcessPlayerData();
 IDirect3DTexture8* STDMETHODCALLTYPE NewPesGetTexture(DWORD p1);
@@ -252,7 +250,6 @@ enum HOOKS {
 	hk_GetNationalTeamInfoExitEdit,
 	hk_SetLodMixerData,
 	hk_GetPlayerInfoOld,
-	hk_FileFromAFS,
 	hk_BeforeFreeMemory,
 	hk_CalcAFSFaceID,
 	hk_ProcessPlayerData,

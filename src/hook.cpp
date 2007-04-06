@@ -19,7 +19,7 @@ int bootserverVersion=0;
 
 static const DWORD GAMECAM_SHIFT = 0x30;
 
-#define CODELEN 45
+#define CODELEN 40
 
 enum {
 	C_GETCLUBTEAMINFO, C_GETNATIONALTEAMINFO, 
@@ -32,14 +32,13 @@ enum {
     C_LODMIXER_HOOK_ORG, C_LODMIXER_HOOK_CS,
     C_LODMIXER_HOOK_ORG2, C_LODMIXER_HOOK_CS2,
     C_GETPLAYERINFO_OLD, C_GETPLAYERINFO_JMP_OLD,
-    C_FILEFROMAFS, C_FREEMEMORY, C_FREEMEMORY_JMP,
+    C_FREEMEMORY, C_FREEMEMORY_JMP,
     C_PROCESSPLAYERDATA_JMP, C_CALL050,
     C_UNISPLIT, C_UNISPLIT_CS1, C_UNISPLIT_CS2,
     C_UNISPLIT_CS3, C_UNISPLIT_CS4, C_UNISPLIT_CS5,
     C_UNISPLIT_CS6, C_UNISPLIT_CS7, C_UNISPLIT_CS8,
     C_GETTEAMINFO, C_GETTEAMINFO_CS,
     C_CLEANINPUTTABLE_HOOK,
-    C_FILEFROMAFS_JUMPHACK,
     C_PES_GETTEXTURE, C_PES_GETTEXTURE_CS1,
     C_BEGIN_RENDERPLAYER_CS, C_BEGIN_RENDERPLAYER_JUMPHACK,
 };
@@ -58,14 +57,13 @@ DWORD codeArray[][CODELEN] = {
       0x6d3b60, 0x6b8099,
       0, 0,
       0, 0,
-      0x65b668, 0x876f20, 0x45bc5c,
+      0, 0, //0x876f20, 0x45bc5c, // not used
       0x5fe506, 0x40c848,
       0, 0, 0,
       0, 0, 0,
       0, 0, 0,
       0x865240, 0x804cda,
       0x9cd4f2,
-      0,
       0x408c20, 0x402723,
       0x8acf93, 0x8acfeb,
     },
@@ -81,14 +79,13 @@ DWORD codeArray[][CODELEN] = {
       0x6d3cc0, 0x6b81b9,
       0, 0,
       0, 0,
-      0x65b8a7, 0x877060, 0x45bc9c,
+      0, 0, //0x877060, 0x45bc9c,
       0x5fe566, 0x40c898,
       0, 0, 0,
       0, 0, 0,
       0, 0, 0,
       0x865370, 0x804e5a,
       0x9cd682,
-      0x65b85b,
       0x408d90, 0x402723,
       0x8ad0f3, 0x8ad14b,
     },
@@ -104,13 +101,12 @@ DWORD codeArray[][CODELEN] = {
       0x0, 0x0,
       0, 0,
       0, 0,
-      0x0, 0x0, 0x0,
+      0, 0, //0x0, 0x0,
       0x0, 0x0,
       0, 0, 0,
       0, 0, 0,
       0, 0, 0,
-      0x0, 0x0,
-      0x0,
+      0x0, 0x0, // no need to find these, not used
       0x0,
       0x0, 0x0,
       0x0, 0x0,
@@ -144,20 +140,11 @@ DWORD dataArray[][DATALEN] = {
     },
 };
 
-BYTE _shortJumpHack[][2] = {
-    //PES6
-    {0,0},
-    //PES6 1.10
-    {0xeb,0x4a},
-    //WE2007
-    {0x0,0x0},
-};
-
 BYTE _shortJumpHack2[][2] = {
     //PES6
     {0xeb,0x37},
     //PES6 1.10
-    {0,0}, //later!
+    {0,0}, //later! but where is this used?
     //WE2007
     {0x0,0x0}, //later!
 };
@@ -249,8 +236,6 @@ bool bEndUniSelectHooked = false;
 bool bSetLodMixerDataHooked = false;
 bool bGetPlayerInfoOldHooked = false;
 bool bGetPlayerInfoOldJmpHooked = false;
-bool bFileFromAFSHooked = false;
-bool bFileFromAFSJumpHackHooked = false;
 bool bFreeMemoryHooked = false;
 bool bProcessPlayerDataHooked = false;
 bool bUniSplitHooked = false;
@@ -286,7 +271,6 @@ CALLLINE l_GetClubTeamInfoML2={0,NULL};
 CALLLINE l_GetNationalTeamInfoExitEdit={0,NULL};
 CALLLINE l_SetLodMixerData={0,NULL};
 CALLLINE l_GetPlayerInfoOld={0,NULL};
-CALLLINE l_FileFromAFS={0,NULL};
 CALLLINE l_BeforeFreeMemory={0,NULL};
 CALLLINE l_ProcessPlayerData={0,NULL};
 CALLLINE l_DrawKitSelectInfo={0,NULL};
@@ -425,34 +409,6 @@ void HookOthers()
 	    };
 	}
 	*/
-
-	// hook FileFromAFS
-	if (code[C_FILEFROMAFS] != 0)
-	{
-		bptr = (BYTE*)(code[C_FILEFROMAFS]);
-		ptr = (DWORD*)(code[C_FILEFROMAFS] + 1);
-	
-	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
-	    	bptr[0]=0xe8; //call
-	    	bptr[5]=0xc3; //ret
-            ptr[0] = (DWORD)NewFileFromAFS - (DWORD)(code[C_FILEFROMAFS] + 5);
-	        bFileFromAFSHooked = true;
-	        Log(&k_kload,"FileFromAFS HOOKED at code[C_FILEFROMAFS]");
-	    };
-
-        // install short jump hack, if needed
-        // (we need this when the correct location doesn't have enough
-        // space to fit a hook instruction, so we need to jump to a different
-        // place instead)
-        if (code[C_FILEFROMAFS_JUMPHACK] != 0) {
-            bptr = (BYTE*)(code[C_FILEFROMAFS_JUMPHACK]);
-            if (VirtualProtect(bptr, 2, newProtection, &protection)) {
-                memcpy(bptr, _shortJumpHack[GetPESInfo()->GameVersion], 2);
-                bFileFromAFSJumpHackHooked = true;
-                Log(&k_kload,"FileFromAFS Short-Jump-Hack installed.");
-            }
-        }
-	};
 
 	// hook jmp to FreeMemory
 	if (code[C_FREEMEMORY_JMP] != 0)
@@ -942,19 +898,6 @@ KEXPORT DWORD GetPlayerInfo(DWORD PlayerNumber,DWORD Mode)
 	__asm mov eax, PlayerNumber
 	__asm mov ecx, Mode
 	return oGetPlayerInfo();
-};
-
-void NewFileFromAFS(DWORD retAddr, DWORD infoBlock)
-{
-	//Log(&k_kload,"NewFileFromAFS CALLED.");
-	FILEFROMAFS NextCall=NULL;
-	for (int i=0;i<(l_FileFromAFS.num);i++)
-	if (l_FileFromAFS.addr[i]!=0) {
-		NextCall=(FILEFROMAFS)l_FileFromAFS.addr[i];
-		NextCall(infoBlock);
-	};
-	//Log(&k_kload,"NewFileFromAFS done.");
-	return;
 };
 
 void NewFreeMemory(DWORD addr)
@@ -2043,7 +1986,6 @@ CALLLINE* LineFromID(HOOKS h)
 		case hk_GetNationalTeamInfoExitEdit: cl = &l_GetNationalTeamInfoExitEdit; break;
 		case hk_SetLodMixerData: cl = &l_SetLodMixerData; break;
 		case hk_GetPlayerInfoOld: cl = &l_GetPlayerInfoOld; break;
-		case hk_FileFromAFS: cl = &l_FileFromAFS; break;
 		case hk_BeforeFreeMemory: cl = &l_BeforeFreeMemory; break;
 		case hk_ProcessPlayerData: cl = &l_ProcessPlayerData; break;
 		case hk_DrawKitSelectInfo: cl = &l_DrawKitSelectInfo; break;

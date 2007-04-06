@@ -8,8 +8,6 @@
 #include "kload.h"
 #include "kload_config.h"
 #include "numpages.h"
-//#include "input.h"
-//#include "keycfg.h"
 #include "afsreplace.h"
 
 #include <hash_map>
@@ -18,28 +16,28 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 //extern KLOAD_CONFIG g_config;
 
-#define CODELEN 9
+#define CODELEN 10
 enum {
-    C_NEWFILEFROMAFS_CS, C_ALLOCATEBUFFERS_CS, C_AFTERFILEFROMAFS_CS,
+    C_NEWFILEFROMAFS_CS, C_ALLOCATEBUFFERS_CS, C_AFTERFILEFROMAFS_CS, C_FILEFROMAFS_JUMPHACK,
     C_UNIDECODE_CS, C_UNPACK, C_UNPACK_CS, C_MULTI_UNPACK_CS,
     C_READFILE_CS, C_ALLOCMEM_CS,
 };
 static DWORD codeArray[][CODELEN] = {
     // PES6
     {
-        0x65b63f, 0x45a607, 0x65b668,
+        0x65b63f, 0x45a607, 0x65b668, 0,
         0x8b1983, 0x8cd490, 0x65b176, 0x8cd469,
         0x44c014, 0x65b152,
     },
     // PES6 1.10
     {
-        0x65b831, 0, 0x65b8a7,
-        0x8b1a63, 0x8cd580, 0x65b216, 0,
-        0x44c064, 0,
+        0x65b831, 0x45a657, 0x65b8a7, 0x65b85b,
+        0x8b1a63, 0x8cd580, 0x65b216, 0x8cd559,
+        0x44c064, 0x65b1f2,
     },
     // WE2007
     {
-        0, 0, 0,
+        0, 0, 0, 0,
         0, 0, 0, 0,
         0, 0,
     },
@@ -72,6 +70,16 @@ ORGUNPACK orgUnpack = NULL;
 
 BYTE g_rfCode[6];
 bool bReadFileHooked = false;
+bool bAfterFileFromAFSHooked = false;
+bool bAfterFileFromAFSJumpHackHooked = false;
+BYTE _shortJumpHack[][2] = {
+    //PES6
+    {0, 0},
+    //PES6 1.10
+    {0xeb, 0x4a},
+    //WE2007
+    {0x0, 0x0},
+};
 
 CRITICAL_SECTION _ar_cs;
 typedef void (*afsreplace_callback_t)(GETFILEINFO* gfi);
@@ -129,11 +137,39 @@ KEXPORT void HookAfsReplace()
 {
 	MasterHookFunction(code[C_NEWFILEFROMAFS_CS], 0, afsNewFileFromAFS);
 	MasterHookFunction(code[C_ALLOCATEBUFFERS_CS], 5, afsAllocateBuffers);
-	HookFunction(hk_FileFromAFS, (DWORD)afsAfterFileFromAFS);
 	HookReadFile();
 	MasterHookFunction(code[C_ALLOCMEM_CS], 3, afsAllocMem);
 	MasterHookFunction(code[C_UNPACK_CS], 5, afsUnpack);
 	MasterHookFunction(code[C_UNIDECODE_CS], 1, afsUniDecode);
+	
+	// hook AfterFileFromAFS
+	if (code[C_AFTERFILEFROMAFS_CS] != 0)
+	{
+		BYTE* bptr = (BYTE*)(code[C_AFTERFILEFROMAFS_CS]);
+		DWORD* ptr = (DWORD*)(code[C_AFTERFILEFROMAFS_CS] + 1);
+		DWORD newProtection = PAGE_EXECUTE_READWRITE, protection;
+	
+	    if (VirtualProtect(bptr, 6, newProtection, &protection)) {
+	    	bptr[0]=0xe8; //call
+	    	bptr[5]=0xc3; //ret
+            ptr[0] = (DWORD)afsAfterFileFromAFS - (DWORD)(code[C_AFTERFILEFROMAFS_CS] + 5);
+	        bAfterFileFromAFSHooked = true;
+	        Log(&k_kload,"AfterFileFromAFS HOOKED at code[C_AFTERFILEFROMAFS_CS]");
+	    };
+
+        // install short jump hack, if needed
+        // (we need this when the correct location doesn't have enough
+        // space to fit a hook instruction, so we need to jump to a different
+        // place instead)
+        if (code[C_FILEFROMAFS_JUMPHACK] != 0) {
+            bptr = (BYTE*)(code[C_FILEFROMAFS_JUMPHACK]);
+            if (VirtualProtect(bptr, 2, newProtection, &protection)) {
+                memcpy(bptr, _shortJumpHack[GetPESInfo()->GameVersion], 2);
+                bAfterFileFromAFSJumpHackHooked = true;
+                Log(&k_kload,"FileFromAFS Short-Jump-Hack installed.");
+            }
+        }
+	}
 	
 	return;
 }
@@ -142,7 +178,6 @@ KEXPORT void UnhookAfsReplace()
 {
 	MasterUnhookFunction(code[C_NEWFILEFROMAFS_CS], afsNewFileFromAFS);
 	MasterUnhookFunction(code[C_ALLOCATEBUFFERS_CS], afsAllocateBuffers);
-	UnhookFunction(hk_FileFromAFS, (DWORD)afsAfterFileFromAFS);
 	
 	// free all file buffers
 	for (g_FilesIterator = g_Files.begin(); g_FilesIterator != g_Files.end();
@@ -327,7 +362,7 @@ DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 
 // By now, the calls to NewFileFromAFS(), GetNumPages() and AllocateBuffers() are
 // finished
-DWORD afsAfterFileFromAFS()
+DWORD afsAfterFileFromAFS(DWORD retAddr, DWORD infoBlock)
 {
 	DWORD res;
 	__asm mov res, eax

@@ -42,7 +42,7 @@ void UnhookReadFile();
 DWORD afsNewFileFromAFS();
 bool afsGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval);
 DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5);
-DWORD afsAfterFileFromAFS();
+DWORD afsAfterFileFromAFS(DWORD retAddr, DWORD infoBlock);
 
 BOOL STDMETHODCALLTYPE afsReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
   LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped);
