@@ -39,13 +39,13 @@
 Version history: <a href="history.txt">history.txt</a>
 </div>
 <div>
-January 20, 2007<br />
-Module Versions: <a href="#kserv">Kserv 6.4.0</a>, 
-<a href="#ballserver">Ballserver 6.4.0</a>,
-<a href="#lodmixer">LOD Mixer 6.3.6</a>,
-<a href="#stadiumserver">Stadium Server 6.3.4</a>,
-<a href="#faceserver">Faceserver 6.4.0</a>,
-<a href="#bootserver">Bootserver 6.4.0</a>
+April ??, 2007<br />
+Module Versions: <a href="#kserv">Kserv 6.5.0</a>, 
+<a href="#ballserver">Ballserver 6.5.0</a>,
+<a href="#lodmixer">LOD Mixer 6.5.0</a>,
+<a href="#stadiumserver">Stadium Server 6.5.0</a>,
+<a href="#faceserver">Faceserver 6.5.0</a>,
+<a href="#bootserver">Bootserver 6.5.0</a>
 </div>
 
 
@@ -55,7 +55,7 @@ Module Versions: <a href="#kserv">Kserv 6.4.0</a>,
 <p>
 Kitserver 6 is an add-on program for Pro Evolution Soccer 6.
 It is a loader and manager for various modules.
-<a href="#kserv">Kserv Module 6.4.0</a> was historically the first module implemented (that's
+<a href="#kserv">Kserv Module 6.5.0</a> was historically the first module implemented (that's
 where Kitserver got its original name from). It provides an alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
@@ -72,20 +72,20 @@ teams - licensed and unlicensed!</span>
 </p>
 
 <p>
-The <a href="#ballserver">BallServer Module 6.4.0</a> does similar things to KitServer, it offers the
+The <a href="#ballserver">BallServer Module 6.5.0</a> does similar things to KitServer, it offers the
 possibility of chosing a ball from the GDB. Of course it is possible to store
 as many balls as you like. You can use different texture sizes for the balls: standard - 256x256,
 and also 512x512 and 1024x1024.
 </p>
 
 <p>
-<a href="#lodmixer">LOD Mixer Module 6.3.6</a> allows to make some tweaks to the graphics engine of the game, such
+<a href="#lodmixer">LOD Mixer Module 6.5.0</a> allows to make some tweaks to the graphics engine of the game, such
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
 </p>
 
-<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server 6.3.4</a>.
+<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server 6.5.0</a>.
 With it, you can organize your stadiums in GDB and again have as large collection as you wish,
 only limited by your hard disk space. Another benefit of using Stadium Server is that you can pick the stadium
 in situations where the game itself doesn't offer you such an option: for example in league, cup
@@ -93,16 +93,21 @@ modes or during online matches.
 </p>
 
 <p>
-<a href="#faceserver">Faceserver Module 6.4.0</a> controls players faces and hair. You can assign a face BIN and a hair BIN
+<a href="#faceserver">Faceserver Module 6.5.0</a> controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
 </p>
 
 <p>
-Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.4.0</a> module, which allows you to 
+Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.5.0</a> module, which allows you to 
 assign each player his own boots. <span class="exclam">With bootserver, you are no longer limited
 by 9 slots for boots that the game offers.</span>
 </p>
+
+<p><font color="#FF0000">However, with only Kitserver itself installed you will <b>not</b> see the
+right kits, faces, balls and so on. For that you will need to fill your GDB with the right graphics
+and files. Read this manual to know how you can insert them. Then look around the web and get the
+files you want. There are also some very big patches which already offer you a filled GDB.</font></p>
 
 <h3>1.2 Installation</h3>
 
@@ -254,7 +259,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kserv">Kserv Module 6.4.0 (kserv.dll)</h2>
+<h2 id="kserv">Kserv Module 6.5.0 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -325,7 +330,7 @@ either ".png" or ".bmp" extensions.</b></div>
 <table>
     <tr><th>Reserved PNG file name</th><th>Reserved BMP file name</th><th>Meaning</th></tr>
     <tr><td>all.png</td><td>all.bmp</td><td>kit texture of arbitrary dimensions. The game uses
-            512x256 8-bit palletted textures with 32-bit palette entries (24bit color + 8bit
+            512x256 8-bit paletted textures with 32-bit palette entries (24bit color + 8bit
             alpha transparency). This format is supported by kitserver, however it is not the
             only one. You can also use TrueColor images (32bit RGBA) of other dimensions, such
             as for example 512x512, 1024x512, 1024x2048, and so for. 
@@ -368,7 +373,7 @@ view or modify it. For each folder, you should have a <b>config.txt</b> file in 
 
 <p>
 Here's the summary table of all the supported attributes:<br />
-("shirt.number.location" is a new attribute - that's why it is highlighted) 
+(the highlighted attributes were introduced with version 6.5.0) 
 </p>
 
 <table>
@@ -471,6 +476,35 @@ type3 - curved.</td>
         <td>any text in double quotes</td>
         <td><nobr>description = "All white (WC2006 Final)"</nobr></td>
     </tr>
+    <tr bgcolor="#CCFFFF">
+        <td><b>mask</b></td>
+        <td>This is the mask file that will be applied when splitting the kit for
+        mixing parts. You only need this if the splitting rules are non-standard
+        (see the <a href="#kserv_kitmixing">kit-mixing</a> section if you need more
+        information)</td>
+        <td>string in double quotes</td>
+        <td><nobr>mask = "mask_juve.png"</nobr></td>
+    </tr>
+	<tr bgcolor="#CCFFFF">
+        <td><b>shirt.folder</b><br />
+        	<b>shorts.folder</b><br />
+        	<b>socks.folder</b></td>
+        <td>These three attributes allow you to make kserv look for the images in another
+        folder than that where the config.txt is. Of course they can be used individually
+        from each other. For more information, look at the <a href="#kserv_kitmixing">kit-mixing</a>
+        section.</td>
+        <td>string in double quotes</td>
+        <td><nobr>shirt.folder = "pa"</nobr><br />
+        	<nobr>shorts.folder = "pb"</nobr><br />
+        	<nobr>socks.folder = "px-cl"</nobr></td>
+    </tr>
+	<tr bgcolor="#CCFFFF">
+        <td><b>overlay</b></td>
+        <td>This specifies an image which is laid over the texture. Please see
+        the <a href="#kserv_kitmixing">kit-mixing</a> section to learn more about this.</td>
+        <td>string in double quotes</td>
+        <td><nobr>overlay = "overlay.png"</nobr></td>
+    </tr>
 </table>
 
 <p>For examples of <b>shorts.num-pal.<span class="kitid">X</span></b> usage - study the
@@ -495,7 +529,70 @@ For the shirt use blue Adidas numbers. Apply palette file "adidas_white.png",
 which effectively renders white numbers on the shorts.
 </p>
 
-<h3>2.3 Strip Selection and 2.5D kits</h3>
+<h3 id="kserv_kitmixing">2.3 Kit-mixing</h3>
+<p>Kit-mixing generally means that the kit texture is not one single texture but composed of
+multiple ones for the different parts of the kit (shirt, shorts and socks). The shirt texture
+has the name <b>shirt.png</b> or <b>shirt.bmp</b>. If none of these is found, the <b>all.png</b>
+or <b>all.bmp</b> is used. This texture is used by default also for the other parts. However, if
+a <b>shorts.png</b> (bmp can also always be used) or <b>all.png</b> is found, that one will be
+taken for the shorts part. The same thing applies to the socks (<b>socks.png</b> / <b>all.png</b>).
+To know what areas of the texture belong to a specific part, kserv needs the mask files.</p>
+
+<h4>Masks</h4>
+<p>The default mask for kit-mixing is this one:</p>
+<img src="mask.png" />
+<p>
+The three colors indicate the areas which belong to shirt (red), shorts (blue) and socks (yellow).
+As the shirt is taken as base texture and the shorts and socks areas are mixed into it, there is
+only need to color the shorts and the socks areas correctly. Anyway, the mask above is used by almost
+all templates. So far it seems that only Juventus needs a special mask for their two different socks.
+Usually, you don't need to change the mask.<br />
+If you specify the "mask" attribute in the config.txt, the given path will first be seen as relative
+to the kit folder (like <b>uni\TeamName\pa</b>), then to the <b>uni\masks</b> folder.</p>
+<div class="NOTE"><b>Without the (default) mask file, no kit-mixing is possible!</b> So if you
+upgrade to version 6.5.0, you also have to copy the "GDB\uni\masks" folder.<br />
+If you need to create your own mask, please notice that it has to be an
+8-bit paletted PNG image. The colors are plain blue and plain yellow.</div>
+
+<h4>Different shirt, shorts and socks folders</h4>
+<p>The idea behind this is that often teams play with the same shirt, but where different
+shorts or even only other socks. Until now, kitmaker had to create a new texture for each
+of the combinations. Although it would be possible to solve this problem with three textures
+for each of the parts, there is a better way: Specify the "shirt.folder", "shorts.folder" and/or
+"socks.folder" attribute. If you do so, kserv will look for the shirt.png / shorts.png / socks.png
+respectively all.png in that folder. This does NOT affect other attributes. Only the files for
+shirt, shorts and socks are looked for in another folder.<br />
+So if you specify these three attributes, you will only need the config.txt inside the subfolder.
+All textures would be taken from the other folders. For example you could create a folder called
+"px-mixed" and create a config.txt where you specify model and so on. Now if you write</p>
+<pre>
+shirt.folder = "pa"
+shorts.folder = "pb"
+socks.folder = "px-cl"
+</pre>
+<p>into the config.txt, the shirt will be loaded from <b>uni\TeamName\pa\all.png</b> (for example),
+the shorts from <b>uni\TeamName\pb\all.png</b> and so on. Of course kserv will look for the single
+images first, so if a file <b>uni\TeamName\px-cl\socks.png</b> exists, that one will be taken. 
+Afterwards, the kit parts will be mixed using the mask and then you can play with a new combination
+without storing a new image in your GDB.</p>
+
+<h4>Overlay</h4>
+<p>Often, teams use the same kits for different tournaments, only with a different
+badge on the sleeves or other modifications. To avoid creating to textures, you can
+use this option to overlay the texture with another one. Transparent parts are marked
+with pink color (RGB 255, 0, 255). However, this doesn't support semi-transparency,
+so a shadow cannot be realized properly. Also make sure to disable anti-aliasing, which
+would cause bad effects as well. Maybe you have an idea yourself for which you need this
+attribute.<br />
+As for the mask files, the path is seen as relative to the kit folder and then to the
+<b>uni\overlay</b> folder. It can be any png or bmp file, but it should (but doesn't have to)
+have the same dimensions as the shirt texture.<br />
+Here is an example for an overlay image (only the smiley will be seen on the texture):
+<img src="overlay.png" />
+</p>
+        
+
+<h3>2.4 Strip Selection and 2.5D kits</h3>
 
 <p>
 In order to provide a visual reference for currently selected GDB kits (including extra kits), 
@@ -562,7 +659,7 @@ choose the kits the same way as you did for the players.
     Kitserver activates the GDB kits during matches and replays.
 </div>
 
-<h3>2.4. HD-kits flag</h3>
+<h3>2.5. HD-kits flag</h3>
 
 <p>
 In kserv.cfg, you can enable or disable HD-kits. By default the HD (High Definition) kits are
@@ -583,7 +680,7 @@ HD-kits.enabled = 0
 
 
 <a name="kitinfoscreen"> </a>
-<h3>2.5 Information pages</h3>
+<h3>2.6 Information pages</h3>
 
 <p>
 In the bottom section of the screen, there might be additional information displayed by
@@ -596,7 +693,7 @@ number of available pages.
 
 <!-- ### BALLSERVER ### -->
 
-<h2 id="ballserver">Ballserver Module 6.4.0 (bserv.dll)</h2>
+<h2 id="ballserver">Ballserver Module 6.5.0 (bserv.dll)</h2>
 
 <h3>3.1 Quick summary of the features</h3>
 
@@ -607,7 +704,10 @@ the bserv.cfg file, if for some reason this causes problems.)</li>
 <li><b>Support for different texture sizes.</b><br />
 You can use 256x256, 512x512 and even 1024x1024 pixel textures, saved in either 
 BMP or PNG format. The size is auto-detected, so there's no need  to configure it.</li>
+<li><b>Assignment of a "home ball" for each team.</b><br />
+You can tell Ballserver to automatically select a specific ball if you play with team.</li>
 </p>
+
 
 <h3>3.2 GDB configuration</h3>
 
@@ -651,7 +751,35 @@ each model file only once. In general, models are independent from the texture s
 texture should work with a 512x512 texture as well. If you're unsure, just try it with different models.
 </p>
 
-<h3>3.3 Ball selection</h3>
+<h3>3.3 Home ball assignment</h3>
+
+<p>
+With help of the <b>home_map.txt</b>, you can assign a "home ball" to each team. This means that
+if Ballserver is in the "home ball" mode (see section 3.4 for information on selecting this mode)
+and you select that team as home team, the "home ball" will automatically be chosen. If you are
+in the "home ball" mode but the home team has no ball assigned, a random ball will be chosen instead.
+Here is a simple map.txt, with 2 teams having home balls associated with them:</p>
+
+<pre>
+# Ball Server home ball map file
+# --------------------------------------------------------------
+# This config maps team number into its home ball name
+# Please note: the ball name is the first parameter in map.txt
+# Format: &lt;team-num&gt;,"&lt;ball name&gt;"
+# Example: 8,"adidas Teamgeist Blue"
+
+8,"adidas Teamgeist Blue"
+125,"Adidas Teamgeist FC Bayern M&uuml;nchen White/Red"
+
+</pre>
+<p>Please also look at the format explanations in the first lines, they help you to configure the
+home map correctly.</p>
+
+<div class="note">IMPORTANT: Double quotes are required - just so that there is no ambiguity about 
+ball name. For IDs for all the teams - see <a href="uni.txt">uni.txt</a> file</div>
+
+
+<h3>3.4 Ball selection</h3>
 <p>
 Start the game just as usual. When you come to Strip Selection, you will see a new text under the mini-kits saying 
 <b>"Ball: game choice"</b> by default. In this case, you will recognize no change when playing as the ball you selected in 
@@ -671,10 +799,45 @@ say "Ball selection" then.
 <img src="ballsel2.jpg" />
 </p>
 
+<h4>Selection modes</h4>
+<p>
+There are two special modes how the ball is selected. You can switch between these using
+<a class="ac" href="#ac_reset">Reset</a> multiple times. You can see which mode is currently
+selected at the color of the ball name: </p>
+<table>
+    <tr><th>The color you see</th><th>Meaning</th></tr>
+    <tr>
+        <td><img src="ball_gamechoice.gif" style="display:inline;margin:1px 0 1px 0;" /></td>
+        <td>Zhe ball selected in the game options will be used.</td>
+    </tr>
+    <tr>
+        <td><img src="ball_selected.gif" style="display:inline;margin:1px 0 1px 0;" /></td>
+        <td>Always play with this ball (normal mode).</td>
+    </tr>
+	<tr>
+        <td><img src="ball_home.gif" style="display:inline;margin:1px 0 1px 0;" /></td>
+        <td>Home ball mode for a team with home ball assigned. If you play the next match
+        with another home team, the ball will automatically change to that team's home ball.</td>
+    </tr>
+    <tr>
+        <td><img src="ball_home1.gif" style="display:inline;margin:1px 0 1px 0;" /></td>
+        <td>Home ball mode too, but for a team without home ball. In that case, a random ball
+        will be chosen. However, the home ball mode is still active, so if you next team has
+        a home ball, that one will be used.</td>
+    </tr>
+    <tr>
+        <td><img src="ball_autorandom.gif" style="display:inline;margin:1px 0 1px 0;" /></td>
+        <td>Auto-random mode: For each match, a random ball is chosen.</td>
+    </tr>
+</table>
+
+<p>These modes do not change your current ball. You will play the match with the ball you see
+in the preview. However, it has effect on the ball which is chosen for the following match.</p>
+
 
 <!-- ### LODMIXER ### -->
 
-<h2 id="lodmixer">LOD Mixer Module 6.3.6 (lodmixer.dll)</h2>
+<h2 id="lodmixer">LOD Mixer Module 6.5.0 (lodmixer.dll)</h2>
 
 <h3>4.1 How to use</h3>
 
@@ -710,7 +873,7 @@ let you can change the value.  The configuration is saved automatically.
 </p>
 
 <!-- ### STADIUM SERVER ### -->
-<h2 id="stadiumserver">Stadium Server Module 6.3.4 (stadium.dll)</h2>
+<h2 id="stadiumserver">Stadium Server Module 6.5.0 (stadium.dll)</h2>
 <h3>5.1 Introduction</h3>
 <p>
 Stadium Server is a plug-in module for Kitserver. It allows to use additional stadiums, which
@@ -896,7 +1059,7 @@ in "View Stadiums" mode. Gamepad doesn't work.</div>
 
 <!-- ### FACESERVER ### -->
 
-<h2 id="faceserver">FaceServer Module 6.4.0 (fserv.dll)</h2>
+<h2 id="faceserver">FaceServer Module 6.5.0 (fserv.dll)</h2>
 
 <h3>6.1 Introduction</h3>
 <p>
@@ -948,7 +1111,7 @@ one which looks best for you.</p>
 
 <!-- ### Bootserver ### -->
 
-<h2 id="bootserver">Bootserver module 6.4.0 (bootserv.dll)</h2>
+<h2 id="bootserver">Bootserver module 6.5.0 (bootserv.dll)</h2>
 
 <h3>7.1. Introduction</h3>
 

@@ -20,7 +20,7 @@ BEGIN
 			VALUE "FileDescription", "FaceServer 6 Module\0"
 			VALUE "FileVersion", "6.5.0\0"
 			VALUE "LegalCopyright", "Copyright © 2005-2007 Robbie\0"
-			VALUE "Comments", "Add-on component for PES6:\
+			VALUE "Comments", "Add-on component for PES6, WE:PES2007:\
 makes it possible to assign as much real faces and hair as you want to the players.\0"
 		END
 	END

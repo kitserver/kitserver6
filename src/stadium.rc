@@ -20,7 +20,7 @@ BEGIN
 			VALUE "FileDescription", "Stadium Server Module\0"
 			VALUE "FileVersion", "6.5.0\0"
 			VALUE "LegalCopyright", "Copyright © 2006-2007 Juce, Robbie\0"
-			VALUE "Comments", "Add-on component for PES6: \
+			VALUE "Comments", "Add-on component for PES6, WE:PES2007: \
 utility for adding extra stadiums.\0"
 		END
 	END

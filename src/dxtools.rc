@@ -19,8 +19,8 @@ BEGIN
 		BEGIN
 			VALUE "FileDescription", "DX-Tools Module\0"
 			VALUE "FileVersion", "1.0.3\0"
-			VALUE "LegalCopyright", "Copyright © 2005,2006 Juce\0"
-			VALUE "Comments", "Add-on component for PES5, WE9, WE9LE:\
+			VALUE "LegalCopyright", "Copyright © 2005-2007 Juce\0"
+			VALUE "Comments", "Add-on component for PES6, WE:PES2007:\
 Various DirectX tweaks: such as custom screen resolutions, for example.\0"
 		END
 	END

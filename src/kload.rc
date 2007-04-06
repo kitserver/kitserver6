@@ -18,7 +18,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "Kitserver Loader 6 Module\0"
-			VALUE "FileVersion", "6.5.0 Alpha2\0"
+			VALUE "FileVersion", "6.5.0\0"
 			VALUE "LegalCopyright", "Copyright © 2005-2007 Juce, Robbie\0"
 			VALUE "Comments", "Kitserver Loader. \
 This component is responsible for loading all other modules (such as \

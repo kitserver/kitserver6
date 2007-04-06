@@ -380,19 +380,19 @@ void gdbLoadConfig(GDB* gdb, Kit* kit)
                 strncpy(kit->description, value, MAXFILENAME);
                 kit->attDefined |= KITDESCRIPTION;
             }
-            else if (lstrcmp(key, "shirtFolder")==0)
+            else if (lstrcmp(key, "shirt.folder")==0)
             {
                 ZeroMemory(kit->shirtFolder, 256);
                 strncpy(kit->shirtFolder, value, 256);
                 kit->attDefined |= SHIRT_FOLDER;
             }
-			else if (lstrcmp(key, "shortsFolder")==0)
+			else if (lstrcmp(key, "shorts.folder")==0)
             {
                 ZeroMemory(kit->shortsFolder, 256);
                 strncpy(kit->shortsFolder, value, 256);
                 kit->attDefined |= SHORTS_FOLDER;
             }
-			else if (lstrcmp(key, "socksFolder")==0)
+			else if (lstrcmp(key, "socks.folder")==0)
             {
                 ZeroMemory(kit->socksFolder, 256);
                 strncpy(kit->socksFolder, value, 256);

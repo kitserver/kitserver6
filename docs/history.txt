@@ -5,13 +5,17 @@ Kitserver 6 HISTORY notes
 2007-04-??
 ----------
 v6.5.0
+- added support for WE:PES 2007
 - ballserver: added home-ball and auto-random feature
 - stadiumserver: fixed 1mb limit
+- kserv: some new attributes for config.txt which allow kit-mixing and overlays
+- kserv: the gdb folder of teams is only loaded when needed -> speed-up when starting and
+lower memory usage
 
 2007-01-08
 ----------
 v6.4.0
-- bootserver: first "official" release
+- bootserver: first "official" release (including a random-boots feature ;) )
 - faceserver: fixed problem with buzz-cut for players, who didn't have hair assigned.
 - kserv: added new "shorts.color" attribute, to allow for correct underpants color.
 - kserv: another attempt to fix the infamous "GK-bug". Was easily seen after a replay-save, 
