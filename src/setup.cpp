@@ -722,6 +722,30 @@ void InitControls(void)
     */
 }
 
+void ShowHelpText()
+{
+	char buf[BUFLEN];
+	strcpy(buf,
+	"The most common mistake when trying to install Kitserver is that\n"
+	"you didn't extract all the files from the zip file to your installation\n"
+	"folder of PES6 / WE:PES2007 but try to start the setup.exe from\n"
+	"elsewhere. This is NO usual installer like other programms have.\n"
+	"You have to extract the files manually.\n"
+	"\n"
+	"For more information on what Kitserver is, what you can do with\n"
+	"it and how you install it correctly, please read the manual.html\n"
+	"which is located in the in the \"docs\" subfolder.\n"
+	"\n"
+	"Do you want to open the manual now?"
+	);
+	
+	if (MessageBox(hWnd, buf, "Kitserver 6 short help", MB_YESNO) == IDYES) {
+		ShellExecute(hWnd, "open", ".\\docs\\manual.html", NULL, NULL, SW_SHOWNORMAL);
+	}
+	
+	return;
+}
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int home, away, timecode;
@@ -744,6 +768,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if ((HWND)lParam == g_removeButtonControl)
 				{
 					RemoveKserv();
+				}
+				else if ((HWND)lParam == g_helpButtonControl)
+				{
+					ShowHelpText();
 				}
 			}
 			else if (HIWORD(wParam) == CBN_SELCHANGE)

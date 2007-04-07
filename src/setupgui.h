@@ -14,6 +14,7 @@ extern HWND g_exeInfoControl;              // displays info about current execut
 
 extern HWND g_installButtonControl;        // restore settings button
 extern HWND g_removeButtonControl;         // save settings button
+extern HWND g_helpButtonControl;           // help button
 
 extern HWND g_statusTextControl;           // displays status messages
 

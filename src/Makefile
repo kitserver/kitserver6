@@ -181,7 +181,7 @@ dxtools.res:
 setupgui.obj: setupgui.cpp setupgui.h
 setup.obj: setup.cpp setup.h setupgui.h
 setup.exe: setup.obj detect.obj setupgui.obj imageutil.obj setup.res
-	$(LINK) $(LFLAGS) /out:setup.exe setup.obj detect.obj setupgui.obj imageutil.obj setup.res $(LIBS)
+	$(LINK) $(LFLAGS) /out:setup.exe setup.obj detect.obj setupgui.obj imageutil.obj setup.res $(LIBS) shell32.lib
 	
 setup.res: 
 	$(RC) -r -fo setup.res setup.rc

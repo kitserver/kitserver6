@@ -8,6 +8,7 @@ HWND g_exeInfoControl;              // displays info about current executable fi
 
 HWND g_installButtonControl;        // restore settings button
 HWND g_removeButtonControl;         // save settings button
+HWND g_helpButtonControl;           // help button
 
 HWND g_statusTextControl;           // displays status messages
 
@@ -118,8 +119,16 @@ bool BuildControls(HWND parent)
 			x, y, butW, butH,
 			parent, NULL, NULL, NULL);
 
+	butW = 60;
+	x -= butW + spacer;
+
+	g_helpButtonControl = CreateWindowEx(
+			xstyle, "Button", "Help", style | WS_TABSTOP,
+			x, y, butW, butH,
+			parent, NULL, NULL, NULL);
+
 	x = spacer;
-	statW = WIN_WIDTH - spacer*4 - 160;
+	statW = WIN_WIDTH - spacer*5 - 220;
 
 	g_statusTextControl = CreateWindowEx(
 			xstyle, "Static", "", style,
@@ -151,6 +160,7 @@ bool BuildControls(HWND parent)
 	SendMessage(g_statusTextControl, WM_SETFONT, (WPARAM)hObj, true);
 	SendMessage(g_installButtonControl, WM_SETFONT, (WPARAM)hObj, true);
 	SendMessage(g_removeButtonControl, WM_SETFONT, (WPARAM)hObj, true);
+	SendMessage(g_helpButtonControl, WM_SETFONT, (WPARAM)hObj, true);
 
 	// disable the dropdown list and the buttons by default
 	EnableWindow(g_installButtonControl, FALSE);
