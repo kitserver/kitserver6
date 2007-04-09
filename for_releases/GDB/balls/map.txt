@@ -1,0 +1,8 @@
+# This is the configuration file for Ballserver
+# Format: "<name displayed in game>","<model file>","<texture file>"
+# Example: "adidas Finale Capitano Grey","ariel_mdl.bin","adidas_finale_capitano_grey.bmp"
+# Texture paths are relative to GDB\balls\, model paths to GDB\balls\mdl\
+
+
+
+# This comment makes sure you have pressed the enter key after the last ball

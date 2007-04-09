@@ -1,0 +1,9 @@
+# This file configures the faces of the players
+# ---------------------------------------------
+# Format: <player number>,"<filename>"
+# Example: 4041,"DavidVilla.bin"
+# More information about player numbers in
+# the manual
+
+
+# This comment makes sure you have pressed the enter key after the last face

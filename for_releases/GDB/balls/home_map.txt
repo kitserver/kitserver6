@@ -1,0 +1,10 @@
+# Ball Server home ball map file
+# --------------------------------------------------------------
+# This config maps team number into its home ball name
+# Please note: the ball name is the first parameter in map.txt
+# Format: <team-num>,"<ball name>"
+# Example: 8,"adidas Teamgeist Blue"
+
+
+
+# This comment makes sure you have pressed the enter key after the last ball

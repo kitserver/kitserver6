@@ -1,0 +1,4 @@
+# This config maps team number into folder name
+# Format: <team-num>,"<folder name>"
+# Example: 21,"Russia"
+

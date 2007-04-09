@@ -1,0 +1,6 @@
+# Stadium Server map file
+# --------------------------------------------------------------
+# This config maps team number into its home stadium folder name
+# Format: <team-num>,"<folder name>"
+# Example: 45,"Maracana"
+

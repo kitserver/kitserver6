@@ -1,0 +1,10 @@
+# This file configures the boots of the players
+# ---------------------------------------------
+# Format: <player number>,"<filename>"
+# Example: 194,"adidas_blue.png"
+# More information about player numbers in
+# the manual
+
+
+
+# This comment makes sure you have pressed the enter key after the last boot
