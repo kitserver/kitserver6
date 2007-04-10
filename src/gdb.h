@@ -99,6 +99,6 @@ typedef struct _GDB {
 GDB* gdbLoad(char* dir);
 void gdbUnload(GDB* gdb);
 void gdbFindKitsForTeam(GDB* gdb, WORD teamId);
-void gdbLoadConfig(GDB* gdb, Kit* kit);
+void gdbLoadConfig(GDB* gdb, string& mykey, Kit* kit);
 
 #endif

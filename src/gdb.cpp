@@ -173,10 +173,10 @@ void gdbFillKitCollection(GDB* gdb, KitCollection* col, int kitType)
 			ZeroMemory(&kit->shortsNumber, sizeof(RGBAColor));
 			kit->attDefined = 0;
 
-            gdbLoadConfig(gdb, kit);
+            string key = fData.cFileName;
+            gdbLoadConfig(gdb, key, kit);
 
             // insert kit object into KitCollection map
-            string key = fData.cFileName;
             StringKitMap* km = (kitType == PLAYERS) ? col->players : col->goalkeepers;
             (*km)[key] = kit;
 		}
@@ -208,7 +208,7 @@ void gdbFindKitsForTeam(GDB* gdb, WORD teamId)
 /**
  * Read and parse the config.txt for the given kit.
  */
-void gdbLoadConfig(GDB* gdb, Kit* kit)
+void gdbLoadConfig(GDB* gdb, string& mykey, Kit* kit)
 {
 	char cfgFileName[MAXFILENAME];
 	ZeroMemory(cfgFileName, MAXFILENAME);
@@ -265,6 +265,19 @@ void gdbLoadConfig(GDB* gdb, Kit* kit)
                 ZeroMemory(kit->shirtPaletteFile,MAXFILENAME);
                 strncpy(kit->shirtPaletteFile, value, MAXFILENAME);
                 kit->attDefined |= NUMBERS_PALETTE_FILE;
+            }
+            else if (lstrcmp(key, "shorts.num-pal")==0) 
+            {
+                // looks like a palette file definition for these shorts
+                string shortsKey(mykey);
+                char* shortsPaletteFile = (char*)HeapAlloc(heap, HEAP_ZERO_MEMORY, MAXFILENAME);
+                if (!shortsPaletteFile) {
+                    GDB_DEBUG(klog, (klog, "Unable to allocate memory for shorts palette file."));
+                    continue;
+                }
+                strncpy(shortsPaletteFile, value, MAXFILENAME);
+                (*(kit->shortsPaletteFiles))[shortsKey] = shortsPaletteFile;
+                GDB_DEBUG(klog, (klog, "pal[%s] = {%s}\n", shortsKey.c_str(), shortsPaletteFile));
             }
             else if (strstr(key, "shorts.num-pal.")==key) 
             {
