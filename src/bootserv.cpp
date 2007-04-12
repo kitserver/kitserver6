@@ -37,10 +37,10 @@ DWORD dataArray[][DATALEN] = {
     // WE2007
     {
         0x1128c28, 0x1128c2c,
-        0x1102f08, 0x1102f68, 0x1128cb2,
+        0x1102f08, 0x1102f9c, 0x1128cb2,
         0x3bd7640, 0x3bca006,
         0x240, 0x60, 0x348, 0,
-        0x112b364, 0x11032b0,
+        0x112b364, 0x1103298,
     },
 };
 DWORD data[DATALEN];

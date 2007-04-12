@@ -146,6 +146,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		switch (v) {
 			case gvPES6PC:
 			case gvPES6PC110:
+			case gvWE2007PC:
 				goto GameVersIsOK;
 				break;
 		};
