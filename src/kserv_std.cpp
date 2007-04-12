@@ -4919,7 +4919,7 @@ void mixKits(IDirect3DTexture8* pShirtTexture, IDirect3DTexture8* pShortsTexture
 		pSocksTexture->UnlockRect(level);
 	}
 	
-	if (pShortsTexture && SUCCEEDED(pSocksTexture->LockRect(level, &rectSocks, NULL, 0))) {
+	if (pSocksTexture && SUCCEEDED(pSocksTexture->LockRect(level, &rectSocks, NULL, 0))) {
 		Log(&k_mydll, "Replacing socks now...");
 		//yellow
 		applyKitMask(&rectShirt, &rectSocks, maskfilename, &desc, 0xffff00);

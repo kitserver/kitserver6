@@ -56,11 +56,13 @@ typedef DWORD (*ISMATCHOVER)();
 
 char pscExe[BUFLEN];
 
+DWORD showCaptureMessage = 0;
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
 void InitPSC();
 BOOL ReadConfig(char* cfgFile);
 DWORD pscMakeStatistics();
+void pscPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused);
 
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -116,6 +118,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		Log(&k_psc,"Detaching dll...");
 		
 		MasterUnhookFunction(code[C_MAKESTATISTICS_CS], pscMakeStatistics);
+		UnhookFunction(hk_D3D_Present,(DWORD)pscPresent);
 		
 		Log(&k_psc,"Detaching done.");
 	};
@@ -130,8 +133,6 @@ void InitPSC()
 	MasterHookFunction(code[C_MAKESTATISTICS_CS], 0, pscMakeStatistics);
 
 	Log(&k_psc, "hooking done");
-	
-	UnhookFunction(hk_D3D_Create,(DWORD)InitPSC);
 
 	return;
 };
@@ -194,6 +195,23 @@ DWORD pscMakeStatistics()
 
 	if (strlen(pscExe) > 0) {
 		WinExec(pscExe, SW_HIDE);
-	}	
+	}
+	
+	//show a message for 4 seconds
+	showCaptureMessage = GetTickCount() + 4000;
+	HookFunction(hk_D3D_Present,(DWORD)pscPresent);
+
 	return res;
+}
+
+void pscPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused)
+{
+	if (GetTickCount() > showCaptureMessage) {
+		UnhookFunction(hk_D3D_Present,(DWORD)pscPresent);
+		return;
+	}
+		
+	KDrawText(10, 746, 0xffffffc0, 12, "Statistics were saved.");
+		
+	return;
 }
