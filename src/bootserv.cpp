@@ -34,6 +34,14 @@ DWORD dataArray[][DATALEN] = {
         0x240, 0x60, 0x348, 0 /*0x1b4*/,
         0x11318dc, 0x1109830,
     },
+    // WE2007
+    {
+        0x1128c28, 0x1128c2c,
+        0x1102f08, 0x1102f68, 0x1128cb2,
+        0x3bd7640, 0x3bca006,
+        0x240, 0x60, 0x348, 0,
+        0x112b364, 0x11032b0,
+    },
 };
 DWORD data[DATALEN];
 
@@ -52,6 +60,11 @@ DWORD codeArray[][CODELEN] = {
     {
         0xa4b612,
         0x9c1737,
+    },
+    // WE2007
+    {
+        0xa4bd62,
+        0x9c1d97,
     },
 };
 DWORD code[CODELEN];
