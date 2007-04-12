@@ -309,15 +309,15 @@ DWORD dataArray[][DATALEN] = {
       0x3be24a1,
     },
     // WE2007
-    { 0x3bdb3c0, 0, 0,
+    { 0x3bdb3c0, 0x3be0af8, 0,
       0, 0, 0,
-      0, 5473, 6831, 
-      0, 0, 0, 0,
-      0, 0, 0,
-      0,
-      0, 0,
-      6793, 0,
-      0,
+      0, 5877, 7235, 
+      0x112ca94, 0x112ca98, 0x112ca6c, 0x112ca70,
+      0x3a6bdb8, 0x3a6bdbc, 0x3a6bdcc,
+      0xd3cf40,
+      0x112ca5c, 0x112ca60,
+      7197, 0x3be0da0,
+      0x3bdbf21,
     },
 };
 
@@ -366,6 +366,21 @@ DWORD codeArray[][CODELEN] = {
         0x8085ae, 0x8654b0,
         0x8b1b39, 0x8d1b50,
         0x9cc50c,
+    },
+    // WE2007
+    {
+        0x865950, 0x804caa, 
+        0x865810, 0xb3c230,
+        0x865600, 0xb3c1b9,
+        0xb365b0, 0xb32f27,
+        0xb3c390, 0xb328e0,
+        0x9da3f9,
+        0x9da473,
+        0x9c1d97,
+        0x6b2467, 0x9675b5, 0x967602, 
+        0x8083fe, 0x865a90,
+        0x8b2259, 0x8d2230,
+        0x9ccb6c,
     },
 };
 
@@ -3292,6 +3307,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		switch (GetPESInfo()->GameVersion) {
             case gvPES6PC: //support for PES6 PC
             case gvPES6PC110: //support for PES6 PC 1.10
+            case gvWE2007PC: //support for WE:PES 2007 PC
 				break;
             default:
                 Log(&k_mydll,"Your game version is currently not supported!");

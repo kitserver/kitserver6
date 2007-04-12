@@ -30,6 +30,11 @@ static DWORD codeArray[][CODELEN] = {
         0x460fdb9, 0x460fdc0, 7,
         0x460fde4, 0x460fdec, 8,
     },
+    // WE2007
+    {
+        0x6720071, 0x6720078, 7,
+        0x672009c, 0x67200a4, 8,
+    },
 };
 
 #define DATALEN 1
@@ -44,6 +49,10 @@ static DWORD dataArray[][DATALEN] = {
     // PES6 1.10
     {
         0x3b5dbc0,
+    },
+    // WE2007
+    {
+        0x3b57640,
     },
 };
 

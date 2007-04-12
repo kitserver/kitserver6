@@ -37,9 +37,9 @@ static DWORD codeArray[][CODELEN] = {
     },
     // WE2007
     {
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-        0, 0,
+        0x65b67f, 0x45a697, 0x65b6a8, 0,
+        0x8b2183, 0x8cdc60, 0x65b1b6, 0x8cdc39,
+        0x44c0a4, 0x65b192,
     },
 };
 
@@ -58,7 +58,7 @@ static DWORD dataArray[][DATALEN] = {
     },
 	// WE2007
     {
-        0,
+        0x3b57640,
     },
 };
 
