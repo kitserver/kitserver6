@@ -462,7 +462,7 @@ void HookOthers()
 	};
 
     // hook num-pages and AfsReplace
-    HookGetNumPages();
+    //HookGetNumPages();
     HookAfsReplace();
 	return;
 };
@@ -1435,6 +1435,12 @@ HRESULT STDMETHODCALLTYPE NewPresent(IDirect3DDevice8* self, CONST RECT* src, CO
 	// CALL ORIGINAL FUNCTION ///////////////////
 	HRESULT res = g_orgPresent(self, src, dest, hWnd, unused);
 
+    // possibly delayed hooking of getnumpages
+    static numPagesHooked = false;
+    if (!numPagesHooked) {
+        numPagesHooked = HookGetNumPages();
+    }
+
 	return res;
 };
 
@@ -1469,6 +1475,7 @@ HRESULT STDMETHODCALLTYPE NewReset(IDirect3DDevice8* self, LPVOID params)
     //self->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 
 	TRACE(&k_kload,"NewReset: Reset() is done. About to return.");
+
 	return res;
 }
 

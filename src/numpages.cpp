@@ -32,27 +32,27 @@ static DWORD codeArray[][CODELEN] = {
     },
     // WE2007
     {
-        0x6720071, 0x6720078, 7,
-        0x672009c, 0x67200a4, 8,
+        0x71, 0x78, 7,
+        0x9c, 0xa4, 8,
     },
 };
 
-#define DATALEN 1
+#define DATALEN 2
 enum {
-    AFS_NUMPAGES_TABLES
+    AFS_NUMPAGES_TABLES, DECRYPTED_CODE_ADDR,
 };
 static DWORD dataArray[][DATALEN] = {
     // PES6
     {
-        0x3b5cbc0,
+        0x3b5cbc0, 0,
     },
     // PES6 1.10
     {
-        0x3b5dbc0,
+        0x3b5dbc0, 0,
     },
     // WE2007
     {
-        0x3b57640,
+        0x3b57640, 0x44adc18,
     },
 };
 
@@ -168,19 +168,27 @@ KEXPORT void InitGetNumPages()
     }
 }
 
-KEXPORT void HookGetNumPages()
+KEXPORT bool HookGetNumPages()
 {
     if (_getnumpages_vec.size() == 0) {
         Log(&k_kload, "HookGetNumPages: no callbacks registered.");
         Log(&k_kload, "GetNumPagesForFileInAFS command not hooked.");
         Log(&k_kload, "GetNumPagesForFileInAFS2 command not hooked.");
-        return;
+    }
+
+    if (data[DECRYPTED_CODE_ADDR]!=0) {
+        if ((*(DWORD*)data[DECRYPTED_CODE_ADDR] & 0xffff)!=0) {
+            return false; // delayed hooking
+        }
     }
 
     _getnumpages_jmpback = code[C_GETNUMPAGES_JMPBACK];
+    if (data[DECRYPTED_CODE_ADDR]!=0) _getnumpages_jmpback += *(DWORD*)data[DECRYPTED_CODE_ADDR];
     _getnumpages2_jmpback = code[C_GETNUMPAGES2_JMPBACK];
+    if (data[DECRYPTED_CODE_ADDR]!=0) _getnumpages2_jmpback += *(DWORD*)data[DECRYPTED_CODE_ADDR];
 
     DWORD addr = code[C_GETNUMPAGES_HOOK];
+    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
     DWORD target = (DWORD)GetNumPagesForFileInAFSCaller + 6;
 
     DWORD protection = 0;
@@ -202,6 +210,7 @@ KEXPORT void HookGetNumPages()
     }
 
     addr = code[C_GETNUMPAGES2_HOOK];
+    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
     target = (DWORD)GetNumPagesForFileInAFSCaller2 + 6;
 
     protection = 0;
@@ -221,6 +230,8 @@ KEXPORT void HookGetNumPages()
 
         Log(&k_kload, "GetNumPagesForFileInAFS2 command hooked");
     }
+
+    return true;
 }
 
 KEXPORT void RegisterGetNumPagesCallback(void* callback)
@@ -240,6 +251,7 @@ KEXPORT void UnhookGetNumPages()
     }
 
     DWORD addr = code[C_GETNUMPAGES_HOOK];
+    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
     DWORD protection = 0;
     DWORD newProtection = PAGE_EXECUTE_READWRITE;
     if (VirtualProtect((void*)addr, 16, newProtection, &protection))
@@ -252,6 +264,7 @@ KEXPORT void UnhookGetNumPages()
     }
 
     addr = code[C_GETNUMPAGES2_HOOK];
+    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
     protection = 0;
     newProtection = PAGE_EXECUTE_READWRITE;
     if (VirtualProtect((void*)addr, 16, newProtection, &protection))

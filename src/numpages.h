@@ -8,7 +8,7 @@
 #endif
 
 KEXPORT void InitGetNumPages();
-KEXPORT void HookGetNumPages();
+KEXPORT bool HookGetNumPages();
 KEXPORT void RegisterGetNumPagesCallback(void* callback);
 KEXPORT void UnhookGetNumPages();
 

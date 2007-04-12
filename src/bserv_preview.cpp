@@ -197,6 +197,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		switch (GetPESInfo()->GameVersion) {
             case gvPES6PC: //support for PES6 PC
             case gvPES6PC110: //support for PES6 PC 1.10
+            case gvWE2007PC: //support for WE:PES2007 PC
 				goto GameVersIsOK;
 				break;
 		};
