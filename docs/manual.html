@@ -40,7 +40,7 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-April ??, 2007<br />
+April 13, 2007<br />
 Module Versions: <a href="#kserv">Kserv 6.5.0</a>, 
 <a href="#ballserver">Ballserver 6.5.0</a>,
 <a href="#lodmixer">LOD Mixer 6.5.0</a>,
@@ -127,7 +127,7 @@ Go to kitserver folder and run setup.exe. The "PES6.exe" in the
 drop-down list should be pre-selected. If not, select whatever executable
 you use as your game executable. 
 
-<img src="setup.gif" />
+<img src="setup.gif" style="border:0" />
 
 If you placed the kitserver files correctly, the "Install" button should
 become enabled, so just press it.
@@ -149,7 +149,7 @@ Configuration"</a> at the bottom of the manual.
 Go to kitserver folder and run setup.exe. The "PES6.exe" in the
 drop-down list should be pre-selected. (Select it, if not so). 
 
-<img src="setup2.gif" />
+<img src="setup2.gif" style="border:0" />
 
 Press "Remove" button.
 The kitserver should show a message box saying that the uninstallation
@@ -483,11 +483,10 @@ type3 - curved.</td>
     <tr bgcolor="#CCFFFF">
         <td><b>mask</b></td>
         <td>This is the mask file that will be applied when splitting the kit for
-        mixing parts. You only need this if the splitting rules are non-standard
-        (see the <a href="#kserv_kitmixing">kit-mixing</a> section if you need more
-        information)</td>
+        mixing parts. Masks are very important for <a href="#kserv_kitmixing">kit-mixing</a>.
+        </td>
         <td>string in double quotes</td>
-        <td><nobr>mask = "mask_juve.png"</nobr></td>
+        <td><nobr>mask = "pes6_nobadge.png"</nobr></td>
     </tr>
 	<tr bgcolor="#CCFFFF">
         <td><b>shirt.folder</b><br />
@@ -535,22 +534,47 @@ which effectively renders white numbers on the shorts.
 
 <h3 id="kserv_kitmixing">2.3 Kit-mixing</h3>
 <p>Kit-mixing generally means that the kit texture is not one single texture but composed of
-multiple ones for the different parts of the kit (shirt, shorts and socks). The shirt texture
-has the name <b>shirt.png</b> or <b>shirt.bmp</b>. If none of these is found, the <b>all.png</b>
-or <b>all.bmp</b> is used. This texture is used by default also for the other parts. However, if
-a <b>shorts.png</b> (bmp can also always be used) or <b>all.png</b> is found, that one will be
-taken for the shorts part. The same thing applies to the socks (<b>socks.png</b> / <b>all.png</b>).
+multiple ones for the different parts of the kit (shirt, shorts and socks).<br />
+The shirt texture has the name <b>shirt.png</b> or <b>shirt.bmp</b>. If none of these is
+found, the <b>all.png</b> or <b>all.bmp</b> is used. This texture is used by default also for the
+other parts. However, if a <b>shorts.png</b> (bmp can also always be used) or <b>all.png</b> is
+found, that one will be taken for the shorts part. The same thing applies to the socks
+(<b>socks.png</b> / <b>all.png</b>).<br />
 To know what areas of the texture belong to a specific part, kserv needs the mask files.</p>
 
+<div class="NOTE">The kit parts can even have different sizes each (such as 1024x1024 for shirt,
+512x256 shorts and 512x512 for socks)!</div>
+
 <h4>Masks</h4>
-<p>The default mask for kit-mixing is this one:</p>
-<img src="mask.png" />
-<p>
+<p><u>Masks are very important for kit-mixing!</u> If you don't use the right mask, the kit will
+look messed up. So read this here carefully!<br /> The default mask for kit-mixing is this one:<br />
+<img src="kit_normal_wb.jpg" style="display:inline">
+<img src="mask.png" style="display:inline">
+<br />
 The three colors indicate the areas which belong to shirt (red), shorts (blue) and socks (yellow).
 As the shirt is taken as base texture and the shorts and socks areas are mixed into it, there is
-only need to color the shorts and the socks areas correctly. Anyway, the mask above is used by almost
-all templates. So far it seems that only Juventus needs a special mask for their two different socks.
-Usually, you don't need to change the mask.<br />
+only need to color the shorts and the socks areas correctly.<br />
+
+<br />The mask above is used by many
+templates. However, there are some models which need a different arrangement of the parts.
+You often find this for 512x512 kits. Look at <a href="templates.txt"><b>this</b></a> table to know which
+mask you have to use for a specific model number. For example this kit is model 32, so you need
+the mask <i>pes6_nobadge.png</i>:<br />
+<img src="kit_nobadge.jpg" style="display:inline">
+<img src="pes6_nobadge.png" height="512" width="512" style="display:inline"><br />
+The mask used here is sized 512x256, but it will automatically be stretched to the size
+of the kit part. This means that you can use the same mask for differently dimensioned kits:<br />
+<img src="kit_nobadge.jpg" height="256" width="512"  style="display:inline">
+<img src="pes6_nobadge.png" style="display:inline"><br />
+
+<br />Yet another mask is <i>pes_badge.png</i>, which you need for example for kits with model
+146 (with an emblem in the right corner and smaller socks):<br/>
+<img src="kit_badge.jpg" style="display:inline">
+<img src="pes6_badge.png" style="display:inline"><br />
+As you can see, these two masks are completly different from the first one. Kserv has to
+rely on the mask you specify. If you select the wrong mask, kserv will mix the kits wrong.
+But using the the table above, you can find out easily which mask is the correct one.<br />
+<br />
 If you specify the "mask" attribute in the config.txt, the given path will first be seen as relative
 to the kit folder (like <b>uni\TeamName\pa</b>), then to the <b>uni\masks</b> folder.</p>
 <div class="NOTE"><b>Without the (default) mask file, no kit-mixing is possible!</b> So if you
@@ -856,7 +880,7 @@ Run <b>lodcfg.exe</b> to configure the LOD Mixer settings. Here's the screenshot
 looks:
 </p> 
 
-<img src="lodmixer.gif"/>
+<img src="lodmixer.gif" style="border:0" />
 
 <div class="NOTE">
     For complete documentation and a brief explanation of what the "LOD" is, see this file: <b><a href="lodmixer.txt">lodmixer.txt</a></b>
@@ -1231,7 +1255,7 @@ do that by modifying the <b>kload.cfg</b> file. Here's how the default config lo
 gdb.dir = ".\"
 ReservedMemory=55000000
 
-DLL.num = 9
+DLL.num = 10
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
 DLL.2 = "kitserver\kserv.dll"
@@ -1241,6 +1265,7 @@ DLL.5 = "kitserver\dxtools.dll"
 DLL.6 = "kitserver\stadium.dll"
 DLL.7 = "kitserver\fserv.dll"
 DLL.8 = "kitserver\bootserv.dll"
+DLL.9 = "kitserver\psc.dll"
 
 # DirectX options
 dx.force-SW-TnL = 0
@@ -1256,7 +1281,7 @@ just comment it out with a "#" symbol at the beginning of the line:
 </p>
 
 <pre>
-DLL.num = 9
+DLL.num = 10
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
 #DLL.2 = "kitserver\kserv.dll"
@@ -1266,6 +1291,7 @@ DLL.5 = "kitserver\dxtools.dll"
 DLL.6 = "kitserver\stadium.dll"
 DLL.7 = "kitserver\fserv.dll"
 DLL.8 = "kitserver\bootserv.dll"
+DLL.9 = "kitserver\psc.dll"
 
 </pre>
 
@@ -1297,7 +1323,7 @@ sure you specify resolution that your monitor supports.</i>
 <p>
 Programming: <b>juce</b>, <b>Robbie</b><br />
 Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun, Seax, pogoss</b><br />
-Kits: <b>Spark, kel, qiankun, OPM, Simonhibsey</b>.<br />
+Kits: <b>Spark, kel, qiankun, OPM, Simonhibsey, Kleimann</b><br />
 Balls: <b>DAMned</b><br />
 Ball models: <b>Ariel</b>, <b>Gwidon</b><br />
 Faces/Hair: <b>Mystiq</b>, <b>Alex</b><br />

@@ -4857,7 +4857,7 @@ void applyOverlay(D3DLOCKED_RECT* dest, char* overlayfilename, D3DSURFACE_DESC* 
 		DWORD* pDestPixel = (DWORD*)pDestRow;
 		DWORD* pSrcPixel = (DWORD*)pSrcRow;
 		for (x=0; x<width; x++) {
-			pixel = (height-y-1)*ovHeight*ovWidth/height + x*ovWidth/width;
+			pixel = (height-y-1)*ovHeight/height*ovWidth + x*ovWidth/width;
 			switch (bitCount) {
 			case 8:
 				if (byOverlay[pixel + 0x400] != index) {
