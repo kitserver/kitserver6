@@ -4777,7 +4777,7 @@ void applyKitMask(D3DLOCKED_RECT* dest, D3DLOCKED_RECT* src, char* maskfilename,
 		DWORD* pDestPixel = (DWORD*)pDestRow;
 		DWORD* pSrcPixel = (DWORD*)pSrcRow;
 		for (int x=0; x<width; x++) {
-			if (mask[(height-y-1)*maskH*maskW/height + x*maskW/width] == index) {
+			if (mask[(height-y-1)*maskH/height*maskW + x*maskW/width] == index) {
 				*pDestPixel = *pSrcPixel;
 			}
 			pDestPixel++;
