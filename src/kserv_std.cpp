@@ -177,27 +177,6 @@ KitIterator g_awaySocksIteratorGK;
 BYTE g_homeStrip = 0xff;
 BYTE g_awayStrip = 0xff;
 
-BITMAPINFO* g_shirtMaskTex = NULL;
-BITMAPINFO* g_shirtMaskTexMip1 = NULL;
-BITMAPINFO* g_shirtMaskTexMip2 = NULL;
-BITMAPINFO* g_shortsMaskTex = NULL;
-BITMAPINFO* g_shortsMaskTexMip1 = NULL;
-BITMAPINFO* g_shortsMaskTexMip2 = NULL;
-BITMAPINFO* g_socksMaskTex = NULL;
-BITMAPINFO* g_socksMaskTexMip1 = NULL;
-BITMAPINFO* g_socksMaskTexMip2 = NULL;
-BITMAPINFO* g_testMaskTex = NULL;
-DWORD* g_shirtMask = NULL;
-DWORD* g_shirtMaskMip1 = NULL;
-DWORD* g_shirtMaskMip2 = NULL;
-DWORD* g_shortsMask = NULL;
-DWORD* g_shortsMaskMip1 = NULL;
-DWORD* g_shortsMaskMip2 = NULL;
-DWORD* g_socksMask = NULL;
-DWORD* g_socksMaskMip1 = NULL;
-DWORD* g_socksMaskMip2 = NULL;
-DWORD* g_testMask = NULL;
-
 WORD _last_homeId = 0;
 WORD _last_awayId = 0;
 
@@ -1177,9 +1156,6 @@ D3DFORMAT g_bbFormat;
 BOOL g_bGotFormat = false;
 BOOL g_needsRestore = TRUE;
 int bpp = 0;
-
-void MaskKitTexture(BITMAPINFO* tex, DWORD id);
-typedef void (*MASKFUNCPROC)(BITMAPINFO* tex, DWORD id);
 
 /* IDirect3DDevice8 method-types */
 typedef HRESULT (STDMETHODCALLTYPE *PFNCREATETEXTUREPROC)(IDirect3DDevice8* self, 
@@ -3011,119 +2987,6 @@ EXTERN_C _declspec(dllexport) void RestoreDeviceMethods()
 	Log(&k_mydll,"RestoreDeviceMethods: done.");
 }
 
-void LoadKitMasks()
-{
-	char filename[BUFLEN];
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\shirt.png");
-	if (LoadPNGTexture(&g_shirtMaskTex, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_shirtMaskTex;
-		g_shirtMask = (DWORD*)((BYTE*)g_shirtMaskTex + bih->biSize + 0x400);
-	}
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\shirt-mip1.png");
-	if (LoadPNGTexture(&g_shirtMaskTexMip1, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_shirtMaskTexMip1;
-		g_shirtMaskMip1 = (DWORD*)((BYTE*)g_shirtMaskTexMip1 + bih->biSize + 0x400);
-	}
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\shirt-mip2.png");
-	if (LoadPNGTexture(&g_shirtMaskTexMip2, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_shirtMaskTexMip2;
-		g_shirtMaskMip2 = (DWORD*)((BYTE*)g_shirtMaskTexMip2 + bih->biSize + 0x400);
-	}
-
-
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\shorts.png");
-	if (LoadPNGTexture(&g_shortsMaskTex, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_shortsMaskTex;
-		g_shortsMask = (DWORD*)((BYTE*)g_shortsMaskTex + bih->biSize + 0x400);
-	}
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\shorts-mip1.png");
-	if (LoadPNGTexture(&g_shortsMaskTexMip1, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_shortsMaskTexMip1;
-		g_shortsMaskMip1 = (DWORD*)((BYTE*)g_shortsMaskTexMip1 + bih->biSize + 0x400);
-	}
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\shorts-mip2.png");
-	if (LoadPNGTexture(&g_shortsMaskTexMip2, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_shortsMaskTexMip2;
-		g_shortsMaskMip2 = (DWORD*)((BYTE*)g_shortsMaskTexMip2 + bih->biSize + 0x400);
-	}
-
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\socks.png");
-	if (LoadPNGTexture(&g_socksMaskTex, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_socksMaskTex;
-		g_socksMask = (DWORD*)((BYTE*)g_socksMaskTex + bih->biSize + 0x400);
-	}
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\socks-mip1.png");
-	if (LoadPNGTexture(&g_socksMaskTexMip1, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_socksMaskTexMip1;
-		g_socksMaskMip1 = (DWORD*)((BYTE*)g_socksMaskTexMip1 + bih->biSize + 0x400);
-	}
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\socks-mip2.png");
-	if (LoadPNGTexture(&g_socksMaskTexMip2, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_socksMaskTexMip2;
-		g_socksMaskMip2 = (DWORD*)((BYTE*)g_socksMaskTexMip2 + bih->biSize + 0x400);
-	}
-
-	ZeroMemory(filename, BUFLEN);
-	lstrcpy(filename, GetPESInfo()->gdbDir);
-	lstrcat(filename, "GDB\\uni\\masks\\alltest.png");
-	if (LoadPNGTexture(&g_testMaskTex, filename) > 0) {
-		BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)g_testMaskTex;
-		g_testMask = (DWORD*)((BYTE*)g_testMaskTex + bih->biSize + 0x400);
-	}
-}
-
-void UnloadKitMasks()
-{
-	if (g_shirtMaskTex != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_shirtMaskTex);
-	}
-	if (g_shirtMaskTexMip1 != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_shirtMaskTexMip1);
-	}
-	if (g_shirtMaskTexMip2 != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_shirtMaskTexMip2);
-	}
-	if (g_shortsMaskTex != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_shortsMaskTex);
-	}
-	if (g_shortsMaskTexMip1 != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_shortsMaskTexMip1);
-	}
-	if (g_shortsMaskTexMip2 != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_shortsMaskTexMip2);
-	}
-	if (g_socksMaskTex != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_socksMaskTex);
-	}
-	if (g_socksMaskTexMip1 != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_socksMaskTexMip1);
-	}
-	if (g_socksMaskTexMip2 != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_socksMaskTexMip2);
-	}
-	if (g_testMaskTex != NULL) {
-        pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)g_testMaskTex);
-	}
-}
-
 void BeginDrawKitLabel()
 {
 	dksiSetMenuTitle("Kit selection");
@@ -3229,9 +3092,6 @@ void InitKserv()
         //LogWithString(&k_mydll,"77: %s", MAP_FIND(gdb->uni,77)->foldername);
         //LogWithString(&k_mydll,"88: %s", MAP_FIND(gdb->uni,88)->foldername);
         //LogWithNumber(&k_mydll,"99: %08x", (DWORD)MAP_FIND(gdb->uni,99));
-        
-        // load kit masks
-        LoadKitMasks();
 
         // hook BeginUniSelect
 		HookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
@@ -3374,10 +3234,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		Log(&k_mydll,"InvalideDeviceObjects done.");
 		DeleteDeviceObjects(GetActiveDevice());
 		Log(&k_mydll,"DeleteDeviceObjects done.");
-
-		// unload kit masks
-		UnloadKitMasks();
-		Log(&k_mydll,"Kit masks unloaded.");
 
 		// unload GDB
 		TRACE(&k_mydll,"Unloading GDB...");
@@ -5962,141 +5818,6 @@ DWORD GetSplitKitOffset(DWORD id)
 	return 0xffffffff;
 }
 
-BOOL IsAllInOneTexture(BITMAPINFO* tex)
-{
-    int i;
-	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)tex;
-	DWORD* pixels = (DWORD*)((BYTE*)tex + bih->biSize + 0x400);
-    if (g_testMask == NULL) return FALSE;
-    for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-        if (pixels[i] & g_testMask[i]) return TRUE;
-    }
-    return FALSE;
-}
-
-void MaskKitTexture(BITMAPINFO* tex, DWORD id)
-{
-	int i;
-	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)tex;
-	DWORD* pixels = (DWORD*)((BYTE*)tex + bih->biSize + 0x400);
-
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case 0:
-		case 5:
-		case 10:
-		case 15:
-			// shirt
-			if (g_shirtMask == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_shirtMask[i];
-			}
-			break;
-        case 1:
-        case 6:
-		case 11:
-		case 16:
-			// shorts
-			if (g_shortsMask == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_shortsMask[i];
-			}
-			break;
-        case 2:
-        case 7:
-		case 12:
-		case 17:
-			// socks
-			if (g_socksMask == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_socksMask[i];
-			}
-			break;
-	}
-}
-
-void MaskKitTextureMip1(BITMAPINFO* tex, DWORD id)
-{
-	int i;
-	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)tex;
-	DWORD* pixels = (DWORD*)((BYTE*)tex + bih->biSize + 0x400);
-
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case 0:
-		case 5:
-		case 10:
-		case 15:
-			// shirt
-			if (g_shirtMaskMip1 == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_shirtMaskMip1[i];
-			}
-			break;
-		case 1:
-		case 6:
-		case 11:
-		case 16:
-			// shorts
-			if (g_shortsMaskMip1 == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_shortsMaskMip1[i];
-			}
-			break;
-		case 2:
-		case 7:
-		case 12:
-		case 17:
-			// socks
-			if (g_socksMaskMip1 == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_socksMaskMip1[i];
-			}
-			break;
-	}
-}
-
-void MaskKitTextureMip2(BITMAPINFO* tex, DWORD id)
-{
-	int i;
-	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)tex;
-	DWORD* pixels = (DWORD*)((BYTE*)tex + bih->biSize + 0x400);
-
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case 0:
-		case 5:
-		case 10:
-		case 15:
-			// shirt
-			if (g_shirtMaskMip2 == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_shirtMaskMip2[i];
-			}
-			break;
-		case 1:
-		case 6:
-		case 11:
-		case 16:
-			// shorts
-			if (g_shortsMaskMip2 == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_shortsMaskMip2[i];
-			}
-			break;
-		case 2:
-		case 7:
-		case 12:
-		case 17:
-			// socks
-			if (g_socksMaskMip2 == NULL) break;
-			for (i=0; i<bih->biWidth*bih->biHeight/sizeof(DWORD); i++) {
-				pixels[i] &= g_socksMaskMip2[i];
-			}
-			break;
-	}
-}
-
 BOOL TeamDirExists(DWORD id) 
 {
     KitCollection* col = MAP_FIND(gdb->uni,id);
@@ -6374,61 +6095,8 @@ void clearTeamKitInfo()
     // disable kit loading
     g_kit_loading_enabled = false;
 }
-/*
-void DoMipMap(DWORD id, TEXIMGPACKHEADER* pack, int ordinal, char* fileSuffix, MASKFUNCPROC maskFunc)
-{
-    // STEP1: check if either BMP or PNG file exists
-    char filename[BUFLEN];
-    // flag to apply mask
-    BOOL needsMask = FALSE;
-    DWORD texType = FindImageFileForId(id, fileSuffix, filename, &needsMask);
 
-    BITMAPINFO* tex = NULL;
-    DWORD texSize = 0;
 
-    switch (texType) {
-        case TEXTYPE_PNG:
-            LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
-            texSize = LoadPNGTexture(&tex, filename);
-            if (texSize > 0) {
-                if (IsShortsOrSocks(id)) {
-                    if (needsMask) {
-                        maskFunc(tex, id);
-                    } 
-                } else if (IsShirt(id)) {
-                    if (IsAllInOneTexture(tex)) {
-                        // this is all-in-one texture loaded in place
-                        // of shirt texture. apply the mask.
-                        maskFunc(tex, id);
-                    }
-                }
-                ApplyDIBTextureMipMap(pack, ordinal, tex);
-                FreePNGTexture(tex);
-            }
-            break;
-        case TEXTYPE_BMP:
-            LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
-            texSize = LoadTexture(&tex, filename);
-            if (texSize > 0) {
-                if (IsShortsOrSocks(id)) {
-                    if (needsMask) {
-                        maskFunc(tex, id);
-                    } 
-                } else if (IsShirt(id)) { 
-                    if (IsAllInOneTexture(tex)) {
-                        // this is all-in-one texture loaded in place
-                        // of shirt texture. apply the mask.
-                        maskFunc(tex, id);
-                    }
-                }
-                ApplyDIBTextureMipMap(pack, ordinal, tex);
-                FreeTexture(tex);
-            }
-            break;
-
-    } // end switch
-}
-*/
 void JuceSet2Dkits()
 {
     g_display2Dkits = TRUE;
@@ -7020,53 +6688,6 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
         BITMAPINFO* tex = NULL;
         DWORD texSize = 0;
 
-        /*
-        switch (texType) {
-            case TEXTYPE_PNG:
-                LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
-                texSize = LoadPNGTexture(&tex, filename);
-                if (texSize > 0) {
-                    if (IsShortsOrSocks(fileId)) {
-                        if (needsMask) {
-                            //MaskKitTexture(tex, fileId);
-                        } 
-                    } else if (IsShirt(fileId)) {
-                        if (IsAllInOneTexture(tex)) {
-                            // this is all-in-one texture loaded in place
-                            // of shirt texture. apply the mask.
-                            //MaskKitTexture(tex, fileId);
-                        }
-                    }
-                    ApplyDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
-                    FreePNGTexture(tex);
-                }
-                break;
-            case TEXTYPE_BMP:
-                LogWithString(&k_mydll,"JuceUniDecode: Image file = %s", filename);
-                texSize = LoadTexture(&tex, filename);
-                if (texSize > 0) {
-                    if (IsShortsOrSocks(fileId)) {
-                        if (needsMask) {
-                            //MaskKitTexture(tex, fileId);
-                        } 
-                    } else if (IsShirt(fileId)) { 
-                        if (IsAllInOneTexture(tex)) {
-                            // this is all-in-one texture loaded in place
-                            // of shirt texture. apply the mask.
-                            //MaskKitTexture(tex, fileId);
-                        }
-                    }
-                    ApplyDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
-                    FreeTexture(tex);
-                }
-                break;
-
-        } // end switch
-
-        DoMipMap(fileId, (TEXIMGPACKHEADER*)decBuf, 0, "-mip1", MaskKitTextureMip1);
-        DoMipMap(fileId, (TEXIMGPACKHEADER*)decBuf, 1, "-mip2", MaskKitTextureMip2);
-        */
-
         // if goalkeeper, extra steps needed:
         if (IsGK(fileId)) {
             // check for gloves
@@ -7089,68 +6710,6 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
                     }
                     break;
             }
-
-            /*
-            // load GK shorts
-            texType = FindImageFileForId(fileId + 1, "", filename, &needsMask);
-            switch (texType) {
-                case TEXTYPE_PNG:
-                    LogWithString(&k_mydll,"JuceUniDecode: GK shorts file = %s", filename);
-                    texSize = LoadPNGTexture(&tex, filename);
-                    if (texSize > 0) {
-                        if (needsMask) {
-                            MaskKitTexture(tex, fileId + 1);
-                        }
-                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
-                        FreePNGTexture(tex);
-                    }
-                    break;
-                case TEXTYPE_BMP:
-                    LogWithString(&k_mydll,"JuceUniDecode: GK shorts file = %s", filename);
-                    texSize = LoadTexture(&tex, filename);
-                    if (texSize > 0) {
-                        if (needsMask) {
-                            MaskKitTexture(tex, fileId + 1);
-                        }
-                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
-                        FreeTexture(tex);
-                    }
-                    break;
-            }
-
-            //DoMipMap(fileId + 1, (TEXIMGPACKHEADER*)decBuf, 0, "-mip1", MaskKitTextureMip1);
-            //DoMipMap(fileId + 1, (TEXIMGPACKHEADER*)decBuf, 1, "-mip2", MaskKitTextureMip2);
-
-            // load GK socks
-            texType = FindImageFileForId(fileId + 2, "", filename, &needsMask);
-            switch (texType) {
-                case TEXTYPE_PNG:
-                    LogWithString(&k_mydll,"JuceUniDecode: GK socks file = %s", filename);
-                    texSize = LoadPNGTexture(&tex, filename);
-                    if (texSize > 0) {
-                        if (needsMask) {
-                            MaskKitTexture(tex, fileId + 2);
-                        }
-                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
-                        FreePNGTexture(tex);
-                    }
-                    break;
-                case TEXTYPE_BMP:
-                    LogWithString(&k_mydll,"JuceUniDecode: GK socks file = %s", filename);
-                    texSize = LoadTexture(&tex, filename);
-                    if (texSize > 0) {
-                        if (needsMask) {
-                            MaskKitTexture(tex, fileId + 2);
-                        }
-                        OrDIBTexture((TEXIMGPACKHEADER*)decBuf, tex);
-                        FreeTexture(tex);
-                    }
-                    break;
-            }
-            */
-
-            //DoMipMap(fileId + 2, (TEXIMGPACKHEADER*)decBuf, 0, "-mip1", MaskKitTextureMip1);
-            //DoMipMap(fileId + 2, (TEXIMGPACKHEADER*)decBuf, 1, "-mip2", MaskKitTextureMip2);
         }
         
         TRACE(&k_mydll,"JuceUniDecode done");
