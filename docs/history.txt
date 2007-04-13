@@ -4,6 +4,14 @@ Kitserver 6 HISTORY notes
 
 2007-04-13
 ----------
+v6.5.1
+- maintanence release: fixed bug in kload.dll, which caused
+crashes in WE:PES 2007 in all game modes except for friendly games and training.
+(PES6 was unaffected by this problem)
+
+
+2007-04-13
+----------
 v6.5.0
 - added support for WE:PES 2007
 - fixed a problem with Windows Vista
