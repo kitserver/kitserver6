@@ -17,11 +17,10 @@ BEGIN
 	BEGIN
 		BLOCK "040904b0"
 		BEGIN
-			VALUE "FileDescription", "KServ 6 Module\0"
+			VALUE "FileDescription", "KitServer 6 Installer\0"
 			VALUE "FileVersion", "6.5.1\0"
 			VALUE "LegalCopyright", "Copyright © 2005-2007 Juce, Robbie\0"
-			VALUE "Comments", "Add-on component for PES6, WE:PES2007 \
-selection of kits/numbers/fonts for players and goalkeepers.\0"
+			VALUE "Comments", "Installs KitServer 6 to PES6 or WE:PES2007\0"
 		END
 	END
 	BLOCK "VarFileInfo"

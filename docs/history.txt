@@ -2,12 +2,15 @@ Kitserver 6 HISTORY notes
 =========================
 
 
-2007-04-13
+2007-04-14
 ----------
 v6.5.1
 - maintanence release: fixed bug in kload.dll, which caused
 crashes in WE:PES 2007 in all game modes except for friendly games and training.
 (PES6 was unaffected by this problem)
+- kserv: overlay wasn't applied if not using a different shorts or socks texture
+- kserv: fixed the preview which didn't show up correctly if you use shirt.folder,
+but not shorts.folder or socks.folder
 
 
 2007-04-13

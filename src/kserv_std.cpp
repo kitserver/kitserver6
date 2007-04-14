@@ -1991,6 +1991,12 @@ void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirec
     	char* kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, kitPart);
         sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFoldername);
         CreateGDBTextureFromFolder(folder, filename, ppTex, pPal);
+        if (kitPart != KITPART_SHIRT && !(*ppTex)) {
+        	// try to load shirt texture instead
+        	kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, KITPART_SHIRT);
+        	sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFoldername);
+        	CreateGDBTextureFromFolder(folder, "shirt.png", ppTex, pPal);
+        }
         if (*ppTex) {
             // store texture in the texture cache
             g_kitTextureMap[key] = *ppTex;
@@ -4758,7 +4764,7 @@ void mixKits(IDirect3DTexture8* pShirtTexture, IDirect3DTexture8* pShortsTexture
 	IDirect3DTexture8* pSocksTexture, char* overlayfilename, char* maskfilename, int level)
 {
 	if (!pShirtTexture) return;
-	if (!pShortsTexture && !pSocksTexture) return;
+	if (!pShortsTexture && !pSocksTexture && !overlayfilename) return;
 	
 	D3DLOCKED_RECT rectShirt;
 	D3DLOCKED_RECT rectShorts;
