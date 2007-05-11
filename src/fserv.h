@@ -1,7 +1,7 @@
 // fserv.h
 
 #define MODID 103
-#define NAMELONG "Faceserver 6.5.0"
+#define NAMELONG "Faceserver 6.5.2"
 #define NAMESHORT "FSERV"
 
 #define DEFAULT_DEBUG 1

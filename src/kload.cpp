@@ -247,7 +247,8 @@ void ReadPatchInfo()
 			if (startQuote == NULL) continue;
 			char* endQuote = strstr(startQuote + 1, "\"");
 			if (endQuote == NULL) continue;
-
+			
+			ZeroMemory(g_pesinfo.AFS_0_text, 256);
             memcpy(g_pesinfo.AFS_0_text, startQuote + 1, endQuote - startQuote - 1);
 		}
 		else if (lstrcmp(name, "0_sound.afs")==0)
@@ -257,6 +258,7 @@ void ReadPatchInfo()
 			char* endQuote = strstr(startQuote + 1, "\"");
 			if (endQuote == NULL) continue;
 
+			ZeroMemory(g_pesinfo.AFS_0_sound, 256);
             memcpy(g_pesinfo.AFS_0_sound, startQuote + 1, endQuote - startQuote - 1);
 		}
 		else if (lstrcmp(name, "+_text.afs")==0)
@@ -266,6 +268,7 @@ void ReadPatchInfo()
 			char* endQuote = strstr(startQuote + 1, "\"");
 			if (endQuote == NULL) continue;
 				
+			ZeroMemory(g_pesinfo.AFS_L_text, 256);
             memcpy(g_pesinfo.AFS_L_text, startQuote + 1, endQuote - startQuote - 1);
 		}
 		else if (lstrcmp(name, "+_sound.afs")==0)
@@ -275,6 +278,7 @@ void ReadPatchInfo()
 			char* endQuote = strstr(startQuote + 1, "\"");
 			if (endQuote == NULL) continue;
 
+			ZeroMemory(g_pesinfo.AFS_L_sound, 256);
             memcpy(g_pesinfo.AFS_L_sound, startQuote + 1, endQuote - startQuote - 1);
 		}
 	}

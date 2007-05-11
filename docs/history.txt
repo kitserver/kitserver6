@@ -1,6 +1,12 @@
 Kitserver 6 HISTORY notes
 =========================
 
+2007-05-11
+----------
+v6.5.2
+- fserv: fixed crash for players with a skin color different from 1 (WE:PES 2007)
+- kserv: disabled the use of gloves for this version to avoid some crashes
+
 
 2007-04-14
 ----------

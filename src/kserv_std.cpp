@@ -6693,7 +6693,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
 
         BITMAPINFO* tex = NULL;
         DWORD texSize = 0;
-
+/*
         // if goalkeeper, extra steps needed:
         if (IsGK(fileId)) {
             // check for gloves
@@ -6717,7 +6717,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
                     break;
             }
         }
-        
+*/ 
         TRACE(&k_mydll,"JuceUniDecode done");
 	}
 	
