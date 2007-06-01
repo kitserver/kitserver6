@@ -4444,6 +4444,11 @@ void ApplyGlovesDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
 	DWORD bitsOff = palOff + palSize;
+	
+	if (numColors != 256 || bih->biWidth != 64 || bih->biHeight != 128) {
+		Log(&k_mydll, "Unsupported format for the gloves.");
+		return;
+	}
 
     BYTE* largeGloves = (BYTE*)orgKit + orgKit->toc[2];
 
@@ -4653,41 +4658,32 @@ void applyKitMask(D3DLOCKED_RECT* dest, D3DLOCKED_RECT* src, char* maskfilename,
 	return;
 }
 
+
+// color 1 is alpha-blended over color 2
+DWORD blendColors(DWORD color1, DWORD color2)
+{
+	BYTE alpha1 =  (color1 & 0xff000000) >> 24;
+
+	if (alpha1 == 0) return color2;		// transparent overlay
+	if (alpha1 == 255) return ((color1 & 0xffffff) | (color2 & 0xff000000));	// opaque overlay
+		
+	BYTE redValue = ((color1 & 0xff0000) * alpha1 + (color2 & 0xff0000) * (255 - alpha1)) / 0xff0000;
+	BYTE greenValue = ((color1 & 0xff00) * alpha1 + (color2 & 0xff00) * (255 - alpha1)) / 0xff00;
+	BYTE blueValue = ((color1 & 0xff) * alpha1 + (color2 & 0xff) * (255 - alpha1)) / 0xff;
+
+	DWORD alpha2 =  color2 & 0xff000000;	// keep the original alpha
+		
+	return (alpha2 | (redValue << 16) | (greenValue << 8) | blueValue);
+}
+
+
 void applyOverlay(D3DLOCKED_RECT* dest, char* overlayfilename, D3DSURFACE_DESC* desc)
 {
-	int i, x, y;
-	
-	D3DXIMAGE_INFO ovImageInfo;
-	if (D3DXGetImageInfoFromFile(overlayfilename, &ovImageInfo) != D3D_OK) return;
-	
-	UINT ovWidth = ovImageInfo.Width;
-	UINT ovHeight = ovImageInfo.Height;
-
-	BITMAPINFO* ovTex = NULL;
-	if (ovImageInfo.ImageFileFormat == D3DXIFF_PNG) {
-		LogWithNumber(&k_mydll, "%d bytes loaded", LoadPNGTexture(&ovTex, overlayfilename));
-	} else if (ovImageInfo.ImageFileFormat == D3DXIFF_BMP) {
-		LogWithNumber(&k_mydll, "%d bytes loaded", LoadTexture(&ovTex, overlayfilename));
-	} else {
-		return;
-	}
-	if (!ovTex) return;
-		
-	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)ovTex;
-	BYTE* byOverlay = (BYTE*)ovTex + bih->biSize;
-	DWORD* dwOverlay = (DWORD*)ovTex + bih->biSize;
-	DWORD index = -1;
-	BYTE* pDestRow = NULL;
-	BYTE* pSrcRow = NULL;
-	DWORD pixel = 0;
-
 	UINT width = desc->Width;
 	UINT height = desc->Height;
+
 	IDirect3DTexture8* pOvTexture = NULL;
 	D3DLOCKED_RECT rectOv;
-	
-	WORD bitCount = bih->biBitCount;
-	if (bitCount != 8 && bitCount != 24 && bitCount != 32) goto freeOv3;
 	
 	// create overlay texture
 	if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
@@ -4696,48 +4692,21 @@ void applyOverlay(D3DLOCKED_RECT* dest, char* overlayfilename, D3DSURFACE_DESC* 
             1, desc->Usage, desc->Format, desc->Pool,
             D3DX_DEFAULT, D3DX_DEFAULT,
             0, NULL, NULL, &pOvTexture))) {
-		goto freeOv3;
+		return;
 	}
-	if (!SUCCEEDED(pOvTexture->LockRect(0, &rectOv, NULL, 0))) goto freeOv2;
-
-	if (bitCount == 8) {
-		for (i=0; i<256; i++) {
-			pixel = ((DWORD*)((BYTE*)ovTex + bih->biSize))[i];
-			// allow a difference of 3 for each byte to 0xff00ff (good if color reduction
-			// to 256 colors doesn't keep this value)
-			if (((pixel&0xff0000)>=0xfc0000) && ((pixel&0x00ff00)<=0x000400) && ((pixel&0x0000ff)>=0x0000fc)) {
-				index = i;
-				break;
-			}
-		}
-		LogWithNumber(&k_mydll, "Index: %d", index);		
+	
+	if (!SUCCEEDED(pOvTexture->LockRect(0, &rectOv, NULL, 0))) {
+		pOvTexture->Release();
+		return;
 	}
 
-	pDestRow = (BYTE*)dest->pBits;
-	pSrcRow = (BYTE*)rectOv.pBits;
-	for (y=0; y<height; y++) {
+	BYTE* pDestRow = (BYTE*)dest->pBits;
+	BYTE* pSrcRow = (BYTE*)rectOv.pBits;
+	for (int y = 0; y < height; y++) {
 		DWORD* pDestPixel = (DWORD*)pDestRow;
 		DWORD* pSrcPixel = (DWORD*)pSrcRow;
-		for (x=0; x<width; x++) {
-			pixel = (height-y-1)*ovHeight/height*ovWidth + x*ovWidth/width;
-			switch (bitCount) {
-			case 8:
-				if (byOverlay[pixel + 0x400] != index) {
-					*pDestPixel = *pSrcPixel;
-				}
-				break;
-			case 24:
-				//3 bits only
-				if (byOverlay[3*pixel]!=0xff || byOverlay[3*pixel+1]!=0 || byOverlay[3*pixel+2]!=0xff) {
-					*pDestPixel = *pSrcPixel;
-				}
-				break;
-			case 32:
-				if (*dwOverlay & 0xffffff != 0xff00ff) {
-					*pDestPixel = *pSrcPixel;
-				}
-				break;
-			}
+		for (int x = 0; x < width; x++) {
+			*pDestPixel = blendColors(*pSrcPixel, *pDestPixel);
 			pDestPixel++;
 			pSrcPixel++;
 		}
@@ -4745,20 +4714,12 @@ void applyOverlay(D3DLOCKED_RECT* dest, char* overlayfilename, D3DSURFACE_DESC* 
 		pSrcRow += rectOv.Pitch;
 	}
 		
-	freeOv1:
 	pOvTexture->UnlockRect(0);
-	freeOv2:
 	pOvTexture->Release();
-	freeOv3:
-	if (ovImageInfo.ImageFileFormat == D3DXIFF_PNG) {
-		FreePNGTexture(ovTex);
-	} else {
-		FreeTexture(ovTex);
-	}
 		
 	return;
 }
-	
+
 
 void mixKits(IDirect3DTexture8* pShirtTexture, IDirect3DTexture8* pShortsTexture,
 	IDirect3DTexture8* pSocksTexture, char* overlayfilename, char* maskfilename, int level)
@@ -6693,7 +6654,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
 
         BITMAPINFO* tex = NULL;
         DWORD texSize = 0;
-/*
+
         // if goalkeeper, extra steps needed:
         if (IsGK(fileId)) {
             // check for gloves
@@ -6717,7 +6678,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
                     break;
             }
         }
-*/ 
+
         TRACE(&k_mydll,"JuceUniDecode done");
 	}
 	
