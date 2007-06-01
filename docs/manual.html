@@ -41,11 +41,11 @@ Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
 April 14, 2007<br />
-Module Versions: <a href="#kserv">Kserv 6.5.1</a>, 
+Module Versions: <a href="#kserv">Kserv 6.5.3</a>, 
 <a href="#ballserver">Ballserver 6.5.0</a>,
 <a href="#lodmixer">LOD Mixer 6.5.0</a>,
 <a href="#stadiumserver">Stadium Server 6.5.0</a>,
-<a href="#faceserver">Faceserver 6.5.0</a>,
+<a href="#faceserver">Faceserver 6.5.2</a>,
 <a href="#bootserver">Bootserver 6.5.0</a>
 </div>
 
@@ -59,7 +59,7 @@ Soccer 2007.
 It is a loader and manager for various modules.</p>
 
 <p>
-<a href="#kserv">Kserv Module 6.5.1</a> was historically the first module implemented (that's
+<a href="#kserv">Kserv Module 6.5.3</a> was historically the first module implemented (that's
 where Kitserver got its original name from). It provides an alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
@@ -97,7 +97,7 @@ modes or during online matches.
 </p>
 
 <p>
-<a href="#faceserver">Faceserver Module 6.5.0</a> controls players faces and hair. You can assign a face BIN and a hair BIN
+<a href="#faceserver">Faceserver Module 6.5.2</a> controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
 </p>
@@ -263,7 +263,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kserv">Kserv Module 6.5.1 (kserv.dll)</h2>
+<h2 id="kserv">Kserv Module 6.5.3 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -607,16 +607,16 @@ without storing a new image in your GDB.</p>
 <h4>Overlay</h4>
 <p>Often, teams use the same kits for different tournaments, only with a different
 badge on the sleeves or other modifications. To avoid creating to textures, you can
-use this option to overlay the texture with another one. Transparent parts are marked
-with pink color (RGB 255, 0, 255). However, this doesn't support semi-transparency,
-so a shadow cannot be realized properly. Also make sure to disable anti-aliasing, which
-would cause bad effects as well. Maybe you have an idea yourself for which you need this
-attribute.<br />
+use this option to overlay the texture with another one. The transparency plays a big
+part here: only parts of the overlay texture should be used. This is why theses textures
+have to be saved either as 32 bit or indexed 256 color images in the PNG format. <br />
 As for the mask files, the path is seen as relative to the kit folder and then to the
-<b>uni\overlay</b> folder. It can be any png or bmp file, but it should (but doesn't have to)
+<b>uni\overlay</b> folder. It can be any png file, but it should (but doesn't have to)
 have the same dimensions as the shirt texture.<br />
-Here is an example for an overlay image (only the smiley will be seen on the texture):
-<img src="overlay.png" />
+Here is an example for an overlay image (note that this is NOT an image you can use because it is
+in the GIF format. However, you'll find it as 32 a bit PNG in the sample GDB):
+<img src="overlay.gif" />
+The white parts you see are fully transparent, so only the logos will be visible later.
 </p>
         
 
@@ -1087,7 +1087,7 @@ in "View Stadiums" mode. Gamepad doesn't work.</div>
 
 <!-- ### FACESERVER ### -->
 
-<h2 id="faceserver">FaceServer Module 6.5.0 (fserv.dll)</h2>
+<h2 id="faceserver">FaceServer Module 6.5.2 (fserv.dll)</h2>
 
 <h3>6.1 Introduction</h3>
 <p>
