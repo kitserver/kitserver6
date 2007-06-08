@@ -595,9 +595,9 @@ void UnhookKeyb()
 		g_hKeyboardHook = NULL;
 	};
 	
-	SAFE_DELETE( g_font12 );
-	SAFE_DELETE( g_font16 );
-	SAFE_DELETE( g_font20 );
+	if (g_font12) g_font12->DeleteDeviceObjects();
+	if (g_font16) g_font16->DeleteDeviceObjects();
+	if (g_font20) g_font20->DeleteDeviceObjects();
 	
 	TRACE(&k_kload,"g_font SAFE_DELETED.");
 	return;
