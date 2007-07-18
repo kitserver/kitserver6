@@ -43,7 +43,7 @@ all_apps: apps
 #	copy vista_test.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll clock.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 release:
@@ -185,6 +185,14 @@ psc.obj: psc.cpp psc.h
 
 psc.res: 
 	$(RC) -r -fo psc.res psc.rc
+
+clock.lib: clock.obj
+clock.dll: clock.lib clock.res
+	$(LINK) $(LFLAGS) /out:clock.dll /DLL clock.obj kload.lib clock.res $(LIBS)
+clock.obj: clock.cpp clock.h
+
+clock.res: 
+	$(RC) -r -fo clock.res clock.rc
 
 setupgui.obj: setupgui.cpp setupgui.h
 setup.obj: setup.cpp setup.h setupgui.h
