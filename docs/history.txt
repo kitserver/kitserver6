@@ -1,9 +1,10 @@
 Kitserver 6 HISTORY notes
 =========================
 
-2007-06-01
+2007-06-23
 ----------
 v6.5.3
+- fixed a problem with long delays when quitting the game in Vista
 - kserv: fixed and re-enabled the gloves processing
 - kserv: support of (semi-)transparency for the overlays
 
