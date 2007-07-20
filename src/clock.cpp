@@ -88,7 +88,7 @@ void InitClock()
     bool success = true;
     for (int i=0; i<sizeof(patch_parts)/sizeof(patch_t); i++)
     {
-        success |= apply_patch(patch_parts[i], patch_data);
+        success &= apply_patch(patch_parts[i], patch_data);
     }
     if (success) Log(&k_clock, "Clock patch successfully applied.");
     else Log(&k_clock, "PROBLEM: Unable to apply clock patch.");
