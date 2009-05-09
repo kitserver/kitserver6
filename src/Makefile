@@ -43,7 +43,7 @@ all_apps: apps
 #	copy vista_test.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll clock.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 release:
@@ -145,6 +145,14 @@ stadium.obj: stadium.cpp stadium.h
 
 stadium.res: 
 	$(RC) -r -fo stadium.res stadium.rc
+
+afs2fs.lib: afs2fs.obj crc32.obj afsreader.obj hooklib.obj
+afs2fs.dll: afs2fs.lib afs2fs.res
+	$(LINK) $(LFLAGS) /out:afs2fs.dll /DLL afs2fs.obj crc32.obj afsreader.obj kload.lib hooklib.obj afs2fs.res $(LIBSDLL) d3dx8.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB)
+afs2fs.obj: afs2fs.cpp afs2fs.h utf8.h
+
+afs2fs.res: 
+	$(RC) -r -fo afs2fs.res afs2fs.rc
 
 lodmixer.lib: lodmixer.obj
 lodmixer.dll: lodmixer.lib lodmixer.res

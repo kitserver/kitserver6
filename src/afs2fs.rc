@@ -1,0 +1,33 @@
+#include "windows.h"
+
+VS_VERSION_INFO VERSIONINFO
+	FILEVERSION 6,6,0,0
+	PRODUCTVERSION 6,6,0,0
+	FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+	FILEFLAGS 0x1L
+#else
+	FILEFLAGS 0x0L
+#endif
+	FILEOS 0x40004L
+	FILETYPE 0x1L
+	FILESUBTYPE 0x0L
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE "FileDescription", "AFS2FS Module\0"
+			VALUE "FileVersion", "6.6.0.0\0"
+			VALUE "LegalCopyright", "Copyright © 2005-2009 Juce, Robbie\0"
+			VALUE "Comments", "AFS2FS Module.\r\n\
+This module allows to organize BIN-files into a simple directory \
+structure, instead of inserting them directly into AFS (*.afs) files. \
+So you don't need to worry about managing space or rebuilding AFS.\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1200
+	END
+END

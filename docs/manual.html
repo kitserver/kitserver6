@@ -28,6 +28,7 @@
         tr.newf td {background-color:#efd}
         span.exclam {font-weight:bold;color:#484;}
         span.emph {color:#844;}
+        span.may9 {color:#800;background-color:#fcc;}
         div.hist {color:#888;float:right;}
         span.buttontext {font-weight:bold;color:#000;background-color:#888}
         a.ac{font-weight:bold;}
@@ -40,13 +41,14 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-June 23, 2007<br />
+    <span class="may9">May 9, 2009</span> <span class="emph">(Special Release, dedicated to 64th anniversay of The Great Victory)</span><br />
 Module Versions: <a href="#kserv">Kserv 6.5.3</a>, 
 <a href="#ballserver">Ballserver 6.5.0</a>,
 <a href="#lodmixer">LOD Mixer 6.5.0</a>,
 <a href="#stadiumserver">Stadium Server 6.5.0</a>,
 <a href="#faceserver">Faceserver 6.5.2</a>,
-<a href="#bootserver">Bootserver 6.5.0</a>
+<a href="#bootserver">Bootserver 6.5.0</a>,
+<a href="#afs2fs">AFS2FS 6.6.0</a>
 </div>
 
 
@@ -106,6 +108,13 @@ have a big hard drive of course).
 Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.5.0</a> module, which allows you to 
 assign each player his own boots. <span class="exclam">With bootserver, you are no longer limited
 by 9 slots for boots that the game offers.</span>
+</p>
+
+<p>
+<a href="#afs2fs">AFS2FS Module 6.6.0</a> module allows you to organize your
+patches into folders and files, instead of inserting them into AFS-files. This
+way, you can quickly add/remove patches, and also never worry about needing
+to re-build AFS, because of lack of space for a particular BIN.
 </p>
 
 <p><font color="#FF0000">However, with only Kitserver itself installed you will <b>not</b> see the
@@ -1235,12 +1244,71 @@ properly, you need to go to "Edit Boots" menu in Edit mode, and set the <b>Type 
 "Editable" boots. (One easy way to accomplish this is to reset all boot types to Default).</span>
 </p>
 
+<!-- ### AFS2FS ### -->
+
+<h2 id="afs2fs">AFS2FS Module 6.6.0 (afs2fs.dll)</h2>
+
+<h3>8.1. Introduction</h3>
+<p>
+This module allows to organize your BIN-files into folders on disk, instead of inserting them into AFS (*.afs) files, which is sometimes a pain, and may require a lot of extra disk space.
+</p>
+
+<p>AFS2FS from Kitserver 7 and 8 proved to be a popular tool, so it made sense to *backport* the functionality into Kitserver 6 also. The basic idea to organize BINs into folders that would mirror the game *.afs files, was brought up by several people in the community, so by now it is really hard to attribute it to someone specific. (Although Str@teG was the one who finally convinced me to implement it). From personal experience, i know that people are sometimes reluctant to install big patches that require an AFS-rebuild, not because it's particularly difficult or anything, but because it can be time-consuming and disk-space-hungry. With afs2fs, this is now very easy: you just put the BIN into correct folder and that's it. And, of course, there are no size constraints - the bins can be as large as needed!
+</p>
+
+<p>Another useful feature (which is unique to this version to AFS2FS module, and does not exist in kitservers for later versions of the game), is that multiple root folders are supported, which makes it really easy to manage multiple patches: you can install/uninstall them by dragging the folders and/or modifying the afs2fs.cfg configuration file. You can re-order them if needed, in case of the overlap in content. See the section called "AFS root folders" below for more details.
+</p>
+
+<h3>8.2. How to set up the folders</h3>
+
+<p>
+Let's start with the simplest scenario. In <b>kitserver</b> folder, there should be a <b>dat</b> folder - if it's not there, create it, and then inside "dat", create folders, as needed, named - <b>0_text.afs</b>, <b>0_sound.afs</b>, <b>e_text.afs</b>, and so for. That's where you're going to be putting the BIN-files. 
+</p>
+
+<p class="note">It's important to name the folders correctly: a folder must have exactly the same name as the corresponding AFS-file. For instance, if you call a folder 0_text, instead of 0_text.afs, things will not work.)
+</p>
+
+<h3>8.3. How to name the files</h3>
+
+<p class="devnote">In general, you can name the files whichever way you want, but you must follow one rule: there must be a BIN number in the name, and it must be preceded by an underscore character ('_'). Also, the filenames CANNOT be longer than 63 characters.
+</p>
+
+<p>
+Examples of correctly named files:<br /><br />
+<span style="color:#080;font-weight:bold">unknown_6844.bin</span><br />
+<span style="color:#080;font-weight:bold">ball_7.bin</span><br />
+<span style="color:#080;font-weight:bold">unknow_8</span> (.bin extension is optional)<br />
+<span style="color:#080;font-weight:bold">music_104.adx</span> (a file can have a different extension: .adx is typically used for music and sound files)<br />
+</p>
+
+<p>
+Examples of incorrectly named files:<br /><br />
+<span style="color:#800;font-weight:bold">unnamed10.bin</span> - no underscore symbol before the BIN number.<br />
+<span style="color:#800;font-weight:bold">face.bin</span> - no BIN number.<br />
+</p>
+
+<h3>8.4. AFS "root" folders</h3>
+<p>
+By default, the AFS2FS module expects to find the <b>dat</b> folder inside the <b>kitserver</b> folder, which serves as the single default AFS root. However, it is also possible to have a more flexible configuration. In <b>afs2fs.cfg</b> file, you can speficy the location of your root, which can be anywhere on your hard disk. You can also have multiple roots, which is very useful if you have several patches, and you don't want to lose track of which BINs came from which patches (so that you can easily uninstall a patch by just deleting its root folder).
+</p>
+
+<p>Here is an example <b>afs2fs.cfg</b> file, where 3 different roots are configured:</p>
+
+<pre>
+# AFS2FS configuration
+afs.root = "c:\mypes6patch"
+afs.root = "dat"
+afs.root = "patch-RPL"
+</pre>
+
+<p>The order of them is important only if there is overlapping content. Let's say for example that <b>patch-RPL</b> and <b>mypes6patch</b> both have bin #7 for 0_text.afs. (The files themselves can actually be named differently - for example: <i>ball_7.bin</i> and <i>unknown_7</i>, but what matters is that they define the same BIN). In this case, the file coming from the <u>last</u> root gets used - in this example, it will be the BIN from <b>patch-RPL</b>.</p>
+
 
 <!-- ### ADVANCED CONFIGURATION ### -->
 
 <h2 id="advconfig">Advanced configuration</h2>
 
-<h3>8.1. Master configuration file: kload.cfg</h3>
+<h3>9.1. Master configuration file: kload.cfg</h3>
 
 <p>
 Typically, you wouldn't need to modify that, unless you're running into problems, or
@@ -1255,17 +1323,18 @@ do that by modifying the <b>kload.cfg</b> file. Here's how the default config lo
 gdb.dir = ".\"
 ReservedMemory=55000000
 
-DLL.num = 10
+DLL.num = 11
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
-DLL.2 = "kitserver\kserv.dll"
-DLL.3 = "kitserver\bserv.dll"
-DLL.4 = "kitserver\lodmixer.dll"
-DLL.5 = "kitserver\dxtools.dll"
-DLL.6 = "kitserver\stadium.dll"
-DLL.7 = "kitserver\fserv.dll"
-DLL.8 = "kitserver\bootserv.dll"
-DLL.9 = "kitserver\psc.dll"
+DLL.2 = "kitserver\afs2fs.dll"
+DLL.3 = "kitserver\kserv.dll"
+DLL.4 = "kitserver\bserv.dll"
+DLL.5 = "kitserver\lodmixer.dll"
+DLL.6 = "kitserver\dxtools.dll"
+DLL.7 = "kitserver\stadium.dll"
+DLL.8 = "kitserver\fserv.dll"
+DLL.9 = "kitserver\bootserv.dll"
+DLL.10 = "kitserver\psc.dll"
 
 # DirectX options
 dx.force-SW-TnL = 0
@@ -1281,17 +1350,18 @@ just comment it out with a "#" symbol at the beginning of the line:
 </p>
 
 <pre>
-DLL.num = 10
+DLL.num = 11
 DLL.0 = "kitserver\zlib1.dll"
 DLL.1 = "kitserver\libpng13.dll"
-#DLL.2 = "kitserver\kserv.dll"
-DLL.3 = "kitserver\bserv.dll"
-DLL.4 = "kitserver\lodmixer.dll"
-DLL.5 = "kitserver\dxtools.dll"
-DLL.6 = "kitserver\stadium.dll"
-DLL.7 = "kitserver\fserv.dll"
-DLL.8 = "kitserver\bootserv.dll"
-DLL.9 = "kitserver\psc.dll"
+DLL.2 = "kitserver\afs2fs.dll"
+#DLL.3 = "kitserver\kserv.dll"
+DLL.4 = "kitserver\bserv.dll"
+DLL.5 = "kitserver\lodmixer.dll"
+DLL.6 = "kitserver\dxtools.dll"
+DLL.7 = "kitserver\stadium.dll"
+DLL.8 = "kitserver\fserv.dll"
+DLL.9 = "kitserver\bootserv.dll"
+DLL.10 = "kitserver\psc.dll"
 
 </pre>
 

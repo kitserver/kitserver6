@@ -1,6 +1,13 @@
 Kitserver 6 HISTORY notes
 =========================
 
+
+2009-05-09
+----------
+v6.6.0
+- afs2fs: backported from newer kitservers. Multiple roots support.
+
+
 2007-06-23
 ----------
 v6.5.3
