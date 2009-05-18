@@ -16,49 +16,53 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 //extern KLOAD_CONFIG g_config;
 
-#define CODELEN 10
+#define CODELEN 11
 enum {
-    C_NEWFILEFROMAFS_CS, C_ALLOCATEBUFFERS_CS, C_AFTERFILEFROMAFS_CS, C_FILEFROMAFS_JUMPHACK,
+    C_NEWFILEFROMAFS_CS, C_NEWFILEFROMAFS2_CS,
+    C_ALLOCATEBUFFERS_CS, C_AFTERFILEFROMAFS_CS, C_FILEFROMAFS_JUMPHACK,
     C_UNIDECODE_CS, C_UNPACK, C_UNPACK_CS, C_MULTI_UNPACK_CS,
-    C_READFILE_CS, C_ALLOCMEM_CS,
+    C_READFILE_CS, C_ALLOCMEM_CS, 
 };
 static DWORD codeArray[][CODELEN] = {
     // PES6
     {
-        0x65b63f, 0x45a607, 0x65b668, 0,
+        0x65b63f, 0x8a4c36,
+        0x45a607, 0x65b668, 0,
         0x8b1983, 0x8cd490, 0x65b176, 0x8cd469,
         0x44c014, 0x65b152,
     },
     // PES6 1.10
     {
-        0x65b831, 0x45a657, 0x65b8a7, 0x65b85b,
+        0x65b831, 0x8a4da6,
+        0x45a657, 0x65b8a7, 0x65b85b,
         0x8b1a63, 0x8cd580, 0x65b216, 0x8cd559,
         0x44c064, 0x65b1f2,
     },
     // WE2007
     {
-        0x65b67f, 0x45a697, 0x65b6a8, 0,
+        0x65b67f, 0x8a54c6,
+        0x45a697, 0x65b6a8, 0,
         0x8b2183, 0x8cdc60, 0x65b1b6, 0x8cdc39,
         0x44c0a4, 0x65b192,
     },
 };
 
-#define DATALEN 1
+#define DATALEN 2
 enum {
-    AFS_PAGELEN_TABLE,
+    AFS_PAGELEN_TABLE, FILEINFO_BASE,
 };
 static DWORD dataArray[][DATALEN] = {
     // PES6
     {
-        0x3b5cbc0,
+        0x3b5cbc0, 0x1246860,
     },
     // PES6 1.10
     {
-        0x3b5dbc0,
+        0x3b5dbc0, 0x1247860,
     },
 	// WE2007
     {
-        0x3b57640,
+        0x3b57640, 0x12412e0,
     },
 };
 
@@ -99,11 +103,18 @@ std::hash_map<DWORD,GETFILEINFO*> g_Files;
 std::hash_map<DWORD,GETFILEINFO*>::iterator g_FilesIterator;
 
 std::hash_map<DWORD,GETFILEINFO*> g_addressMap;
+std::hash_map<DWORD,GETFILEINFO*> _fileInfoMap;
+std::hash_map<DWORD,GETFILEINFO*> _fileOpMap;
+DWORD _lastFileId = -1;
 
 #define HASREPLACEBUFFER (lastGetFileInfo->replaceBuf != NULL && lastGetFileInfo->replaceSize > 0)
 #define NEEDSUNPACK (lastGetFileInfo->needsUnpack)
 #define MAP_FIND(map,key) map[key]
 #define MAP_CONTAINS(map,key) (map.find(key)!=map.end())
+DWORD _fileInfoAddr;
+
+void newFileFromAfsCallPoint();
+void afsNewFileFromAFS2(DWORD* fileId);
 
 //--------------------------------------------
 //----------- END OF DEFINITIONS ------------
@@ -131,6 +142,27 @@ KEXPORT void InitAfsReplace()
     }
     
     return;
+}
+
+KEXPORT void HookCallPoint(DWORD addr, void* func, int codeShift, int numNops, bool addRetn)
+{
+    DWORD target = (DWORD)func + codeShift;
+	if (addr && target)
+	{
+	    BYTE* bptr = (BYTE*)addr;
+	    DWORD protection = 0;
+	    DWORD newProtection = PAGE_EXECUTE_READWRITE;
+	    if (VirtualProtect(bptr, 16, newProtection, &protection)) {
+	        bptr[0] = 0xe8;
+	        DWORD* ptr = (DWORD*)(addr + 1);
+	        ptr[0] = target - (DWORD)(addr + 5);
+            // padding with NOPs
+            for (int i=0; i<numNops; i++) bptr[5+i] = 0x90;
+            if (addRetn)
+                bptr[5+numNops]=0xc3;
+	        TRACE2X(&k_kload, "Function (%08x) HOOKED at address (%08x)", target, addr);
+	    }
+	}
 }
 
 KEXPORT void HookAfsReplace()
@@ -171,6 +203,9 @@ KEXPORT void HookAfsReplace()
         }
 	}
 	
+    HookCallPoint(code[C_NEWFILEFROMAFS2_CS], newFileFromAfsCallPoint, 
+            6, 1, false);
+    _fileInfoAddr = data[FILEINFO_BASE];
 	return;
 }
 
@@ -265,6 +300,7 @@ DWORD afsNewFileFromAFS()
 	DWORD infoBlock, res;
 	__asm mov infoBlock, esi
 	INFOBLOCK* ib = (INFOBLOCK*)infoBlock;
+    //LogWithNumber(&k_kload, "ib->FileID = %08x", ib->FileID);
 	
 	lastGetFileInfo = (GETFILEINFO*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(GETFILEINFO));
 	
@@ -307,12 +343,91 @@ DWORD afsNewFileFromAFS()
 	return MasterCallNext();
 }
 
+void newFileFromAfsCallPoint()
+{
+    __asm {
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push edx
+        push esi
+        push edi
+        add ecx, _fileInfoAddr
+        push ecx 
+        push ecx
+        call afsNewFileFromAFS2
+        add esp, 4 // pop parameters
+        pop ecx 
+        mov ecx,[ecx]
+        pop edi
+        pop esi
+        pop edx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        retn
+    }
+}
+
+// From here, there is one call per loaded file. The values
+// inside the structure can be changed, so that various scenarios
+// are possible:
+// - replacing a file,
+// - changing the file which is loaded to another one from the AFS,
+// - both (like for fserv, where the fileId is not valid but a special id)
+// - mark a file to be observed until it is unpacked
+void afsNewFileFromAFS2(DWORD* fileId)
+{
+    LogWithNumber(&k_kload, "afsNewFileFromAFS2:: fileId = %08x", *fileId);
+	
+	lastGetFileInfo = (GETFILEINFO*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(GETFILEINFO));
+	
+	// Fill the structure
+	lastGetFileInfo->uniqueId = nextUniqueId;
+	lastGetFileInfo->isProcessed = false;
+	lastGetFileInfo->fileId = lastGetFileInfo->oldFileId = *fileId;
+	lastGetFileInfo->replaceBuf = NULL;
+	lastGetFileInfo->replaceSize = 0;
+	lastGetFileInfo->firstPage = 0;
+	lastGetFileInfo->needsUnpack = false;
+	
+	nextUniqueId = (nextUniqueId == 0xffffffff)?0 : nextUniqueId + 1;
+	
+	// This is the call to the modules where parameters can be changed
+	// only isProcessed and fileId should be changed directly, to replace
+	// a file with other data, use makeReplaceBuffer() or loadReplaceFile()
+	for (vector<afsreplace_callback_t>::iterator it = _afsreplace_vec.begin(); it != _afsreplace_vec.end(); it++) {
+		(*it)(lastGetFileInfo);
+	}
+
+	if (lastGetFileInfo->fileId != lastGetFileInfo->oldFileId) {
+		*fileId = lastGetFileInfo->fileId;
+		
+		LogWithTwoNumbers(&k_kload, "Replace fileId: 0x%x -> 0x%x", 
+                lastGetFileInfo->oldFileId, lastGetFileInfo->fileId);
+	}
+
+    // store in a map for later use
+    if (lastGetFileInfo->isProcessed && lastGetFileInfo->replaceBuf!=NULL)
+        _fileInfoMap[lastGetFileInfo->fileId] = lastGetFileInfo;
+    else 
+        _fileInfoMap.erase(lastGetFileInfo->fileId);
+}
+
 // Change the size here, if a replacing buffer is given
 bool afsGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
 {
+    // remember last file ID
+    _lastFileId = ((afsId<<16)&0xffff0000)|(fileId&0xffff);
+
+    //LogWithTwoNumbers(&k_kload, "GetNumPages: (%d,%d)", afsId, fileId);
 	if (!lastGetFileInfo) return false;
 	if (!HASREPLACEBUFFER) return false;
 
+    //LogWithTwoNumbers(&k_kload, "GetNumPages: %08x, %08x", 
+    //        (DWORD)lastGetFileInfo, (DWORD)HASREPLACEBUFFER);
 	*retval = lastGetFileInfo->replaceSize / 0x800 + 1;
 	return true;
 }
@@ -326,6 +441,8 @@ DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 	// we don't need this if we don't want to replace the file
 	if (!HASREPLACEBUFFER && !NEEDSUNPACK) return false;
 	
+    LogWithTwoNumbers(&k_kload, "AllocateBuffers: %08x, %08x", 
+            (DWORD)lastGetFileInfo, (DWORD)HASREPLACEBUFFER);
 	DWORD bufHeader = 0;
 	
 	try {
@@ -355,6 +472,7 @@ DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 		g_Files.erase(bufHeader);
 	}
 	// in ReadFile, we can find the GETFILEINFO for the loaded file with that
+    strncpy(lastGetFileInfo->fileName, (char*)(bufHeader + 0x60), 0x200);
 	g_Files[bufHeader] = lastGetFileInfo;
 	
 	return res;
@@ -378,6 +496,76 @@ DWORD afsAfterFileFromAFS(DWORD retAddr, DWORD infoBlock)
 	return res;
 }
 
+DWORD GetAfsId(char* shortName)
+{
+    for (int i=0; i<8; i++)
+    {
+        char* afsData = (char*)(((DWORD*)data[AFS_PAGELEN_TABLE])[i]);
+        if (afsData==NULL)
+            continue;
+        char* name = afsData + 0x10;
+        if (strncmp(shortName,name,20)==0)
+            return i;
+    }
+    return -1;
+}
+
+bool GetBinInfo(DWORD afsId, DWORD currPage, DWORD& binId, DWORD& firstPage)
+{
+    BYTE* afsData = (BYTE*)(((DWORD*)data[AFS_PAGELEN_TABLE])[afsId]);
+    WORD numFiles = *(WORD*)(afsData + 0x1a);
+    DWORD page = *(DWORD*)(afsData + 0x118);
+    for (int i=0; i<numFiles; i++)
+    {
+        DWORD numPages = *(DWORD*)(afsData + 0x11c + i*4);
+        if (page + numPages > currPage)
+        {
+            binId = i;
+            firstPage = page;
+            return true;
+        }
+        page += numPages;
+    }
+    return false;
+}
+
+GETFILEINFO* FindFileInfo(BYTE* bufHeader)
+{
+    char* afsFileName = (char*)(bufHeader + 0x60);
+    DWORD page = *(DWORD*)(bufHeader + 0x1c);
+    char* shortName = afsFileName + strlen(afsFileName);
+    while (*(shortName-1)!='\\') shortName--;
+
+    DWORD afsId = GetAfsId(shortName);
+    //LogWithString(&k_kload, "FindFileInfo: shortName=%s", shortName);
+    //LogWithNumber(&k_kload, "FindFileInfo: afsId=%d", afsId);
+    //LogWithNumber(&k_kload, "FindFileInfo: page=%08x", page);
+    DWORD binId = -1, firstPage = -1;
+    if (GetBinInfo(afsId, page, binId, firstPage))
+    {
+        //LogWithTwoNumbers(&k_kload, "binId = %08x, firstPage=%08x",
+        //        binId, firstPage);
+        DWORD fileId = ((afsId<<16)&0xffff0000)|(binId&0xffff);
+        //LogWithNumber(&k_kload, "fileId = %08x", fileId);
+        hash_map<DWORD,GETFILEINFO*>::iterator git;
+        git = _fileInfoMap.find(fileId);
+        if (git != _fileInfoMap.end())
+        {
+            GETFILEINFO* gfi = git->second;
+            if (gfi->fileId != fileId)
+            {
+                _fileInfoMap.erase(fileId);
+                return NULL;
+            }
+            gfi->firstPage = firstPage;
+            //LogWithNumber(&k_kload, "gfi->fileId = %08x", gfi->fileId);
+            //LogWithNumber(&k_kload, "gfi->firstPage = %08x", gfi->firstPage);
+            //LogWithNumber(&k_kload, "gfi->replaceSize = %08x", gfi->replaceSize);
+            return gfi;
+        }
+    }
+    return NULL;
+}
 
 
 // the calls to ReadFile can happen independently from the functions above
@@ -389,22 +577,65 @@ BOOL STDMETHODCALLTYPE afsReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberO
   LPDWORD lpNumberOfBytesRead,  LPOVERLAPPED lpOverlapped)
 {
 	DWORD lastBufHeader = 0;
-	
 	// important to connect this call to the corresponding GETFILEINFO structure
 	__asm mov lastBufHeader, esi
     //LogWithNumber(&k_kload, "afsReadFile: lastBufHeader = %08x", lastBufHeader);
 
+    ///////////////DEBUG
+	////DWORD offs = SetFilePointer(hFile,0,0,FILE_CURRENT);
+    ////if (offs >= 0x9376800 && offs < 0x966f000)
+    ////{
+    ////    LogWithNumber(&k_kload, "ReadFile: BinID: 71, Offset: %08x", offs);
+    ////    //__asm { int 3 }
+    ////}
+
 	// call original function	
 	BOOL result=ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 
+    //LogWithNumber(&k_kload, "lastBufHeader = %08x", lastBufHeader);
+
 	// check if we have some data to replace this file
-	if (MAP_CONTAINS(g_Files, lastBufHeader)) {
-		GETFILEINFO* gfi = g_Files[lastBufHeader];
-		
+    GETFILEINFO* gfi = NULL;
+    hash_map<DWORD,GETFILEINFO*>::iterator fit;
+    fit = g_Files.find(lastBufHeader);
+	if (fit != g_Files.end())
+    {
+		gfi = fit->second;
+        if (strncmp((char*)(lastBufHeader+0x60),gfi->fileName,0x200)!=0)
+        {
+            LogWithTwoStrings(&k_kload, "Different filenames: {%s} vs {%s}",
+                    (char*)(lastBufHeader+0x60),gfi->fileName);
+            gfi = NULL; // reset on different filename
+            g_Files.erase(lastBufHeader);
+        }
+        else if (_lastFileId != gfi->fileId)
+        {
+            LogWithTwoNumbers(&k_kload, "Different fileIds: {%08x} vs {%08x}",
+                    _lastFileId,gfi->fileId);
+            gfi = NULL; // reset on different IDs
+            g_Files.erase(lastBufHeader);
+        }
+    }
+    if (gfi==NULL)
+    {
+        gfi = FindFileInfo((BYTE*)lastBufHeader);
+        if (gfi!=NULL) 
+        {
+            strncpy(gfi->fileName, (char*)(lastBufHeader + 0x60), 0x200);
+            g_Files[lastBufHeader] = gfi;
+        }
+    }
+
+    if (gfi != NULL) {
 		// find out which page we are reading
 		DWORD currPage = *(DWORD*)(lastBufHeader + 0x1c);
 		
 		if (gfi->replaceBuf != NULL && gfi->replaceSize > 0) {
+            //LogWithNumber(&k_kload, "currPage = %08x", currPage);
+            //LogWithNumber(&k_kload, "gfi->fileId = %08x", gfi->fileId);
+            //LogWithNumber(&k_kload, "gfi->firstPage = %08x", gfi->firstPage);
+            //LogWithNumber(&k_kload, "gfi->replaceBuf = %08x", (DWORD)gfi->replaceBuf);
+            //LogWithNumber(&k_kload, "gfi->replaceSize = %08x", (DWORD)gfi->replaceSize);
 			// replace with contents of the buffer
 			DWORD readingPos = (currPage - gfi->firstPage) * 0x800;
 			DWORD bytesLeft = gfi->replaceSize - readingPos;
@@ -662,7 +893,7 @@ KEXPORT bool loadReplaceFile(char* filename)
 		CloseHandle(hFile);
 		return false;
 	}
-	
+
 	if (ReadFile(hFile, repBuf, fileSize, &bytesRead, NULL) == 0) {
 		LogWithString(&k_kload, "Couldn't read %s", filename);
 		CloseHandle(hFile);

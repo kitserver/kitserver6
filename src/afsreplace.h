@@ -8,6 +8,7 @@ typedef struct _GETFILEINFO {
 	void* replaceBuf;
 	DWORD replaceSize;
 	DWORD firstPage;
+    char fileName[0x200];
 	// unpacking
 	bool needsUnpack;
 } GETFILEINFO;

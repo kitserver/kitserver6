@@ -27,7 +27,7 @@ KMOD k_afs = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
 
 // cache
 #define DEFAULT_FILENAMELEN 64
-#define MAX_ITEMS 12000
+#define MAX_ITEMS 16000
 #define MAX_FOLDERS 10
 #define NUM_SONGS 60
 #define NUM_BALLS 13
@@ -159,7 +159,7 @@ void InitializeFileNameCache()
         if (hff == INVALID_HANDLE_VALUE) 
         {
             // none found.
-            return;
+            continue;
         }
         while(true)
         {
@@ -206,11 +206,14 @@ void InitializeFileNameCache()
                                         _info_cache.insert(pair<string,BYTE*>(key, entries));
                                     }
 
-                                    INFO_CACHE_ENTRY_STRUCT* entry = (INFO_CACHE_ENTRY_STRUCT*)(entries + binId*(sizeof(char*) + sizeof(char)*_config._fileNameLen));
-
-                                    // print message, if filename is too long
-                                    if (strlen(fData1.cFileName) >= _config._fileNameLen)
+                                    if (binId >= GetNumItems(folder))
                                     {
+                                        // binID too large
+                                        LogWithStringAndNumber(&k_afs, "ERROR: bin ID for filename \"%s\" is too large. Maximum bin ID for this folder is: %d", (char*)fData1.cFileName, GetNumItems(folder)-1);
+                                    }
+                                    else if (strlen(fData1.cFileName) >= _config._fileNameLen)
+                                    {
+                                        // file name too long
                                         LogWithTwoStrings(&k_afs, "ERROR: filename too long: \"%s\" (in folder: %s)", 
                                                 (char*)fData1.cFileName, (char*)folder.c_str());
                                         LogWithTwoNumbers(&k_afs, "ERROR: length = %d chars. Maximum allowed length: %d chars.", 
@@ -218,6 +221,8 @@ void InitializeFileNameCache()
                                     }
                                     else
                                     {
+                                        INFO_CACHE_ENTRY_STRUCT* entry = (INFO_CACHE_ENTRY_STRUCT*)(entries 
+                                                + binId*(sizeof(char*) + sizeof(char)*_config._fileNameLen));
                                         // put filename into cache
                                         strncpy(entry->fileName, fData1.cFileName, _config._fileNameLen-1);
                                         // put foldername into cache
