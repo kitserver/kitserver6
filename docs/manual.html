@@ -28,7 +28,6 @@
         tr.newf td {background-color:#efd}
         span.exclam {font-weight:bold;color:#484;}
         span.emph {color:#844;}
-        span.may9 {color:#800;background-color:#fcc;}
         div.hist {color:#888;float:right;}
         span.buttontext {font-weight:bold;color:#000;background-color:#888}
         a.ac{font-weight:bold;}
@@ -41,14 +40,14 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-    <span class="may9">May 9, 2009</span> <span class="emph">(Special Release, dedicated to 64th anniversay of The Great Victory)</span><br />
-Module Versions: <a href="#kserv">Kserv 6.5.3</a>, 
-<a href="#ballserver">Ballserver 6.5.0</a>,
-<a href="#lodmixer">LOD Mixer 6.5.0</a>,
-<a href="#stadiumserver">Stadium Server 6.5.0</a>,
-<a href="#faceserver">Faceserver 6.5.2</a>,
-<a href="#bootserver">Bootserver 6.5.0</a>,
-<a href="#afs2fs">AFS2FS 6.6.0</a>
+    <span class="emph">May 19, 2009</span><br />
+Module Versions: <a href="#kserv">Kserv 6.6.4</a>, 
+<a href="#ballserver">Ballserver 6.6.4</a>,
+<a href="#lodmixer">LOD Mixer 6.6.4</a>,
+<a href="#stadiumserver">Stadium Server 6.6.4</a>,
+<a href="#faceserver">Faceserver 6.6.4</a>,
+<a href="#bootserver">Bootserver 6.6.4</a>,
+<a href="#afs2fs">AFS2FS 6.6.4</a>
 </div>
 
 
@@ -61,7 +60,7 @@ Soccer 2007.
 It is a loader and manager for various modules.</p>
 
 <p>
-<a href="#kserv">Kserv Module 6.5.3</a> was historically the first module implemented (that's
+<a href="#kserv">Kserv Module 6.6.4</a> was historically the first module implemented (that's
 where Kitserver got its original name from). It provides an alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
@@ -78,20 +77,20 @@ teams - licensed and unlicensed!</span>
 </p>
 
 <p>
-The <a href="#ballserver">BallServer Module 6.5.0</a> does similar things to KitServer, it offers the
+The <a href="#ballserver">BallServer Module 6.6.4</a> does similar things to KitServer, it offers the
 possibility of chosing a ball from the GDB. Of course it is possible to store
 as many balls as you like. You can use different texture sizes for the balls: standard - 256x256,
 and also 512x512 and 1024x1024.
 </p>
 
 <p>
-<a href="#lodmixer">LOD Mixer Module 6.5.0</a> allows to make some tweaks to the graphics engine of the game, such
+<a href="#lodmixer">LOD Mixer Module 6.6.4</a> allows to make some tweaks to the graphics engine of the game, such
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
 </p>
 
-<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server 6.5.0</a>.
+<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server 6.6.4</a>.
 With it, you can organize your stadiums in GDB and again have as large collection as you wish,
 only limited by your hard disk space. Another benefit of using Stadium Server is that you can pick the stadium
 in situations where the game itself doesn't offer you such an option: for example in league, cup
@@ -99,19 +98,19 @@ modes or during online matches.
 </p>
 
 <p>
-<a href="#faceserver">Faceserver Module 6.5.2</a> controls players faces and hair. You can assign a face BIN and a hair BIN
+<a href="#faceserver">Faceserver Module 6.6.4</a> controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
 </p>
 
 <p>
-Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.5.0</a> module, which allows you to 
+Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.6.4</a> module, which allows you to 
 assign each player his own boots. <span class="exclam">With bootserver, you are no longer limited
 by 9 slots for boots that the game offers.</span>
 </p>
 
 <p>
-<a href="#afs2fs">AFS2FS Module 6.6.0</a> module allows you to organize your
+<a href="#afs2fs">AFS2FS Module 6.6.4</a> module allows you to organize your
 patches into folders and files, instead of inserting them into AFS-files. This
 way, you can quickly add/remove patches, and also never worry about needing
 to re-build AFS, because of lack of space for a particular BIN.
@@ -272,7 +271,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kserv">Kserv Module 6.5.3 (kserv.dll)</h2>
+<h2 id="kserv">Kserv Module 6.6.4 (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -587,7 +586,7 @@ But using the the table above, you can find out easily which mask is the correct
 If you specify the "mask" attribute in the config.txt, the given path will first be seen as relative
 to the kit folder (like <b>uni\TeamName\pa</b>), then to the <b>uni\masks</b> folder.</p>
 <div class="NOTE"><b>Without the (default) mask file, no kit-mixing is possible!</b> So if you
-upgrade to version 6.5.0, you also have to copy the "GDB\uni\masks" folder.<br />
+upgrade to version 6.5.0 or newer, you also have to copy the "GDB\uni\masks" folder.<br />
 If you need to create your own mask, please notice that it has to be an
 8-bit paletted PNG image. The colors are plain blue and plain yellow.</div>
 
@@ -730,7 +729,7 @@ number of available pages.
 
 <!-- ### BALLSERVER ### -->
 
-<h2 id="ballserver">Ballserver Module 6.5.0 (bserv.dll)</h2>
+<h2 id="ballserver">Ballserver Module 6.6.4 (bserv.dll)</h2>
 
 <h3>3.1 Quick summary of the features</h3>
 
@@ -874,7 +873,7 @@ in the preview. However, it has effect on the ball which is chosen for the follo
 
 <!-- ### LODMIXER ### -->
 
-<h2 id="lodmixer">LOD Mixer Module 6.5.0 (lodmixer.dll)</h2>
+<h2 id="lodmixer">LOD Mixer Module 6.6.4 (lodmixer.dll)</h2>
 
 <h3>4.1 How to use</h3>
 
@@ -910,7 +909,7 @@ let you can change the value.  The configuration is saved automatically.
 </p>
 
 <!-- ### STADIUM SERVER ### -->
-<h2 id="stadiumserver">Stadium Server Module 6.5.0 (stadium.dll)</h2>
+<h2 id="stadiumserver">Stadium Server Module 6.6.4 (stadium.dll)</h2>
 <h3>5.1 Introduction</h3>
 <p>
 Stadium Server is a plug-in module for Kitserver. It allows to use additional stadiums, which
@@ -1096,7 +1095,7 @@ in "View Stadiums" mode. Gamepad doesn't work.</div>
 
 <!-- ### FACESERVER ### -->
 
-<h2 id="faceserver">FaceServer Module 6.5.2 (fserv.dll)</h2>
+<h2 id="faceserver">FaceServer Module 6.6.4 (fserv.dll)</h2>
 
 <h3>6.1 Introduction</h3>
 <p>
@@ -1148,7 +1147,7 @@ one which looks best for you.</p>
 
 <!-- ### Bootserver ### -->
 
-<h2 id="bootserver">Bootserver module 6.5.0 (bootserv.dll)</h2>
+<h2 id="bootserver">Bootserver module 6.6.4 (bootserv.dll)</h2>
 
 <h3>7.1. Introduction</h3>
 
@@ -1246,7 +1245,7 @@ properly, you need to go to "Edit Boots" menu in Edit mode, and set the <b>Type 
 
 <!-- ### AFS2FS ### -->
 
-<h2 id="afs2fs">AFS2FS Module 6.6.0 (afs2fs.dll)</h2>
+<h2 id="afs2fs">AFS2FS Module 6.6.4 (afs2fs.dll)</h2>
 
 <h3>8.1. Introduction</h3>
 <p>

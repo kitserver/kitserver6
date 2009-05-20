@@ -2,6 +2,13 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2009-05-19
+----------
+v6.6.4
+- kload, afs2fs: fixes for sound support in AFS2FS.
+- full rebuild of all DLLs
+
+
 2009-05-09
 ----------
 v6.6.0

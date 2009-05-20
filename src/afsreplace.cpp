@@ -16,12 +16,12 @@ extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 //extern KLOAD_CONFIG g_config;
 
-#define CODELEN 11
+#define CODELEN 12
 enum {
     C_NEWFILEFROMAFS_CS, C_NEWFILEFROMAFS2_CS,
     C_ALLOCATEBUFFERS_CS, C_AFTERFILEFROMAFS_CS, C_FILEFROMAFS_JUMPHACK,
     C_UNIDECODE_CS, C_UNPACK, C_UNPACK_CS, C_MULTI_UNPACK_CS,
-    C_READFILE_CS, C_ALLOCMEM_CS, 
+    C_READFILE_CS, C_ALLOCMEM_CS, C_CLOSEHANDLE_CS,
 };
 static DWORD codeArray[][CODELEN] = {
     // PES6
@@ -29,21 +29,21 @@ static DWORD codeArray[][CODELEN] = {
         0x65b63f, 0x8a4c36,
         0x45a607, 0x65b668, 0,
         0x8b1983, 0x8cd490, 0x65b176, 0x8cd469,
-        0x44c014, 0x65b152,
+        0x44c014, 0x65b152, 0x44bc6c,
     },
     // PES6 1.10
     {
         0x65b831, 0x8a4da6,
         0x45a657, 0x65b8a7, 0x65b85b,
         0x8b1a63, 0x8cd580, 0x65b216, 0x8cd559,
-        0x44c064, 0x65b1f2,
+        0x44c064, 0x65b1f2, 0x44bccc,
     },
     // WE2007
     {
         0x65b67f, 0x8a54c6,
         0x45a697, 0x65b6a8, 0,
         0x8b2183, 0x8cdc60, 0x65b1b6, 0x8cdc39,
-        0x44c0a4, 0x65b192,
+        0x44c0a4, 0x65b192, 0x44bd0c,
     },
 };
 
@@ -104,8 +104,6 @@ std::hash_map<DWORD,GETFILEINFO*>::iterator g_FilesIterator;
 
 std::hash_map<DWORD,GETFILEINFO*> g_addressMap;
 std::hash_map<DWORD,GETFILEINFO*> _fileInfoMap;
-std::hash_map<DWORD,GETFILEINFO*> _fileOpMap;
-DWORD _lastFileId = -1;
 
 #define HASREPLACEBUFFER (lastGetFileInfo->replaceBuf != NULL && lastGetFileInfo->replaceSize > 0)
 #define NEEDSUNPACK (lastGetFileInfo->needsUnpack)
@@ -115,6 +113,8 @@ DWORD _fileInfoAddr;
 
 void newFileFromAfsCallPoint();
 void afsNewFileFromAFS2(DWORD* fileId);
+void closeHandleCallPoint();
+void afsCloseHandle(DWORD bufHeader);
 
 //--------------------------------------------
 //----------- END OF DEFINITIONS ------------
@@ -205,6 +205,8 @@ KEXPORT void HookAfsReplace()
 	
     HookCallPoint(code[C_NEWFILEFROMAFS2_CS], newFileFromAfsCallPoint, 
             6, 1, false);
+    HookCallPoint(code[C_CLOSEHANDLE_CS], closeHandleCallPoint, 
+            6, 2, false);
     _fileInfoAddr = data[FILEINFO_BASE];
 	return;
 }
@@ -380,7 +382,7 @@ void newFileFromAfsCallPoint()
 // - mark a file to be observed until it is unpacked
 void afsNewFileFromAFS2(DWORD* fileId)
 {
-    LogWithNumber(&k_kload, "afsNewFileFromAFS2:: fileId = %08x", *fileId);
+    //LogWithNumber(&k_kload, "afsNewFileFromAFS2:: fileId = %08x", *fileId);
 	
 	lastGetFileInfo = (GETFILEINFO*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(GETFILEINFO));
 	
@@ -416,12 +418,42 @@ void afsNewFileFromAFS2(DWORD* fileId)
         _fileInfoMap.erase(lastGetFileInfo->fileId);
 }
 
+void closeHandleCallPoint()
+{
+    __asm {
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx 
+        push edx
+        push esi
+        push edi
+        push esi // parameter: bufHeader
+        call afsCloseHandle
+        add esp, 4 // pop parameters
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        mov dword ptr ds:[esi+0x30], 0  //replaced code
+        retn
+    }
+}
+
+void afsCloseHandle(DWORD bufHeader)
+{
+    //LogWithNumber(&k_kload, "afsCloseHandle: bufHeader = %08x", bufHeader);
+    g_Files.erase(bufHeader);
+}
+
 // Change the size here, if a replacing buffer is given
 bool afsGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
 {
-    // remember last file ID
-    _lastFileId = ((afsId<<16)&0xffff0000)|(fileId&0xffff);
-
     //LogWithTwoNumbers(&k_kload, "GetNumPages: (%d,%d)", afsId, fileId);
 	if (!lastGetFileInfo) return false;
 	if (!HASREPLACEBUFFER) return false;
@@ -441,8 +473,8 @@ DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 	// we don't need this if we don't want to replace the file
 	if (!HASREPLACEBUFFER && !NEEDSUNPACK) return false;
 	
-    LogWithTwoNumbers(&k_kload, "AllocateBuffers: %08x, %08x", 
-            (DWORD)lastGetFileInfo, (DWORD)HASREPLACEBUFFER);
+    //LogWithTwoNumbers(&k_kload, "AllocateBuffers: %08x, %08x", 
+    //        (DWORD)lastGetFileInfo, (DWORD)HASREPLACEBUFFER);
 	DWORD bufHeader = 0;
 	
 	try {
@@ -474,7 +506,6 @@ DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 	// in ReadFile, we can find the GETFILEINFO for the loaded file with that
     strncpy(lastGetFileInfo->fileName, (char*)(bufHeader + 0x60), 0x200);
 	g_Files[bufHeader] = lastGetFileInfo;
-	
 	return res;
 }
 
@@ -513,19 +544,23 @@ DWORD GetAfsId(char* shortName)
 bool GetBinInfo(DWORD afsId, DWORD currPage, DWORD& binId, DWORD& firstPage)
 {
     BYTE* afsData = (BYTE*)(((DWORD*)data[AFS_PAGELEN_TABLE])[afsId]);
-    WORD numFiles = *(WORD*)(afsData + 0x1a);
+    WORD numFiles = *(WORD*)(afsData + 8);
     DWORD page = *(DWORD*)(afsData + 0x118);
-    for (int i=0; i<numFiles; i++)
+    DWORD* begin = (DWORD*)(afsData + 0x11c);
+    DWORD* end = (DWORD*)(afsData + 0x11c + sizeof(DWORD)*numFiles);
+    DWORD i=0;
+    for (DWORD* numPages=begin; numPages!=end; numPages++, i++)
     {
-        DWORD numPages = *(DWORD*)(afsData + 0x11c + i*4);
-        if (page + numPages > currPage)
+        if (page + *numPages > currPage)
         {
             binId = i;
             firstPage = page;
             return true;
         }
-        page += numPages;
+        page += *numPages;
     }
+    LogWithTwoNumbers(&k_kload, "Failed to determine bin-info for (%d,%08x)",
+            afsId, currPage);
     return false;
 }
 
@@ -580,19 +615,18 @@ BOOL STDMETHODCALLTYPE afsReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberO
 	// important to connect this call to the corresponding GETFILEINFO structure
 	__asm mov lastBufHeader, esi
     //LogWithNumber(&k_kload, "afsReadFile: lastBufHeader = %08x", lastBufHeader);
+    //LogWithString(&k_kload, "afsReadFile: filename = %s", (char*)(lastBufHeader+0x60));
 
-    ///////////////DEBUG
+    //////////////DEBUG
 	////DWORD offs = SetFilePointer(hFile,0,0,FILE_CURRENT);
     ////if (offs >= 0x9376800 && offs < 0x966f000)
     ////{
     ////    LogWithNumber(&k_kload, "ReadFile: BinID: 71, Offset: %08x", offs);
-    ////    //__asm { int 3 }
+    ////    __asm { int 3 }
     ////}
 
 	// call original function	
 	BOOL result=ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-
-    //LogWithNumber(&k_kload, "lastBufHeader = %08x", lastBufHeader);
 
 	// check if we have some data to replace this file
     GETFILEINFO* gfi = NULL;
@@ -601,22 +635,8 @@ BOOL STDMETHODCALLTYPE afsReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberO
 	if (fit != g_Files.end())
     {
 		gfi = fit->second;
-        if (strncmp((char*)(lastBufHeader+0x60),gfi->fileName,0x200)!=0)
-        {
-            LogWithTwoStrings(&k_kload, "Different filenames: {%s} vs {%s}",
-                    (char*)(lastBufHeader+0x60),gfi->fileName);
-            gfi = NULL; // reset on different filename
-            g_Files.erase(lastBufHeader);
-        }
-        else if (_lastFileId != gfi->fileId)
-        {
-            LogWithTwoNumbers(&k_kload, "Different fileIds: {%08x} vs {%08x}",
-                    _lastFileId,gfi->fileId);
-            gfi = NULL; // reset on different IDs
-            g_Files.erase(lastBufHeader);
-        }
     }
-    if (gfi==NULL)
+    else
     {
         gfi = FindFileInfo((BYTE*)lastBufHeader);
         if (gfi!=NULL) 
