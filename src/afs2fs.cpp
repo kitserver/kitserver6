@@ -409,8 +409,8 @@ void afsAfsReplace(GETFILEINFO* gfi)
 	DWORD afsId = 0, fileId = 0;
 	fileId = splitFileId(gfi->fileId, &afsId);
 	
-    //if (k_afs.debug)
-    //    LogWithTwoNumbers(&k_afs,"afsAfsReplace: afsId=%d, fileId=%d", afsId, fileId);
+    if (k_afs.debug > 1)
+        LogWithTwoNumbers(&k_afs,"afsAfsReplace: afsId=%d, fileId=%d", afsId, fileId);
 
     char filename[1024];
     if (!GetBinFileName(afsId, fileId, filename, 1024))

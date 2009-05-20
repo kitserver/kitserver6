@@ -314,6 +314,7 @@ DWORD afsNewFileFromAFS()
 	lastGetFileInfo->replaceSize = 0;
 	lastGetFileInfo->firstPage = 0;
 	lastGetFileInfo->needsUnpack = false;
+    GETFILEINFO* gfi = lastGetFileInfo;
 	
 	nextUniqueId = (nextUniqueId == 0xffffffff)?0 : nextUniqueId + 1;
 	
@@ -323,22 +324,12 @@ DWORD afsNewFileFromAFS()
 	for (vector<afsreplace_callback_t>::iterator it = _afsreplace_vec.begin(); it != _afsreplace_vec.end(); it++) {
 		(*it)(lastGetFileInfo);
 	}
-/*
-	lastGetFileInfo->fileId = 0x10000 + 6949;
-	
-	if (lastGetFileInfo->fileId == 0x10000 + 6949) {
-		loadReplaceFile("E:\\Pro Evolution Soccer 6\\kitserver\\GDB\\stadiums\\ZZZ - n4d4 arena\\1_day_fine\\stad1_main.bin");
-	}
-*/
-	if (lastGetFileInfo->fileId < 0x10000) {
-		MessageBox(0,"","",0);
-		LogWithNumber(&k_kload,"#sound: %d",lastGetFileInfo->fileId);
-	}
-	if (lastGetFileInfo->fileId != lastGetFileInfo->oldFileId) {
-		ib->FileID = lastGetFileInfo->fileId;
+
+	if (gfi->fileId != gfi->oldFileId) {
+		ib->FileID = gfi->fileId;
 		
-		LogWithTwoNumbers(&k_kload, "Replace fileId: 0x%x -> 0x%x", lastGetFileInfo->oldFileId,
-				lastGetFileInfo->fileId);
+		LogWithTwoNumbers(&k_kload, "Replace fileId: 0x%x -> 0x%x", 
+                gfi->oldFileId, gfi->fileId);
 	}
 		
 	__asm mov esi, infoBlock
@@ -394,6 +385,7 @@ void afsNewFileFromAFS2(DWORD* fileId)
 	lastGetFileInfo->replaceSize = 0;
 	lastGetFileInfo->firstPage = 0;
 	lastGetFileInfo->needsUnpack = false;
+    GETFILEINFO* gfi = lastGetFileInfo;
 	
 	nextUniqueId = (nextUniqueId == 0xffffffff)?0 : nextUniqueId + 1;
 	
@@ -404,18 +396,20 @@ void afsNewFileFromAFS2(DWORD* fileId)
 		(*it)(lastGetFileInfo);
 	}
 
-	if (lastGetFileInfo->fileId != lastGetFileInfo->oldFileId) {
-		*fileId = lastGetFileInfo->fileId;
+    //LogWithTwoNumbers(&k_kload, "afsNewFileFromAFS2: fileId=%08x, lastGetFileInfo=%08x", *fileId, (DWORD)lastGetFileInfo);
+    //LogWithTwoNumbers(&k_kload, "afsNewFileFromAFS2: fileId=%08x, gfi=%08x", *fileId, (DWORD)gfi);
+	if (gfi->fileId != gfi->oldFileId) {
+		*fileId = gfi->fileId;
 		
 		LogWithTwoNumbers(&k_kload, "Replace fileId: 0x%x -> 0x%x", 
-                lastGetFileInfo->oldFileId, lastGetFileInfo->fileId);
+                gfi->oldFileId, gfi->fileId);
 	}
 
     // store in a map for later use
-    if (lastGetFileInfo->isProcessed && lastGetFileInfo->replaceBuf!=NULL)
-        _fileInfoMap[lastGetFileInfo->fileId] = lastGetFileInfo;
+    if (gfi->isProcessed && gfi->replaceBuf!=NULL)
+        _fileInfoMap[gfi->fileId] = gfi;
     else 
-        _fileInfoMap.erase(lastGetFileInfo->fileId);
+        _fileInfoMap.erase(gfi->fileId);
 }
 
 void closeHandleCallPoint()
