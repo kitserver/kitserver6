@@ -43,7 +43,7 @@ all_apps: apps
 #	copy vista_test.exe output
 
 #dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 release:
@@ -201,6 +201,12 @@ clock.obj: clock.cpp clock.h
 
 clock.res: 
 	$(RC) -r -fo clock.res clock.rc
+
+roster.lib: roster.obj md5.obj
+roster.dll: roster.lib roster.res
+	$(LINK) $(LFLAGS) /out:roster.dll /DLL roster.obj md5.obj kload.lib d3dx8.lib roster.res $(LIBS)
+roster.obj: roster.cpp roster.h
+md5.obj: md5.c md5.h
 
 setupgui.obj: setupgui.cpp setupgui.h
 setup.obj: setup.cpp setup.h setupgui.h
