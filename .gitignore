@@ -4,3 +4,10 @@
 # /src/
 /src/setenv.cmd
 /src/output
+/src/*.exe
+/src/*.dll
+/src/*.lib
+/src/*.exp
+/src/*.res
+*.obj
+*~
