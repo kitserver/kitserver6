@@ -122,9 +122,10 @@ bserv_preview.res:
 	$(RC) -r -fo bserv_preview.res bserv_preview.rc
 	
 fserv.lib: fserv.obj
-fserv.dll: fserv.lib fserv.res
-	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj kload.lib fserv.res $(LIBS)
+fserv.dll: fserv.lib fserv_config.obj fserv.res
+	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj fserv_config.obj kload.lib fserv.res $(LIBS) d3dx8.lib
 fserv.obj: fserv.cpp fserv.h
+fserv_config.obj: fserv_config.cpp fserv_config.h
 
 fserv.res: 
 	$(RC) -r -fo fserv.res fserv.rc
