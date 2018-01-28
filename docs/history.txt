@@ -2,6 +2,13 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2018-01-28
+----------
+v6.6.5
+- fserv: HD faces and hair
+- dxtools: support for internal resolution modifier
+
+
 2009-05-19
 ----------
 v6.6.4
