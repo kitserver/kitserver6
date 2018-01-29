@@ -4,10 +4,12 @@ Kitserver 6 HISTORY notes
 
 2018-01-29
 ----------
-v6.6.6
+v6.7.0
 - fserv: HD faces and hair
 - dxtools: support for internal resolution modifier
 - speeder: modify game speed
+- bootserv: fixed crash, when random boots mode was used with no boots in GDB
+- camerazoomer: module by reddwarf to alter camera settings
 
 
 2009-05-19
