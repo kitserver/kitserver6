@@ -40,7 +40,7 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-    <span class="emph">January 28, 2018</span><br />
+    <span class="emph">January 29, 2018</span><br />
 Module Versions: <a href="#kserv">Kserv 6.6.4</a>, 
 <a href="#ballserver">Ballserver 6.6.4</a>,
 <a href="#lodmixer">LOD Mixer 6.6.4</a>,
@@ -48,6 +48,7 @@ Module Versions: <a href="#kserv">Kserv 6.6.4</a>,
 <a href="#faceserver">Faceserver 6.6.5</a>,
 <a href="#bootserver">Bootserver 6.6.4</a>,
 <a href="#afs2fs">AFS2FS 6.6.4</a>
+<a href="#speeder">Speeder 6.6.6</a>
 </div>
 
 
@@ -1343,6 +1344,26 @@ afs.root = "patch-RPL"
 </pre>
 
 <p>The order of them is important only if there is overlapping content. Let's say for example that <b>patch-RPL</b> and <b>mypes6patch</b> both have bin #7 for 0_text.afs. (The files themselves can actually be named differently - for example: <i>ball_7.bin</i> and <i>unknown_7</i>, but what matters is that they define the same BIN). In this case, the file coming from the <u>last</u> root gets used - in this example, it will be the BIN from <b>patch-RPL</b>.</p>
+
+
+<!-- ### SPEEDER ### -->
+
+<h2 id="speeder">Speeder (speeder.dll)</h2>
+
+<p>Not everyone is satisfied with the pace of the gameplay. It must be said that it is not an easy thing to get this aspect of simulating a football match correctly. Many factors are in play, and a lot depends on hardware. Personally, i think Konami did a decent job at that, but many folks find the gameplay too fast.</p>
+
+<p>Several techniques of slowing the game down exist, and not one of them is perfect, but all work to some extent. The speeder module basically slows down the clock, sort of tricking the game into running slower. This is not an ideal solution either, but if a small adjustment is used, it can still look real, play well, and actually provide a smoother gameplay. Don't consider it a silver bullet though. It might work well for you, but it also may not deliver everything you had hoped for :) (One side-effect, for example, is that if you set your match time to 10 minutes, but you have the Game Speed set to 0.9, the actual match time will be approximately 11.1 minutes.)</p>
+
+<p>It is possible to decrease the game speed and also to increase it. The value 1.0 gives the default unchanged speed. Less than 1.0 - slower gameplay, greater than 1.0 - faster gameplay. It is not advised to use values lower than 0.7, because the music/commentary starts to break up. Also values larger than 2.5 are not supported. It is already ridiculously fast with 2.5!.</p>
+
+<p>Example of <b>speeder.cfg</b> file:</p>
+
+<pre>
+# Game speed configuration
+
+count.factor = 0.96
+</pre>
+
 
 
 <!-- ### ADVANCED CONFIGURATION ### -->
