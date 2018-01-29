@@ -2,6 +2,14 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2018-01-29
+----------
+v6.6.6
+- fserv: HD faces and hair
+- dxtools: support for internal resolution modifier
+- speeder: modify game speed
+
+
 2009-05-19
 ----------
 v6.6.4

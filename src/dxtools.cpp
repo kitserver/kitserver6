@@ -9,7 +9,8 @@ KMOD k_dxtools={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 HINSTANCE hInst;
 DXCONFIG dxconfig = {
     { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT},
-    { DEFAULT_FULLSCREEN_WIDTH, DEFAULT_FULLSCREEN_HEIGHT}
+    { DEFAULT_FULLSCREEN_WIDTH, DEFAULT_FULLSCREEN_HEIGHT},
+    { DEFAULT_INTERNAL_WIDTH, DEFAULT_INTERNAL_HEIGHT }
 };
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
@@ -26,6 +27,31 @@ BOOL ReadConfig(DXCONFIG* config, char* cfgFile);
 typedef HRESULT (STDMETHODCALLTYPE *PFNRESETFUNC)(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS*);
 PFNRESETFUNC g_reset = NULL;
 PFNPRESENTPROC g_present = NULL;
+
+#define DATALEN 2
+
+// data array names
+enum {
+    INTRES_WIDTH, INTRES_HEIGHT,
+};
+
+// Data addresses.
+DWORD dataArray[][DATALEN] = {
+    // PES6
+    {
+        0x11631f8, 0x11631fc,
+    },
+    // PES6 1.10
+    {
+        0x11641f8, 0x11641fc,
+    },
+    // WE2007
+    {
+        0x115dc78, 0x115dc7c,
+    },
+};
+
+DWORD data[DATALEN];
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
@@ -47,6 +73,28 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	}
 
 	return true;
+}
+
+void SetInternalResolution(DXCONFIG *cfg)
+{
+    DWORD *w = (DWORD*)data[INTRES_WIDTH];
+    DWORD *h = (DWORD*)data[INTRES_HEIGHT];
+    if (w != NULL && h != NULL) {
+        LogWithTwoNumbers(&k_dxtools,"Internal resolution was: %d x %d", *w, *h);
+        DWORD protection;
+        DWORD newProtection = PAGE_READWRITE;
+        if (VirtualProtect(w, 4, newProtection, &protection))
+        {
+            *w = cfg->internal.width;
+            if (VirtualProtect(h, 4, newProtection, &protection)) {
+                *h = cfg->internal.height;
+                LogWithTwoNumbers(&k_dxtools,"Internal resolution now: %d x %d", *w, *h);
+            }
+        }
+        else {
+            Log(&k_dxtools,"Problem changing internal resolution.");
+        }
+    }
 }
 
 void dxtoolsCreateDevice(IDirect3D8* self, UINT Adapter,
@@ -83,6 +131,13 @@ void dxtoolsCreateDevice(IDirect3D8* self, UINT Adapter,
 		}
     }
     */
+
+    // Determine the game version
+    int v = GetPESInfo()->GameVersion;
+    if (v != -1)
+    {
+        memcpy(data, dataArray[v], sizeof(data));
+    }
 }
 
 /* New Reset function */
@@ -117,6 +172,11 @@ IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params)
 	// CALL ORIGINAL FUNCTION
     LogWithNumber(&k_dxtools, "dxtoolsReset: calling original = %08x", (DWORD)g_reset);
 	HRESULT res = g_reset(self, params);
+
+    // enforce internal resolution
+    if (dxconfig.internal.width>0 && dxconfig.internal.height>0) {
+        SetInternalResolution(&dxconfig);
+    }
 
 	return res;
 }
@@ -198,6 +258,18 @@ BOOL ReadConfig(DXCONFIG* config, char* cfgFile)
 			LogWithNumber(&k_dxtools,"ReadConfig: dx.window.height = (%d)", value);
             config->window.height = value;
 		}
+        else if (lstrcmp(name, "internal.resolution.width")==0)
+        {
+            if (sscanf(pValue, "%d", &value)!=1) continue;
+            LogWithNumber(&k_dxtools,"ReadConfig: internal.resolution.width = (%d)", value);
+            config->internal.width = value;
+        }
+        else if (lstrcmp(name, "internal.resolution.height")==0)
+        {
+            if (sscanf(pValue, "%d", &value)!=1) continue;
+            LogWithNumber(&k_dxtools,"ReadConfig: internal.resolution.height = (%d)", value);
+            config->internal.height = value;
+        }
 	}
 	fclose(cfg);
 	return true;

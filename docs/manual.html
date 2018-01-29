@@ -40,14 +40,15 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-    <span class="emph">May 19, 2009</span><br />
+    <span class="emph">January 29, 2018</span><br />
 Module Versions: <a href="#kserv">Kserv 6.6.4</a>, 
 <a href="#ballserver">Ballserver 6.6.4</a>,
 <a href="#lodmixer">LOD Mixer 6.6.4</a>,
 <a href="#stadiumserver">Stadium Server 6.6.4</a>,
-<a href="#faceserver">Faceserver 6.6.4</a>,
+<a href="#faceserver">Faceserver 6.6.5</a>,
 <a href="#bootserver">Bootserver 6.6.4</a>,
 <a href="#afs2fs">AFS2FS 6.6.4</a>
+<a href="#speeder">Speeder 6.6.6</a>
 </div>
 
 
@@ -98,7 +99,7 @@ modes or during online matches.
 </p>
 
 <p>
-<a href="#faceserver">Faceserver Module 6.6.4</a> controls players faces and hair. You can assign a face BIN and a hair BIN
+<a href="#faceserver">Faceserver Module 6.6.5</a> controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
 </p>
@@ -1144,6 +1145,48 @@ purpose, you can add a third parameter to the hair map:</p>
 0 stands for complete transparency. Just experiment a bit with the values to find the
 one which looks best for you.</p>
 
+<h3>4.3 HD faces and hair</h3>
+
+<p>Since Faceserver version 6.6.5, new experimental feature exists: HD (High-Definition) support
+for faces and hair. It is not very well tested yet, but appears to work fine.</p>
+
+<p>Standard faces use textures of two sizes: 64x128 and 32x64 pixels. Those two textures share the
+same palette and are inside the BIN file that also contains a 3D-model of the face. If you have
+an original texture that has a bigger size - say, for example, 256x512 or 512x1024 - you can include
+it as a "companion" PNG file, and faceserver will try to use it. The PNG file must be named the same
+way as your BIN file, except the file extension should be ".png". It should be placed into the same
+folder, where the BIN is.</p>
+
+<p>For example, let's assume you have the following entry in your <b>GDB\faces\map.txt</b>:</p>
+<pre>
+
+2934,"Juventus\Del Piero.bin"
+
+</pre>
+
+<p>Then, your high-resolution PNG with the face texture must be: <b>
+<span style="color:#484">GDB\faces\Juventus\Del Piero.png</span></b><br />
+There is no need to modify the map.txt: faceserver will automatically check for presense of the 
+PNG file.</p>
+
+<p>Format of the HD face image is also flexible: it can be 8-bit paletted PNG or 32-bit RGBA with alpha
+channel - it's your choice.</p>
+
+<div class="note">Please note, that the textures inside the BIN file must still be of standard
+size (64x128 and 32x64). If you try to put bigger textures in there - it will not work the way you
+might expect. Instead the face rendering will be broken</div>
+
+<p>HD hair works in a very similar way: in the hair BIN, there are two standard size textures:
+128x64 and 64x32 pixels. The BIN also contains 3D model for the hair. Again, we don't modify the
+textures in the BIN, but instead put a companion PNG file with high-definition hair image. Faceserver
+will automatically check for presence of PNG file with the same name as hair BIN, and if present, the
+HD image will be used to hair texture.</p>
+
+<img src="del-piero-hd.png"/>
+
+<p>Alessandro Del Piero with HD face (but standard non-HD hair) by <b>anffs</b>.<br />
+(Screenshot made with <a href="#intres">internal resolution</a> set to 2880x1800)</p>
+
 
 <!-- ### Bootserver ### -->
 
@@ -1303,6 +1346,26 @@ afs.root = "patch-RPL"
 <p>The order of them is important only if there is overlapping content. Let's say for example that <b>patch-RPL</b> and <b>mypes6patch</b> both have bin #7 for 0_text.afs. (The files themselves can actually be named differently - for example: <i>ball_7.bin</i> and <i>unknown_7</i>, but what matters is that they define the same BIN). In this case, the file coming from the <u>last</u> root gets used - in this example, it will be the BIN from <b>patch-RPL</b>.</p>
 
 
+<!-- ### SPEEDER ### -->
+
+<h2 id="speeder">Speeder (speeder.dll)</h2>
+
+<p>Not everyone is satisfied with the pace of the gameplay. It must be said that it is not an easy thing to get this aspect of simulating a football match correctly. Many factors are in play, and a lot depends on hardware. Personally, i think Konami did a decent job at that, but many folks find the gameplay too fast.</p>
+
+<p>Several techniques of slowing the game down exist, and not one of them is perfect, but all work to some extent. The speeder module basically slows down the clock, sort of tricking the game into running slower. This is not an ideal solution either, but if a small adjustment is used, it can still look real, play well, and actually provide a smoother gameplay. Don't consider it a silver bullet though. It might work well for you, but it also may not deliver everything you had hoped for :) (One side-effect, for example, is that if you set your match time to 10 minutes, but you have the Game Speed set to 0.9, the actual match time will be approximately 11.1 minutes.)</p>
+
+<p>It is possible to decrease the game speed and also to increase it. The value 1.0 gives the default unchanged speed. Less than 1.0 - slower gameplay, greater than 1.0 - faster gameplay. It is not advised to use values lower than 0.7, because the music/commentary starts to break up. Also values larger than 2.5 are not supported. It is already ridiculously fast with 2.5!.</p>
+
+<p>Example of <b>speeder.cfg</b> file:</p>
+
+<pre>
+# Game speed configuration
+
+count.factor = 0.96
+</pre>
+
+
+
 <!-- ### ADVANCED CONFIGURATION ### -->
 
 <h2 id="advconfig">Advanced configuration</h2>
@@ -1381,16 +1444,56 @@ To enable, just change the values from 0 to 1.
 </p>
 
 <p>
-The last two options - <b>dx.fullscreen.width</b> and <b>dx.fullscreen.height</b> - can be used
+The <b>dx.fullscreen.width</b> and <b>dx.fullscreen.height</b> can be used
 to enforce custom resolution in fullscreen mode. <i>Note that those two options are disabled by
 default; to enable, remove the comment sign ('#') at the begining of those two lines, and make 
 sure you specify resolution that your monitor supports.</i>
 </p>
 
+<a name="intres"> </a>
+<h4>Game's internal resolution modifiers</h4>
+
+<p>
+Since version 6.6.0, the DXTOOLS module (dxtools.dll) also supports new set of options to
+modify the game's so-called "internal resolution". This internal resolution is what the game
+uses to render each frame, before the final image is resized to fit the window/fullscreen dimensions.
+So, if you play on a huge screen, but the internal resolution is still standard 1024x1024 pixels,
+then the picture quailty will still be bad. By increasing internal resolution, we can make the
+game looks absolutely magnificent on big screen monitors. This all was discovered by <b>Kingsley813</b> -
+for which he deserves huge credit. Because of his work, the old PES5-family of games suddenly got
+a fresh new life ;-).
+</p>
+
+<p>
+The internal resolution options are called: <b>internal.resolution.width</b> and <b>internal.resolution.height</b>.
+(By default they are set to 0, which means that internal resolution will NOT be modified.) Set them to values
+larger than zero to see the effect. Typically you would want values <i>equal or bigger</i> than the screen 
+resolution that you play on.
+</p>
+
+<p>
+For example, let's say your monitor resolution is 2880 x 1800 pixels, and you want to play fullscreen. Then set
+the following settings in your kload.cfg file:
+
+<pre>
+dx.fullscreen.width = 2880
+dx.fullscreen.height = 1800
+
+internal.resolution.width = 3072
+internal.resolution.height = 2048
+</pre>
+
+<p>
+If you are not sure that you see the effect these settings play, try something like this: set them both to 256.
+Right away, you will notice how crappy the game looks ;-)
+</p>
+
+
 <h2>Credits</h2>
 
 <p>
 Programming: <b>juce</b>, <b>Robbie</b><br />
+Game reversing and analysis: <b>juce</b>, <b>Robbie</b>, <b>Kingsley813</b><br />
 Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun, Seax, pogoss</b><br />
 Kits: <b>Spark, kel, qiankun, OPM, Simonhibsey, Kleimann, danie (thedragon)</b><br />
 Balls: <b>DAMned</b><br />
@@ -1419,6 +1522,10 @@ Kitserver uses the following open source software:<br />
 <a href="http://libpng.org/pub/png/libpng.html">http://libpng.org/pub/png/libpng.html</a><br />
 <span class="soft">zlib</span> by Jean-loup Gailly and Mark Adler, and others
 <a href="http://www.zlib.net/">http://www.zlib.net/</a><br />
+</p>
+
+<p>
+Kitserver license can be see here: <a href="license.txt">license.txt</a>
 </p>
 
 </body>
