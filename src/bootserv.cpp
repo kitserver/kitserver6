@@ -466,7 +466,7 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big)
             }
         }
         
-	} else if (g_config._randomBootsEnabled) {
+	} else if (g_config._randomBootsEnabled && g_bootTextureFiles.size() > 0) {
         // not in the main map. 
         // try random boots map instead: if no entry, it will be created
         TexturePack& pack = g_bootTexturePacksRandom[playerId];
