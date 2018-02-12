@@ -273,7 +273,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		}
 
 		RegisterKModule(&k_afs);
-		HookFunction(hk_D3D_CreateDevice,(DWORD)initModule);
+		HookFunction(hk_D3D_Create,(DWORD)initModule);
 	}
 	
 	else if (dwReason == DLL_PROCESS_DETACH)
@@ -388,7 +388,7 @@ void initModule(IDirect3D8* self, UINT Adapter,
     RegisterAfsReplaceCallback(afsAfsReplace);
     Log(&k_afs, "afsAfsReplace hooked");
 
-	UnhookFunction(hk_D3D_CreateDevice,(DWORD)initModule);
+	UnhookFunction(hk_D3D_Create,(DWORD)initModule);
 
     InitializeFileNameCache();
     ZeroMemory(_fast_info_cache,sizeof(_fast_info_cache));
