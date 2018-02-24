@@ -73,12 +73,14 @@ typedef struct _TEX_SRC {
     string filename;
 } TEX_SRC;
 
-std::queue<string> g_faceFiles;
+std::queue<string> g_faceFilesBig;
+std::queue<string> g_faceFilesSmall;
 std::map<IDirect3DTexture8*,string> g_BigFaceTextures;
 std::map<IDirect3DTexture8*,string> g_SmallFaceTextures;
 std::map<DWORD,TEX_SRC> g_FaceSources;
 
-std::queue<string> g_hairFiles;
+std::queue<string> g_hairFilesBig;
+std::queue<string> g_hairFilesSmall;
 std::map<IDirect3DTexture8*,string> g_BigHairTextures;
 std::map<IDirect3DTexture8*,string> g_SmallHairTextures;
 std::map<DWORD,TEX_SRC> g_HairSources;
@@ -183,9 +185,9 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
 
     // faces
     if (width == 64 && height == 128 && levels == 1) {
-        if (g_faceFiles.size()>0) {
-            string filename = g_faceFiles.front();
-            g_faceFiles.pop();
+        if (g_faceFilesBig.size()>0) {
+            string filename = g_faceFilesBig.front();
+            g_faceFilesBig.pop();
 
             //LOG(&k_fserv, ">>> Looks like a big face texture (%dx%dx%d): %08x (src=%08x)",
             //    width, height, levels, (DWORD)*ppTexture, src);
@@ -236,9 +238,9 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
         }
     }
     else if (width == 32 && height == 64 && levels == 1) {
-        if (g_faceFiles.size()>0) {
-            string filename = g_faceFiles.front();
-            g_faceFiles.pop();
+        if (g_faceFilesSmall.size()>0) {
+            string filename = g_faceFilesSmall.front();
+            g_faceFilesSmall.pop();
             //LOG(&k_fserv, ">>> Looks like a small face texture (%dx%dx%d): %08x (src=%08x)",
             //    width, height, levels, (DWORD)*ppTexture, src);
 
@@ -290,9 +292,9 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
 
     // hair
     if (width == 128 && height == 64 && levels == 1) {
-        if (g_hairFiles.size()>0) {
-            string filename = g_hairFiles.front();
-            g_hairFiles.pop();
+        if (g_hairFilesBig.size()>0) {
+            string filename = g_hairFilesBig.front();
+            g_hairFilesBig.pop();
 
             string hdfilename = filename.substr(0,filename.size()-4);
             hdfilename += ".png";
@@ -340,9 +342,9 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
         }
     }
     else if (width == 64 && height == 32 && levels == 1) {
-        if (g_hairFiles.size()>0) {
-            string filename = g_hairFiles.front();
-            g_hairFiles.pop();
+        if (g_hairFilesSmall.size()>0) {
+            string filename = g_hairFilesSmall.front();
+            g_hairFilesSmall.pop();
             //LOG(&k_fserv, ">>> Looks like a small face texture (%dx%dx%d): %08x (src=%08x)",
             //    width, height, levels, (DWORD)*ppTexture, src);
 
@@ -991,8 +993,8 @@ void fservAfsReplace(GETFILEINFO* gfi)
 		LogWithNumber(&k_fserv, "FaceID is %d",FaceID);
 		if (g_Faces[FaceID] != NULL) {
 			sprintf(filename, "%sGDB\\faces\\%s", GetPESInfo()->gdbDir, g_Faces[FaceID]);
-            g_faceFiles.push(filename); // for big
-            g_faceFiles.push(filename); // for small
+            g_faceFilesBig.push(filename);
+            g_faceFilesSmall.push(filename);
 		} else {
 			Log(&k_fserv,"FAILED! No file is assigned to this parameter combination!");
 			return;
@@ -1005,8 +1007,8 @@ void fservAfsReplace(GETFILEINFO* gfi)
 		LogWithNumber(&k_fserv,"Processing hair id %d",HairID);
 		if (g_Hair[HairID] != NULL) {
 			sprintf(filename, "%sGDB\\hair\\%s", GetPESInfo()->gdbDir, g_Hair[HairID]);
-            g_hairFiles.push(filename); // for big
-            g_hairFiles.push(filename); // for small
+            g_hairFilesBig.push(filename);
+            g_hairFilesSmall.push(filename);
 		} else {
 			Log(&k_fserv,"FAILED! No file is assigned to this parameter combination!");
 			return;
