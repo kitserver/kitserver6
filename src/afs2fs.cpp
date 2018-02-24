@@ -74,6 +74,7 @@ bool ReadConfig(config_t& config, const char* cfgFile);
 
 bool GetBinFileName(DWORD afsId, DWORD binId, char* filename, int maxLen)
 {
+    //LOG(&k_afs, "GetBinFileName: %d, %d", afsId, binId);
     if (afsId < 0 || MAX_FOLDERS-1 < afsId) return false; // safety check
     if (!_fast_info_cache[afsId].initialized)
     {
@@ -86,11 +87,11 @@ bool GetBinFileName(DWORD afsId, DWORD binId, char* filename, int maxLen)
                 if (stricmp(it->first.c_str(), pBST->relativePathName)==0)
                     _fast_info_cache[afsId].entries = it->second;
             }
+            if (k_afs.debug)
+                LOG(&k_afs, "initialized _fast_info_cache entry for afsId=%d (%s)", afsId, pBST->relativePathName);
+            _fast_info_cache[afsId].numEntries = pBST->numItems;
+            _fast_info_cache[afsId].entrySize = sizeof(char*) + sizeof(char)*_config._fileNameLen;
         }
-        if (k_afs.debug)
-            LogWithNumberAndString(&k_afs, "initialized _fast_info_cache entry for afsId=%d (%s)", afsId, pBST->relativePathName);
-        _fast_info_cache[afsId].numEntries = pBST->numItems;
-        _fast_info_cache[afsId].entrySize = sizeof(char*) + sizeof(char)*_config._fileNameLen;
         _fast_info_cache[afsId].initialized = true;
     }
 
@@ -105,6 +106,7 @@ bool GetBinFileName(DWORD afsId, DWORD binId, char* filename, int maxLen)
     char *afsDir = pBST->relativePathName;
     _snprintf(filename, maxLen, "%s\\%s\\%s", 
             entry->rootDir, afsDir, entry->fileName);
+    //LOG(&k_afs, "GetBinFileName: %d, %d --> %s", afsId, binId, filename);
     return true;
 }
 
@@ -384,14 +386,14 @@ void initModule(IDirect3D8* self, UINT Adapter,
     memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
     memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
 
+    InitializeFileNameCache();
+    ZeroMemory(_fast_info_cache,sizeof(_fast_info_cache));
+
     // register callback
     RegisterAfsReplaceCallback(afsAfsReplace);
     Log(&k_afs, "afsAfsReplace hooked");
 
 	UnhookFunction(hk_D3D_Create,(DWORD)initModule);
-
-    InitializeFileNameCache();
-    ZeroMemory(_fast_info_cache,sizeof(_fast_info_cache));
 
 	TRACE(&k_afs, "Hooking done.");
 
@@ -422,7 +424,7 @@ void afsAfsReplace(GETFILEINFO* gfi)
         {
             LogWithTwoNumbers(&k_afs, "afsAfsReplace: replace FAILED for afsId=%d, fileId=%d", afsId, fileId);
         }
-        gfi->isProcessed = true;
+        //gfi->isProcessed = true;
     }
 }
 

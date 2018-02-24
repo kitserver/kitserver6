@@ -2036,16 +2036,20 @@ void FixReservedMemory()
 		return;
 		
 	DWORD oldResMem=*(DWORD*)data[RESMEM1];
+    LogWithNumber(&k_kload,"Reserved memory was: %d bytes", oldResMem);
 		
-	if (g_config.newResMem <= oldResMem)
-		return;
+	//if (g_config.newResMem <= oldResMem)
+	//	return;
+    if (g_config.newResMem < 55000000) {
+        g_config.newResMem = 55000000;
+    }
 	
 	DWORD protection=0, newProtection=PAGE_EXECUTE_READWRITE;
 	if (VirtualProtect((BYTE*)data[RESMEM1], 0xff, newProtection, &protection)) {
 		*(DWORD*)data[RESMEM1]=g_config.newResMem;
 		*(DWORD*)data[RESMEM2]=g_config.newResMem>>2;
 		*(DWORD*)data[RESMEM3]=g_config.newResMem;
-		LogWithNumber(&k_kload,"Increased reserved memory to %d bytes",g_config.newResMem);
+		LogWithNumber(&k_kload,"Set reserved memory to %d bytes",g_config.newResMem);
 	};
 	
 

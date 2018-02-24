@@ -1,7 +1,7 @@
 // afs2fs.h
 
 #define MODID 301
-#define NAMELONG "Afs2fs Module 6.7.1"
+#define NAMELONG "Afs2fs Module 6.7.3"
 #define NAMESHORT "AFS2FS"
 #define DEFAULT_DEBUG 1
 

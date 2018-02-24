@@ -1,8 +1,8 @@
 #include "windows.h"
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION 6,7,1,0
-	PRODUCTVERSION 6,7,1,0
+	FILEVERSION 6,7,3,0
+	PRODUCTVERSION 6,7,3,0
 	FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 	FILEFLAGS 0x1L
@@ -18,7 +18,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "AFS2FS Module\0"
-			VALUE "FileVersion", "6.7.1.0\0"
+			VALUE "FileVersion", "6.7.3.0\0"
 			VALUE "LegalCopyright", "Copyright © 2005-2018 Juce, Robbie\0"
 			VALUE "Comments", "AFS2FS Module.\r\n\
 This module allows to organize BIN-files into a simple directory \
