@@ -2,6 +2,13 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2018-04-22
+----------
+v6.7.1
+- fserv: fixes for HD face/hair logic
+- removed camerazoomer, as it was flagged by Google
+
+
 2018-01-29
 ----------
 v6.7.0
