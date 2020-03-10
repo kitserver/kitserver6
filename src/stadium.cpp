@@ -267,7 +267,7 @@ static DWORD data[DATALEN];
 static std::map<DWORD,bool> g_AFS_idMap;
 static std::map<WORD,std::string> g_HomeStadiumMap;
 static std::map<std::string,STADINFO*> g_stadiumMap;
-static std::map<std::string,STADINFO*>::iterator g_stadiumMapIterator = NULL;
+static std::map<std::string,STADINFO*>::iterator g_stadiumMapIterator;
 
 static bool hasGdbStadiums = false;
 static char g_stadiumText[61];

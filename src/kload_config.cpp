@@ -98,7 +98,8 @@ BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile)
 		{
 			if (sscanf(pValue, "%d", &value)!=1) continue;
 			LogWithNumber(&k_kload,"ReadConfig: DLL.num = (%d)", value);
-			for (int i=0;i< config->numDLLs ;i++) delete config->dllnames[i];
+            int i;
+			for (i=0;i< config->numDLLs ;i++) delete config->dllnames[i];
 			delete config->dllnames;
 			config->numDLLs=value;
 			config->dllnames=new LPTSTR[value];

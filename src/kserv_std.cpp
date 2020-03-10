@@ -1447,9 +1447,11 @@ HRESULT InitVB(IDirect3DDevice8* dev)
         return E_FAIL;
     }
 
+    int i;
+
     ///// HOME /////////////////////////////////
 
-    for (int i=0; i<4; i++) {
+    for (i=0; i<4; i++) {
         if (FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shirt_left[i],sizeof(g_2Dkit_shirt_left[i]),
                         X_2DKIT_LEFT, &g_pVB_home_shirt_left[i])) 
@@ -1652,8 +1654,10 @@ HRESULT InvalidateDeviceObjects(IDirect3DDevice8* dev)
 		return S_OK;
 	}
 
+    int i;
+
     // home
-    for (int i=0; i<4; i++) {
+    for (i=0; i<4; i++) {
         SafeRelease( &g_pVB_home_shirt_left[i] );
         SafeRelease( &g_pVB_home_sleeve_left[i] );
         SafeRelease( &g_pVB_home_shirt_right[i] );
@@ -4594,7 +4598,7 @@ DWORD VtableSet(void* self, int index, DWORD value)
 
 void kservUnlockRect(IDirect3DTexture8* self,UINT Level) 
 {
-    vector<TextureBinding>::iterator texit = NULL;
+    vector<TextureBinding>::iterator texit = _textureBindings.end();
     if (_textureBindings.size()>0) {
         for (vector<TextureBinding>::iterator it = _textureBindings.begin();
                 it != _textureBindings.end();
@@ -4612,7 +4616,9 @@ void kservUnlockRect(IDirect3DTexture8* self,UINT Level)
             }
         }
         // remove that binding from the vector
-        if (texit) _textureBindings.erase(texit);
+        if (texit != _textureBindings.end()) {
+            _textureBindings.erase(texit);
+        }
     }
 }
 

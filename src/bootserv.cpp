@@ -340,7 +340,8 @@ void populateTextureFilesVector(vector<string>& vec, string& currDir)
 void releaseBootTextures()
 {
     // release the boot textures, so that we don't consume too much memory for boots
-    for (hash_map<WORD,TexturePack>::iterator it = g_bootTexturePacks.begin();
+    hash_map<WORD,TexturePack>::iterator it;
+    for (it = g_bootTexturePacks.begin();
             it != g_bootTexturePacks.end();
             it++) {
         if (it->second._big) {

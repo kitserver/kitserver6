@@ -2,8 +2,8 @@ CC=cl
 LINK=link
 RC=rc
 
-CFLAGS=/nologo /GX $(EXTRA_CFLAGS) /DUSE_HASHMAPS
-LFLAGS=/NOLOGO /NODEFAULTLIB:libcmt.lib
+CFLAGS=/nologo /EHsc /wd4731 /MT /D_WINNT_WIN32=0x601 $(EXTRA_CFLAGS) /DUSE_HASHMAPS
+LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
 LIBS=user32.lib gdi32.lib advapi32.lib
 LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
 

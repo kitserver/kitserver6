@@ -224,7 +224,8 @@ void DeEncCode(BYTE* buf, DWORD fs)
 	DWORD param=DECRYPT_START;
     DWORD start=0;
     
-	for (int i=0;i<start;i++) {
+    int i;
+	for (i=0;i<start;i++) {
 		param*=DECRYPT_FACTOR;
 		param++;
 	};

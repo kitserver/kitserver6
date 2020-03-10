@@ -196,15 +196,15 @@ bool RedirectIAT( SDLLHook* DLLHook, PIMAGE_IMPORT_DESCRIPTOR pImportDesc, PVOID
             // If it's code, we shouldn't be able to write to it
             if ( IsBadWritePtr( (PVOID)pIteratingIAT->u1.Function, 1 ) )
             {
-                pIteratingIAT->u1.Function = (DWORD_PTR)HookFn;
+                pIteratingIAT->u1.Function = (DWORD)HookFn;
             }
             else if ( osvi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
             {
                 // Special hack for Win9X, which builds stubs for imported
                 // functions in system DLLs (Loaded above 2GB).  These stubs are
                 // writeable, so we have to explicitly check for this case
-                if ( pIteratingIAT->u1.Function > (DWORD_PTR)0x80000000 )
-                    pIteratingIAT->u1.Function = (DWORD_PTR)HookFn;
+                if ( pIteratingIAT->u1.Function > (DWORD)0x80000000 )
+                    pIteratingIAT->u1.Function = (DWORD)HookFn;
             }
         }
 

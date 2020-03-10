@@ -873,7 +873,8 @@ DWORD NewGetPlayerInfoOld()
 	DWORD result=GetPlayerInfo(PlayerNumber,Mode);
 	
 	//Find out who's calling
-	for (int i=0;i<GPILEN;i++)
+    int i;
+	for (i=0;i<GPILEN;i++)
 		if (Caller==gpi[i]+5) {
 			Caller=i;
 			break;
@@ -1322,7 +1323,8 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 			src=0;
 	}
 	
-	for (int i=0;i<(l_D3D_CreateTexture.num);i++)
+    int i;
+	for (i=0;i<(l_D3D_CreateTexture.num);i++)
 	if (l_D3D_CreateTexture.addr[i]!=0) {
 		NextCall=(CCREATETEXTURE)l_D3D_CreateTexture.addr[i];
 		res=NextCall(self, width, height, levels, usage, format, pool, ppTexture, src, &IsProcessed);
@@ -1436,7 +1438,7 @@ HRESULT STDMETHODCALLTYPE NewPresent(IDirect3DDevice8* self, CONST RECT* src, CO
 	HRESULT res = g_orgPresent(self, src, dest, hWnd, unused);
 
     // possibly delayed hooking of getnumpages
-    static numPagesHooked = false;
+    static bool numPagesHooked = false;
     if (!numPagesHooked) {
         numPagesHooked = HookGetNumPages();
     }
