@@ -85,11 +85,11 @@ bool GetBinFileName(DWORD afsId, DWORD binId, char* filename, int maxLen)
             {
                 if (stricmp(it->first.c_str(), pBST->relativePathName)==0)
                     _fast_info_cache[afsId].entries = it->second;
+                    _fast_info_cache[afsId].numEntries = pBST->numItems;
             }
         }
-        if (k_afs.debug)
+        if (k_afs.debug && pBST)
             LogWithNumberAndString(&k_afs, "initialized _fast_info_cache entry for afsId=%d (%s)", afsId, pBST->relativePathName);
-        _fast_info_cache[afsId].numEntries = pBST->numItems;
         _fast_info_cache[afsId].entrySize = sizeof(char*) + sizeof(char)*_config._fileNameLen;
         _fast_info_cache[afsId].initialized = true;
     }

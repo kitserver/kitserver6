@@ -189,7 +189,7 @@ KEXPORT bool HookGetNumPages()
 
     DWORD addr = code[C_GETNUMPAGES_HOOK];
     if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
-    DWORD target = (DWORD)GetNumPagesForFileInAFSCaller + 6;
+    DWORD target = (DWORD)GetNumPagesForFileInAFSCaller + KS_JMP_SHIFT; //6;
 
     DWORD protection = 0;
     DWORD newProtection = PAGE_EXECUTE_READWRITE;
@@ -211,7 +211,7 @@ KEXPORT bool HookGetNumPages()
 
     addr = code[C_GETNUMPAGES2_HOOK];
     if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
-    target = (DWORD)GetNumPagesForFileInAFSCaller2 + 6;
+    target = (DWORD)GetNumPagesForFileInAFSCaller2 + KS_JMP_SHIFT; //6;
 
     protection = 0;
     newProtection = PAGE_EXECUTE_READWRITE;

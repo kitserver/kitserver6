@@ -345,13 +345,13 @@ void releaseBootTextures()
             it != g_bootTexturePacks.end();
             it++) {
         if (it->second._big) {
-            SafeRelease(it->second._big);
+            SafeRelease(&it->second._big);
             it->second._big = NULL;
             it->second._bigLoaded = false;
             LogWithNumber(&k_boot, "Released big boot texture for player %d", it->first);
         }
         if (it->second._small) {
-            SafeRelease(it->second._small);
+            SafeRelease(&it->second._small);
             it->second._small = NULL;
             it->second._smallLoaded = false;
             LogWithNumber(&k_boot, "Released small boot texture for player %d", it->first);
@@ -361,13 +361,13 @@ void releaseBootTextures()
             it != g_bootTexturePacksRandom.end();
             it++) {
         if (it->second._big) {
-            SafeRelease(it->second._big);
+            SafeRelease(&it->second._big);
             it->second._big = NULL;
             it->second._bigLoaded = false;
             LogWithNumber(&k_boot, "Released big boot texture for player %d", it->first);
         }
         if (it->second._small) {
-            SafeRelease(it->second._small);
+            SafeRelease(&it->second._small);
             it->second._small = NULL;
             it->second._smallLoaded = false;
             LogWithNumber(&k_boot, "Released small boot texture for player %d", it->first);
@@ -782,7 +782,7 @@ void bootBeginRenderPlayer(DWORD playerMainColl)
 							case 0xffffffff:
 								break;
 							default:
-								SafeRelease(g_bootTextures[j][temp]);
+								SafeRelease(&g_bootTextures[j][temp]);
 								break;
 						};
 						 g_bootTextures[j][temp]=NULL;
