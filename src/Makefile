@@ -42,8 +42,8 @@ all_apps: apps
 #	copy speedtest.exe output
 #	copy vista_test.exe output
 
-#dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
+#dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll skins.dll
+dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 release:
@@ -138,6 +138,13 @@ bootserv.obj: bootserv.cpp bootserv.h
 bootserv.res: 
 	$(RC) -r -fo bootserv.res bootserv.rc
 	
+skins.lib: skins.obj
+skins.dll: skins.lib skins.res
+	$(LINK) $(LFLAGS) /out:skins.dll /DLL skins.obj kload.lib d3dx8.lib skins.res $(LIBS)
+skins.obj: skins.cpp skins.h
+
+skins.res: 
+	$(RC) -r -fo skins.res skins.rc
 	
 stadium.lib: stadium.obj crc32.obj afsreader.obj hooklib.obj pngdib.obj
 stadium.dll: stadium.lib stadium.res
