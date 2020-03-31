@@ -71,26 +71,30 @@ DWORD code[CODELEN];
 
 class TexturePack {
 public:
-    TexturePack() : _big(NULL),_small(NULL),_textureFile(),_bigLoaded(false),_smallLoaded(false) {}
+    TexturePack() : _big(NULL),_gloves(NULL),_textureFile(),_glovesFile(),_bigLoaded(false),_glovesLoaded(false) {}
     ~TexturePack() {
         if (_big) _big->Release();
-        if (_small) _small->Release();
+        if (_gloves) _gloves->Release();
     }
     IDirect3DTexture8* _big;
-    IDirect3DTexture8* _small;
+    IDirect3DTexture8* _gloves;
     string _textureFile;
+    string _glovesFile;
     bool _bigLoaded;
-    bool _smallLoaded;
+    bool _glovesLoaded;
 };
 
 //////////////////////////////////////////////////////
 // Globals ///////////////////////////////////////////
 
-vector<string> g_skinTextureFiles;
 hash_map<WORD,TexturePack> g_skinTexturePacks;
 DWORD g_skinTexturesColl[5];
+DWORD g_handsTexturesColl[5];
+DWORD g_neckTexturesColl[5];
 DWORD g_skinTexturesPos[5];
-IDirect3DTexture8* g_skinTextures[2][64]; //[big/small][32*team + posInTeam]
+DWORD g_handsTexturesPos[5];
+DWORD g_neckTexturesPos[5];
+IDirect3DTexture8* g_skinTextures[2][64]; //[no-gloves/gloves][32*team + posInTeam]
 DWORD g_skinPlayerIds[64]; //[32*team + posInTeam]
 DWORD currRenderPlayer=0xffffffff;
 PLAYER_RECORD* currRenderPlayerRecord=NULL;
@@ -186,6 +190,7 @@ void readSkinsMap()
     char str[BUFLEN];
     char *comment=NULL;
     char sfile[BUFLEN];
+    char gfile[BUFLEN];
     WORD number=0;
 
     strcpy(tmp,GetPESInfo()->gdbDir);
@@ -208,7 +213,15 @@ void readSkinsMap()
 
         // parse line
         ZeroMemory(sfile,BUFLEN);
-        if (sscanf(str,"%d , \"%[^\"]\"",&number,sfile)==2) {
+        ZeroMemory(gfile,BUFLEN);
+        if (sscanf(str,"%d , \"%[^\"]\" , \"%[^\"]\"",&number,sfile,gfile)==3) {
+            TexturePack pack;
+            pack._textureFile = sfile;
+            pack._glovesFile = gfile;
+            // add to the map
+            g_skinTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+        }
+        else if (sscanf(str,"%d , \"%[^\"]\"",&number,sfile)==2) {
             TexturePack pack;
             pack._textureFile = sfile;
             // add to the map
@@ -232,8 +245,15 @@ void releaseTextures()
             //SafeRelease(&it->second._big);
             it->second._big = NULL;
             it->second._bigLoaded = false;
-            LogWithNumber(&k_skin, "Released big skin texture for player %d", it->first);
+            LogWithNumber(&k_skin, "Released skin texture for player %d", it->first);
         }
+        if (it->second._gloves) {
+            //SafeRelease(&it->second._gloves);
+            it->second._gloves = NULL;
+            it->second._glovesLoaded = false;
+            LogWithNumber(&k_skin, "Released with-gloves skin texture for player %d", it->first);
+        }
+
     }
 
     ZeroMemory(g_skinTextures, 64*4*2);
@@ -248,7 +268,7 @@ void skinBeginUniSelect()
 
 DWORD skinResetFlag2()
 {
-    Log(&k_skin,"skinBeginUniSelect: releasing skin textures");
+    Log(&k_skin,"skinResetFlag2: releasing skin textures");
     releaseTextures();
 
     // call original
@@ -256,15 +276,99 @@ DWORD skinResetFlag2()
     return result;
 }
 
-IDirect3DTexture8* getSkinTexture(WORD playerId)
+// color 1 is alpha-blended over color 2
+DWORD blendColors(DWORD color1, DWORD color2)
+{
+	BYTE alpha1 =  (color1 & 0xff000000) >> 24;
+
+	if (alpha1 == 0) return color2;		// transparent overlay
+	if (alpha1 == 255) return ((color1 & 0xffffff) | (color2 & 0xff000000));	// opaque overlay
+
+	BYTE redValue = ((color1 & 0xff0000) * alpha1 + (color2 & 0xff0000) * (255 - alpha1)) / 0xff0000;
+	BYTE greenValue = ((color1 & 0xff00) * alpha1 + (color2 & 0xff00) * (255 - alpha1)) / 0xff00;
+	BYTE blueValue = ((color1 & 0xff) * alpha1 + (color2 & 0xff) * (255 - alpha1)) / 0xff;
+
+	DWORD alpha2 =  color2 & 0xff000000;	// keep the original alpha
+
+	return (alpha2 | (redValue << 16) | (greenValue << 8) | blueValue);
+}
+
+void applyOverlay(D3DLOCKED_RECT* dest, const char* overlayfilename, D3DSURFACE_DESC* desc)
+{
+	UINT width = desc->Width;
+	UINT height = desc->Height;
+
+	IDirect3DTexture8* pOvTexture = NULL;
+	D3DLOCKED_RECT rectOv;
+
+	// create overlay texture
+	if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+            GetActiveDevice(), overlayfilename,
+            width, height,
+            1, desc->Usage, desc->Format, desc->Pool,
+            D3DX_DEFAULT, D3DX_DEFAULT,
+            0, NULL, NULL, &pOvTexture))) {
+        LogWithTwoNumbers(&k_skin, "Failed to load overlay texture of (%d,%d)", width, height);
+		return;
+	}
+
+	if (!SUCCEEDED(pOvTexture->LockRect(0, &rectOv, NULL, 0))) {
+		pOvTexture->Release();
+		return;
+	}
+
+	BYTE* pDestRow = (BYTE*)dest->pBits;
+	BYTE* pSrcRow = (BYTE*)rectOv.pBits;
+	for (int y = 0; y < height; y++) {
+		DWORD* pDestPixel = (DWORD*)pDestRow;
+		DWORD* pSrcPixel = (DWORD*)pSrcRow;
+		for (int x = 0; x < width; x++) {
+			*pDestPixel = blendColors(*pSrcPixel, *pDestPixel);
+			pDestPixel++;
+			pSrcPixel++;
+		}
+		pDestRow += dest->Pitch;
+		pSrcRow += rectOv.Pitch;
+	}
+
+	pOvTexture->UnlockRect(0);
+	pOvTexture->Release();
+}
+
+void pasteGloves(IDirect3DTexture8* pSkinTexture, const char* overlayfilename)
+{
+	if (!pSkinTexture) return;
+
+	D3DLOCKED_RECT rect;
+	D3DSURFACE_DESC desc;
+
+	if (!SUCCEEDED(pSkinTexture->LockRect(0, &rect, NULL, 0))) {
+        LogWithNumber(&k_skin, "LockRect failed for skin texture %08x", (DWORD)pSkinTexture);
+        return;
+    }
+	pSkinTexture->GetLevelDesc(0, &desc);
+
+	if (overlayfilename != NULL) {
+		Log(&k_skin, "Applying gloves overlay...");
+		applyOverlay(&rect, overlayfilename, &desc);
+	}
+
+	pSkinTexture->UnlockRect(0);
+}
+
+IDirect3DTexture8* getSkinTexture(WORD playerId, bool overlay_gloves)
 {
     IDirect3DTexture8* skinTexture = NULL;
     hash_map<WORD,TexturePack>::iterator it = g_skinTexturePacks.find(playerId);
     if (it != g_skinTexturePacks.end()) {
         // map has an entry for this player
-        if (it->second._bigLoaded) {
+        if (it->second._bigLoaded && !overlay_gloves) {
             // already looked up and the texture should be loaded
             return it->second._big;
+
+        } else if (it->second._glovesLoaded && overlay_gloves) {
+            // already looked up and the texture should be loaded
+            return it->second._gloves;
 
         } else {
             // haven't tried to load the textures for this player yet.
@@ -278,14 +382,35 @@ IDirect3DTexture8* getSkinTexture(WORD playerId)
                             D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                             0, NULL, NULL, &skinTexture))) {
                 // store in the map
-                it->second._big = skinTexture;
-                LogWithNumber(&k_skin, "getSkinTexture: loaded big texture for player %d", playerId);
+                if (overlay_gloves) {
+                    it->second._gloves = skinTexture;
+                    LogWithNumber(&k_skin, "getSkinTexture: loaded with-gloves skin texture for player %d", playerId);
+                }
+                else {
+                    it->second._big = skinTexture;
+                    LogWithNumber(&k_skin, "getSkinTexture: loaded skin texture for player %d", playerId);
+                }
             } else {
                 LogWithString(&k_skin, "D3DXCreateTextureFromFileEx FAILED for %s", filename);
             }
 
+            if (overlay_gloves) {
+                char glv_name[BUFLEN];
+                if (it->second._glovesFile.empty()) {
+                    sprintf(glv_name,"%sGDB\\skins\\gloves.png", GetPESInfo()->gdbDir);
+                } else {
+                    sprintf(glv_name,"%sGDB\\skins\\%s", GetPESInfo()->gdbDir, it->second._glovesFile.c_str());
+                }
+                pasteGloves(skinTexture, glv_name);
+            }
+
             // update loaded flags, so that we only load each texture once
-            it->second._bigLoaded = true;
+            if (overlay_gloves) {
+                it->second._glovesLoaded = true;
+            }
+            else {
+                it->second._bigLoaded = true;
+            }
         }
     }
     return skinTexture;
@@ -306,11 +431,14 @@ bool isEditBootsMode()
     return *(BYTE*)data[EDITBOOTS_FLAG] == 1;
 }
 
+bool has_gloves = false;
+
 void skinBeginRenderPlayer(DWORD playerMainColl)
 {
-    DWORD pmc=0, playerNumber=0;
+    DWORD pmc=0, pinfo=0, playerNumber=0;
     DWORD* bodyColl=NULL;
     int minI=1, maxI=22;
+    BYTE *pgloves;
 
     currRenderPlayer=0xffffffff;
     currRenderPlayerRecord=NULL;
@@ -326,15 +454,19 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
 
         if (playerNumber != 0) {
             pmc=*(playerRecord(i)->texMain);
+            pinfo=*(DWORD*)(pmc+0x14);
+            pgloves=(BYTE*)(pmc+0x1fe);
             pmc=*(DWORD*)(pmc+0x10);
 
             if (pmc==playerMainColl) {
                 //PES is going to render this player now
                 currRenderPlayer = playerNumber;
                 currRenderPlayerRecord = playerRecord(i);
+                bool is_goalkeeper = (pinfo)?(((BYTE*)pinfo)[0x11] == 1):false;
+                has_gloves = *pgloves;
 
-                //LOG(&k_skin, "currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x",
-                //    currRenderPlayer, currRenderPlayerRecord, pmc);
+                //LOG(&k_skin, ">>>>>>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x, pinfo = %08x (gk=%d) has_gloves=%d",
+                //    currRenderPlayer, currRenderPlayerRecord, pmc, pinfo, is_goalkeeper, has_gloves);
 
                 BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
                 if (currRenderPlayer != g_skinPlayerIds[temp]) {
@@ -343,12 +475,38 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
                     g_skinTextures[1][temp]=NULL;
                 }
 
+                // skin
                 bodyColl=*(DWORD**)(playerMainColl+0x14) + 1;
-
                 for (int lod=0;lod<5;lod++) {
                     g_skinTexturesColl[lod]=*bodyColl;  //remember p2 value for this lod level
                     g_skinTexturesPos[lod] = 0;
                     bodyColl+=2;
+                }
+
+                // hands
+                // for goalkeepers: keep the gloves texture
+                bodyColl=*(DWORD**)(playerMainColl+0x18) + 2;
+                for (int lod=0;lod<3;lod++) {
+                    if ((*(DWORD*)(bodyColl+1) == 0x11) || (*(DWORD*)(bodyColl+1) == 0x12)) {
+                        if (!is_goalkeeper) {
+                            g_handsTexturesColl[lod]=*bodyColl;  //remember p2 value for this lod level
+                            g_handsTexturesPos[lod] = 0;
+                        }
+                        else {
+                            g_handsTexturesColl[lod]=0;
+                            g_handsTexturesPos[lod]=0;
+                        }
+                    }
+                    bodyColl+=7;
+                }
+
+                // neck
+                bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
+                bodyColl+=10;
+                for (int lod=2;lod<3;lod++) {
+                    g_neckTexturesColl[lod]=*bodyColl;
+                    g_neckTexturesPos[lod]=0;
+                    bodyColl+=5;
                 }
             }
         }
@@ -364,13 +522,15 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
 
     for (int lod=0; lod<5; lod++) {
         if (p2==g_skinTexturesColl[lod] && p3==g_skinTexturesPos[lod]) {
-            BYTE bigTex=(lod<3)?1:0;
+            //LOG(&k_skin, "skinPesGetTexture:: ^^^ skin texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+            BYTE j=(has_gloves)?1:0;
             BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
-            IDirect3DTexture8* skinTexture=g_skinTextures[bigTex][temp];
+            IDirect3DTexture8* skinTexture=g_skinTextures[j][temp];
             if ((DWORD)skinTexture != 0xffffffff) { //0xffffffff means: has no gdb skin
                 if (!skinTexture) {
                     //no skin texture in cache yet
-                    skinTexture = getSkinTexture(currRenderPlayer);
+                    skinTexture = getSkinTexture(currRenderPlayer, has_gloves);
                     if (!skinTexture) {
                         //no texture assigned
                         skinTexture = (IDirect3DTexture8*)0xffffffff;
@@ -378,7 +538,7 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
                         *res=skinTexture;
                     }
                     //cache the texture pointer
-                    g_skinTextures[bigTex][temp]=skinTexture;
+                    g_skinTextures[j][temp]=skinTexture;
                 } else {
                     //set texture
                     *res=skinTexture;
@@ -386,5 +546,60 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
             }
         }
     }
+
+    for (int lod=0; lod<3; lod++) {
+        if (p2==g_handsTexturesColl[lod] && p3==g_handsTexturesPos[lod]) {
+            //LOG(&k_skin, "skinPesGetTexture:: ^^^ hand texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+            BYTE j=(has_gloves)?1:0;
+            BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+            IDirect3DTexture8* skinTexture=g_skinTextures[j][temp];
+            if ((DWORD)skinTexture != 0xffffffff) { //0xffffffff means: has no gdb skin
+                if (!skinTexture) {
+                    //no skin texture in cache yet
+                    skinTexture = getSkinTexture(currRenderPlayer, has_gloves);
+                    if (!skinTexture) {
+                        //no texture assigned
+                        skinTexture = (IDirect3DTexture8*)0xffffffff;
+                    } else {
+                        *res=skinTexture;
+                    }
+                    //cache the texture pointer
+                    g_skinTextures[j][temp]=skinTexture;
+                } else {
+                    //set texture
+                    *res=skinTexture;
+                }
+            }
+        }
+    }
+
+    for (int lod=0; lod<3; lod++) {
+        if (p2==g_neckTexturesColl[lod] && p3==g_neckTexturesPos[lod]) {
+            //LOG(&k_skin, "skinPesGetTexture:: ^^^ neck texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+            BYTE j=(has_gloves)?1:0;
+            BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+            IDirect3DTexture8* skinTexture=g_skinTextures[j][temp];
+            if ((DWORD)skinTexture != 0xffffffff) { //0xffffffff means: has no gdb skin
+                if (!skinTexture) {
+                    //no skin texture in cache yet
+                    skinTexture = getSkinTexture(currRenderPlayer, has_gloves);
+                    if (!skinTexture) {
+                        //no texture assigned
+                        skinTexture = (IDirect3DTexture8*)0xffffffff;
+                    } else {
+                        *res=skinTexture;
+                    }
+                    //cache the texture pointer
+                    g_skinTextures[j][temp]=skinTexture;
+                } else {
+                    //set texture
+                    *res=skinTexture;
+                }
+            }
+        }
+    }
+
     return;
 }
