@@ -443,13 +443,14 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
     currRenderPlayer=0xffffffff;
     currRenderPlayerRecord=NULL;
 
-    if (isEditMode()) {
+    bool edit_mode = isEditMode();
+    if (edit_mode) {
         playerNumber = editPlayerId();
         maxI=1;
     }
 
     for (int i=minI;i<=maxI;i++) {
-        if (!isEditMode())
+        if (!edit_mode)
             playerNumber=getRecordPlayerId(i);
 
         if (playerNumber != 0) {
@@ -462,7 +463,16 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
                 //PES is going to render this player now
                 currRenderPlayer = playerNumber;
                 currRenderPlayerRecord = playerRecord(i);
-                bool is_goalkeeper = (pinfo)?(((BYTE*)pinfo)[0x11] == 1):false;
+                bool is_goalkeeper = false;
+                if (edit_mode) {
+                    if (pinfo && ((BYTE*)pinfo)[0x11] == 1) {
+                        is_goalkeeper = true;
+                    }
+                }
+                else if (((BYTE*)currRenderPlayerRecord)[0x1fd] == 1) {
+                    is_goalkeeper = true;
+                }
+
                 has_gloves = *pgloves;
 
                 //LOG(&k_skin, ">>>>>>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x, pinfo = %08x (gk=%d) has_gloves=%d",
