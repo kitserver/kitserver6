@@ -1450,6 +1450,9 @@ HRESULT STDMETHODCALLTYPE NewPresent(IDirect3DDevice8* self, CONST RECT* src, CO
 HRESULT STDMETHODCALLTYPE NewReset(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS *params)
 {
 	LogWithNumber(&k_kload,"NewReset: CALLED. caller = %08x", (DWORD)(*(&self-4)));
+    LogWithNumber(&k_kload,"NewReset: BackBufferWidth=%d", params->BackBufferWidth);
+    LogWithNumber(&k_kload,"NewReset: BackBufferHeight=%d", params->BackBufferHeight);
+    LogWithNumber(&k_kload,"NewReset: Windowed=%d", params->Windowed);
 	
 	Log(&k_kload,"NewReset: cleaning-up.");
 
