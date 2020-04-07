@@ -12,7 +12,7 @@
 enum {
     C_READ_VERSION, C_COMPUTE_HASH, C_COPY_PLAYER_DATA,
 };
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES6
     {
         0xb76526, 0xb766ae, 0x860deb,
@@ -26,5 +26,5 @@ DWORD dataArray[][DATALEN] = {
         0, 0, 0,
     },
 };
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 

@@ -2,7 +2,7 @@
 #define _JUCE_CONFIG
 
 #include <windows.h>
-#include <hash_map>
+#include <unordered_map>
 
 #define BUFLEN 4096
 
@@ -34,9 +34,9 @@ public:
 	WORD   vKeyGKAwayKit;
 	bool   ShowKitInfo;
     bool   enable_HD_kits;
-    std::hash_map<int,bool> wideBackModels;
-    std::hash_map<int,bool> narrowBackModels;
-    std::hash_map<int,bool> squashedWithLogoModels;
+    std::unordered_map<int,bool> wideBackModels;
+    std::unordered_map<int,bool> narrowBackModels;
+    std::unordered_map<int,bool> squashedWithLogoModels;
 };
 
 BOOL ReadConfig(KSERV_CONFIG* config, char* cfgFile);

@@ -149,7 +149,7 @@ enum {
     ISVIEWSTADIUMMODE,
     HOME_CROWD, AWAY_CROWD,
 };
-static DWORD dataArray[][DATALEN] = {
+static DWORD dtaArray[][DATALEN] = {
 	// PES6
 	{66, 38, 6941, 7611, 4, 
      6915, 25, 6923,
@@ -262,7 +262,7 @@ static char* WEATHER_NAMES[] = {
 };
 
 static DWORD code[CODELEN];
-static DWORD data[DATALEN];
+static DWORD dta[DATALEN];
 
 static std::map<DWORD,bool> g_AFS_idMap;
 static std::map<WORD,std::string> g_HomeStadiumMap;
@@ -512,15 +512,15 @@ static void InitStadiumMaps()
 WORD GetTeamId(int which)
 {
     BYTE* mlData;
-    if (data[TEAM_IDS]==0) return 0xffff;
-    WORD id = ((WORD*)data[TEAM_IDS])[which];
+    if (dta[TEAM_IDS]==0) return 0xffff;
+    WORD id = ((WORD*)dta[TEAM_IDS])[which];
     if (id==0x126 || id==0x127) {
         WORD id1,id2;
         switch (id) {
             case 0x126:
                 // saved team (home)
-                id1 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x36);
-                id2 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x40);
+                id1 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x36);
+                id2 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x40);
                 if (id1 != 0) {
                     id = id1;
                 } else {
@@ -529,8 +529,8 @@ WORD GetTeamId(int which)
                 break;
             case 0x127:
                 // saved team (away)
-                id1 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x36);
-                id2 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x40);
+                id1 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x36);
+                id2 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x40);
                 if (id1 != 0) {
                     id = id1;
                 } else {
@@ -647,7 +647,7 @@ void InitStadiumServer()
     int i,j;
 
 	memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
-	memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
+	memcpy(dta, dtaArray[GetPESInfo()->GameVersion], sizeof(dta));
     
     RegisterAfsReplaceCallback(stadAfsReplace);
     Log(&k_stadium, "stadAfsReplace hooked");
@@ -663,18 +663,18 @@ void InitStadiumServer()
     }
 
     // mark ids for stadium files
-	for (i=0; i<data[NUM_STADS]; i++) {
-        for (j=0; j<data[NUM_FILES]; j++) {
-            DWORD id = data[STAD_FIRST] + i*data[NUM_FILES] + j;
-            id = (id > data[NOU_CAMP_SHIFT_ID])?(id + data[SHIFT]):id;
+	for (i=0; i<dta[NUM_STADS]; i++) {
+        for (j=0; j<dta[NUM_FILES]; j++) {
+            DWORD id = dta[STAD_FIRST] + i*dta[NUM_FILES] + j;
+            id = (id > dta[NOU_CAMP_SHIFT_ID])?(id + dta[SHIFT]):id;
             // store id in id-map
             g_AFS_idMap[id] = true;
         }
     }
 
     // mark ids for adboard textures
-	for (i=0; i<data[NUM_ADBOARD_TEX]; i++) {
-        DWORD id = data[ADBOARD_TEX_FIRST] + i;
+	for (i=0; i<dta[NUM_ADBOARD_TEX]; i++) {
+        DWORD id = dta[ADBOARD_TEX_FIRST] + i;
         // store id in id-map
         g_AFS_idMap[id] = true;
     }
@@ -695,31 +695,31 @@ void InitStadiumServer()
 
 int GetStadId(DWORD id)
 {
-    int sid = id - data[STAD_FIRST];
-    sid = (id > data[NOU_CAMP_SHIFT_ID])?(sid - data[SHIFT]):sid;
-    return sid / data[NUM_FILES];
+    int sid = id - dta[STAD_FIRST];
+    sid = (id > dta[NOU_CAMP_SHIFT_ID])?(sid - dta[SHIFT]):sid;
+    return sid / dta[NUM_FILES];
 }
 
 int GetFileId(DWORD id)
 {
-    int sid = id - data[STAD_FIRST];
-    sid = (id > data[NOU_CAMP_SHIFT_ID])?(sid - data[SHIFT]):sid;
-    return sid % data[NUM_FILES];
+    int sid = id - dta[STAD_FIRST];
+    sid = (id > dta[NOU_CAMP_SHIFT_ID])?(sid - dta[SHIFT]):sid;
+    return sid % dta[NUM_FILES];
 }
 
 int GetStadiumBase(DWORD stadId)
 {
-    int base = data[STAD_FIRST] + stadId * data[NUM_FILES];
-    base = (base > data[NOU_CAMP_SHIFT_ID])?(base + data[SHIFT]):base;
+    int base = dta[STAD_FIRST] + stadId * dta[NUM_FILES];
+    base = (base > dta[NOU_CAMP_SHIFT_ID])?(base + dta[SHIFT]):base;
     LogWithTwoNumbers(&k_stadium, "GetStadiumBase(%d): base = %d", stadId, base);
     return base;
 }
 
 void FindAdboardsFile(char* filename)
 {
-	LCM* lcm=(LCM*)data[TEAM_IDS];
+	LCM* lcm=(LCM*)dta[TEAM_IDS];
     // force full stadium reload next time
-    BYTE* randomStad = (BYTE*)data[RANDOM_STADIUM_FLAG];
+    BYTE* randomStad = (BYTE*)dta[RANDOM_STADIUM_FLAG];
     *randomStad = *randomStad | 0x01;
 
     if (g_gameChoice || isViewStadiumMode) {
@@ -833,13 +833,13 @@ void stadAfsReplace(GETFILEINFO* gfi)
         if (MAP_CONTAINS(g_AFS_idMap, fileId)) {
 			LogWithTwoNumbers(&k_stadium,"stadAfsReplace: afsId=%d, fileId=%d", afsId, fileId);
 
-            if (fileId < data[STAD_FIRST]) {
+            if (fileId < dta[STAD_FIRST]) {
                 // adboard textures
                 if (g_stadId != 0xffffffff) {
                     // we know the stadium id
 
                     // force Della Alpi adboards
-                    //fileId = data[DELLA_ALPI_ADBOARDS];
+                    //fileId = dta[DELLA_ALPI_ADBOARDS];
 
                     FindAdboardsFile(filename);
                     LogWithString(&k_stadium,"OnReadFile: file: %s", FILE_NAMES[ADBOARDS]);
@@ -854,7 +854,7 @@ void stadAfsReplace(GETFILEINFO* gfi)
                 LogWithTwoNumbers(&k_stadium,"stadAfsReplace: stadId=%d, stadFileId=%d", stadId, stadFileId);
 
                 // force Della Alpi stadium
-                //fileId = stadFileId + data[DELLA_ALPI];
+                //fileId = stadFileId + dta[DELLA_ALPI];
 
                 // remember current stadium ID
                 if (STAD_MAIN(stadFileId)) {
@@ -1245,8 +1245,8 @@ void stadPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND
 
 bool IsStadiumText(char* text) 
 {
-    DWORD base = *((DWORD*)data[STADIUM_TEXT_TABLE]);
-    for (int i=0; i<data[NUM_STADS]; i++) {
+    DWORD base = *((DWORD*)dta[STADIUM_TEXT_TABLE]);
+    for (int i=0; i<dta[NUM_STADS]; i++) {
         if (base + STADIUM_TEXT_LEN*i == (DWORD)text) return true;
     }
     return false;
@@ -1647,7 +1647,7 @@ DWORD stadWriteCapacity(char* dest, char* format, DWORD num)
 
 void CheckViewStadiumMode()
 {	
-	if (data[ISVIEWSTADIUMMODE]!=0 && *(BYTE*)data[ISVIEWSTADIUMMODE] != 0) {
+	if (dta[ISVIEWSTADIUMMODE]!=0 && *(BYTE*)dta[ISVIEWSTADIUMMODE] != 0) {
 		if (!isViewStadiumMode) {
 			//reset parameters if reentering View Stadium mode
 			viewGdbStadiums=false;
@@ -1666,7 +1666,7 @@ DWORD stadReadLCM(DWORD p1, DWORD p2, DWORD p3, DWORD p4)
     //Log(&k_stadium, "stadReadLCM: CALLED");
 
     // avoid Club House
-	LCM* lcm=(LCM*)data[TEAM_IDS];
+	LCM* lcm=(LCM*)dta[TEAM_IDS];
     if (!g_gameChoice) {
         LogWithNumber(&k_stadium, "stadReadLCM: stadium = %d", lcm->stadium);
         if (lcm->stadium == CLUB_HOUSE) {
@@ -1683,7 +1683,7 @@ DWORD stadSetLCM(DWORD p1)
     //Log(&k_stadium, "stadSetLCM: CALLED");
 	stadEndUniSelect();
 
-	LCM* lcm=(LCM*)data[TEAM_IDS];
+	LCM* lcm=(LCM*)dta[TEAM_IDS];
 	
     DWORD result = MasterCallNext(p1);
 

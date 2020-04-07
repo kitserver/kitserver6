@@ -7,7 +7,7 @@
 #include <string>
 
 #ifdef USE_HASHMAPS
-	#include <hash_map>
+	#include <unordered_map>
 #else
 	#include <map>
 #endif
@@ -17,8 +17,8 @@
 	needs this here for compiling:
 	http://www.sgi.com/tech/stl/
 	*/
-	std::hash_map<DWORD,DWORD> testMap;
-	std::hash_map<DWORD,DWORD>::iterator testMapIt;
+	std::unordered_map<DWORD,DWORD> testMap;
+	std::unordered_map<DWORD,DWORD>::iterator testMapIt;
 #else
 	std::map<DWORD,DWORD> testMap;
 	std::map<DWORD,DWORD>::iterator testMapIt;

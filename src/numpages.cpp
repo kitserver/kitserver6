@@ -41,7 +41,7 @@ static DWORD codeArray[][CODELEN] = {
 enum {
     AFS_NUMPAGES_TABLES, DECRYPTED_CODE_ADDR,
 };
-static DWORD dataArray[][DATALEN] = {
+static DWORD dtaArray[][DATALEN] = {
     // PES6
     {
         0x3b5cbc0, 0,
@@ -57,7 +57,7 @@ static DWORD dataArray[][DATALEN] = {
 };
 
 static DWORD code[CODELEN];
-static DWORD data[DATALEN];
+static DWORD dta[DATALEN];
 
 typedef DWORD (*getnumpages_callback_t)(DWORD fileId, DWORD afsId, DWORD* retval);
 vector<getnumpages_callback_t> _getnumpages_vec;
@@ -79,7 +79,7 @@ BYTE _saved_code2[10];
  */
 DWORD GetNumPagesForFileInAFS(DWORD fileId, DWORD afsId)
 {
-    DWORD* numPagesTables = (DWORD*)data[AFS_NUMPAGES_TABLES];
+    DWORD* numPagesTables = (DWORD*)dta[AFS_NUMPAGES_TABLES];
     DWORD* numPagesTable = (DWORD*)(numPagesTables[afsId] + 0x11c);
     DWORD orgNumPages = numPagesTable[fileId];
 
@@ -102,7 +102,7 @@ DWORD GetNumPagesForFileInAFS(DWORD fileId, DWORD afsId)
  */
 DWORD GetNumPagesForFileInAFS2(DWORD fileId, DWORD afsId)
 {
-    DWORD* numPagesTables = (DWORD*)data[AFS_NUMPAGES_TABLES];
+    DWORD* numPagesTables = (DWORD*)dta[AFS_NUMPAGES_TABLES];
     WORD* numPagesTable = (WORD*)(numPagesTables[afsId] + 0x11a);
     DWORD orgNumPages = (DWORD)numPagesTable[fileId];
 
@@ -164,7 +164,7 @@ KEXPORT void InitGetNumPages()
     if (v != -1)
     {
         memcpy(code, codeArray[v], sizeof(code));
-        memcpy(data, dataArray[v], sizeof(data));
+        memcpy(dta, dtaArray[v], sizeof(dta));
     }
 }
 
@@ -176,19 +176,19 @@ KEXPORT bool HookGetNumPages()
         Log(&k_kload, "GetNumPagesForFileInAFS2 command not hooked.");
     }
 
-    if (data[DECRYPTED_CODE_ADDR]!=0) {
-        if ((*(DWORD*)data[DECRYPTED_CODE_ADDR] & 0xffff)!=0) {
+    if (dta[DECRYPTED_CODE_ADDR]!=0) {
+        if ((*(DWORD*)dta[DECRYPTED_CODE_ADDR] & 0xffff)!=0) {
             return false; // delayed hooking
         }
     }
 
     _getnumpages_jmpback = code[C_GETNUMPAGES_JMPBACK];
-    if (data[DECRYPTED_CODE_ADDR]!=0) _getnumpages_jmpback += *(DWORD*)data[DECRYPTED_CODE_ADDR];
+    if (dta[DECRYPTED_CODE_ADDR]!=0) _getnumpages_jmpback += *(DWORD*)dta[DECRYPTED_CODE_ADDR];
     _getnumpages2_jmpback = code[C_GETNUMPAGES2_JMPBACK];
-    if (data[DECRYPTED_CODE_ADDR]!=0) _getnumpages2_jmpback += *(DWORD*)data[DECRYPTED_CODE_ADDR];
+    if (dta[DECRYPTED_CODE_ADDR]!=0) _getnumpages2_jmpback += *(DWORD*)dta[DECRYPTED_CODE_ADDR];
 
     DWORD addr = code[C_GETNUMPAGES_HOOK];
-    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
+    if (dta[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)dta[DECRYPTED_CODE_ADDR];
     DWORD target = (DWORD)GetNumPagesForFileInAFSCaller + KS_JMP_SHIFT; //6;
 
     DWORD protection = 0;
@@ -210,7 +210,7 @@ KEXPORT bool HookGetNumPages()
     }
 
     addr = code[C_GETNUMPAGES2_HOOK];
-    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
+    if (dta[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)dta[DECRYPTED_CODE_ADDR];
     target = (DWORD)GetNumPagesForFileInAFSCaller2 + KS_JMP_SHIFT; //6;
 
     protection = 0;
@@ -251,7 +251,7 @@ KEXPORT void UnhookGetNumPages()
     }
 
     DWORD addr = code[C_GETNUMPAGES_HOOK];
-    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
+    if (dta[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)dta[DECRYPTED_CODE_ADDR];
     DWORD protection = 0;
     DWORD newProtection = PAGE_EXECUTE_READWRITE;
     if (VirtualProtect((void*)addr, 16, newProtection, &protection))
@@ -264,7 +264,7 @@ KEXPORT void UnhookGetNumPages()
     }
 
     addr = code[C_GETNUMPAGES2_HOOK];
-    if (data[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)data[DECRYPTED_CODE_ADDR];
+    if (dta[DECRYPTED_CODE_ADDR]!=0) addr += *(DWORD*)dta[DECRYPTED_CODE_ADDR];
     protection = 0;
     newProtection = PAGE_EXECUTE_READWRITE;
     if (VirtualProtect((void*)addr, 16, newProtection, &protection))

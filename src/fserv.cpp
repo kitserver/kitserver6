@@ -7,11 +7,13 @@
 #include "numpages.h"
 #include "crc32.h"
 
-#include <hash_map>
+#include <unordered_map>
 #include <queue>
 
 KMOD k_fserv={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 #define DEFAULT_USESPECIALHAIR 0
+
+bool dump_it = false;
 
 HINSTANCE hInst;
 bool Inited=false;
@@ -35,30 +37,30 @@ RANDSEL_PLAYERS randSelPlayersAddr=NULL;
 DWORD StartsStdFaces[4];
 WORD* randSelIDs=NULL;
 
-std::hash_map<DWORD,LPVOID> g_Buffers;
-std::hash_map<DWORD,LPVOID>::iterator g_BuffersIterator;
+std::unordered_map<DWORD,LPVOID> g_Buffers;
+std::unordered_map<DWORD,LPVOID>::iterator g_BuffersIterator;
 	
 //Stores the filenames to a face id
 DWORD numFaces=0;
-std::hash_map<DWORD,char*> g_Faces;
-std::hash_map<DWORD,char*>::iterator g_FacesIterator;
+std::unordered_map<DWORD,char*> g_Faces;
+std::unordered_map<DWORD,char*>::iterator g_FacesIterator;
 
 //Same for hair
 DWORD numHair=0;
-std::hash_map<DWORD,char*> g_Hair;
-std::hash_map<DWORD,char*>::iterator g_HairIterator;
-std::hash_map<DWORD,BYTE> g_HairTransp;
+std::unordered_map<DWORD,char*> g_Hair;
+std::unordered_map<DWORD,char*>::iterator g_HairIterator;
+std::unordered_map<DWORD,BYTE> g_HairTransp;
 
 //Stores larger face id for players
-std::hash_map<DWORD,DWORD> g_Players;
-std::hash_map<DWORD,DWORD> g_PlayersHair;
-std::hash_map<DWORD,DWORD> g_PlayersAddr;
-std::hash_map<DWORD,DWORD> g_PlayersAddr2;
-std::hash_map<DWORD,DWORD> g_SpecialFaceHair;
-std::hash_map<DWORD,DWORD> g_EditorAddresses;
-std::hash_map<DWORD,bool>  g_FaceExists;
-std::hash_map<DWORD,bool>  g_HairExists;
-std::hash_map<DWORD,DWORD>::iterator g_PlayersIterator;
+std::unordered_map<DWORD,DWORD> g_Players;
+std::unordered_map<DWORD,DWORD> g_PlayersHair;
+std::unordered_map<DWORD,DWORD> g_PlayersAddr;
+std::unordered_map<DWORD,DWORD> g_PlayersAddr2;
+std::unordered_map<DWORD,DWORD> g_SpecialFaceHair;
+std::unordered_map<DWORD,DWORD> g_EditorAddresses;
+std::unordered_map<DWORD,bool>  g_FaceExists;
+std::unordered_map<DWORD,bool>  g_HairExists;
+std::unordered_map<DWORD,DWORD>::iterator g_PlayersIterator;
 
 BYTE isInEditPlayerMode=0, isInEditPlayerList=0;
 DWORD lastPlayerNumber=0, lastFaceID=0;
@@ -181,7 +183,7 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
     HRESULT res = D3D_OK;
 
     //LOG(&k_fserv, "CreateTexture (%dx%dx%d): %08x (src=%08x)",
-    //    width, height, levels, (DWORD)*ppTexture, src);
+    //    width, height, levels, (DWORD)ppTexture, src);
 
     // faces
     if (width == 64 && height == 128 && levels == 1) {
@@ -189,8 +191,9 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
             string filename = g_faceFilesBig.front();
             g_faceFilesBig.pop();
 
-            //LOG(&k_fserv, ">>> Looks like a big face texture (%dx%dx%d): %08x (src=%08x)",
-            //    width, height, levels, (DWORD)*ppTexture, src);
+            LOG(&k_fserv, ">>> Looks like a big face texture (%dx%dx%d): %08x (src=%08x)",
+                width, height, levels, (DWORD)*ppTexture, src);
+            dump_it = true;
 
             string hdfilename = filename.substr(0,filename.size()-4);
             hdfilename += ".png";
@@ -241,8 +244,8 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
         if (g_faceFilesSmall.size()>0) {
             string filename = g_faceFilesSmall.front();
             g_faceFilesSmall.pop();
-            //LOG(&k_fserv, ">>> Looks like a small face texture (%dx%dx%d): %08x (src=%08x)",
-            //    width, height, levels, (DWORD)*ppTexture, src);
+            LOG(&k_fserv, ">>> Looks like a small face texture (%dx%dx%d): %08x (src=%08x)",
+                width, height, levels, (DWORD)*ppTexture, src);
 
             string hdfilename = filename.substr(0,filename.size()-4);
             hdfilename += ".png";
@@ -295,6 +298,8 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
         if (g_hairFilesBig.size()>0) {
             string filename = g_hairFilesBig.front();
             g_hairFilesBig.pop();
+            LOG(&k_fserv, ">>> Looks like a big hair texture (%dx%dx%d): %08x (src=%08x)",
+                width, height, levels, (DWORD)*ppTexture, src);
 
             string hdfilename = filename.substr(0,filename.size()-4);
             hdfilename += ".png";
@@ -345,8 +350,8 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
         if (g_hairFilesSmall.size()>0) {
             string filename = g_hairFilesSmall.front();
             g_hairFilesSmall.pop();
-            //LOG(&k_fserv, ">>> Looks like a small face texture (%dx%dx%d): %08x (src=%08x)",
-            //    width, height, levels, (DWORD)*ppTexture, src);
+            LOG(&k_fserv, ">>> Looks like a small hair texture (%dx%dx%d): %08x (src=%08x)",
+                width, height, levels, (DWORD)*ppTexture, src);
 
             string hdfilename = filename.substr(0,filename.size()-4);
             hdfilename += ".png";
@@ -394,6 +399,7 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
             }
         }
     }
+
     return res;
 }
 
@@ -424,6 +430,18 @@ void fservLoadTextureFromFile(IDirect3DTexture8* tex, const char *filename)
 
 void fservUnlockRect(IDirect3DTexture8* self,UINT Level) {
     static int count = 1;
+
+    if (g_config->dump_textures && dump_it) {
+        char buf[BUFLEN];
+        sprintf(buf,"%s\\%03d.bmp", GetPESInfo()->mydir, count);
+        if (SUCCEEDED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, self, NULL))) {
+            LOG(&k_fserv, "Saved texture [%p] to: %s", self, buf);
+        }
+        else {
+            LOG(&k_fserv, "FAILED to save texture to: %s", buf);
+        }
+        count++;
+    }
 
     // check faces
     std::map<IDirect3DTexture8*,string>::iterator it;
@@ -462,6 +480,7 @@ void fservUnlockRect(IDirect3DTexture8* self,UINT Level) {
             else {
                 LOG(&k_fserv, "FAILED to save texture to: %s", buf);
             }
+            dump_it = true;
         }
 
         count++;
@@ -484,6 +503,7 @@ void fservUnlockRect(IDirect3DTexture8* self,UINT Level) {
             else {
                 LOG(&k_fserv, "FAILED to save texture to: %s", buf);
             }
+            dump_it = true;
         }
 
         count++;
@@ -504,6 +524,7 @@ void fservUnlockRect(IDirect3DTexture8* self,UINT Level) {
             else {
                 LOG(&k_fserv, "FAILED to save texture to: %s", buf);
             }
+            dump_it = true;
         }
 
         count++;
@@ -975,7 +996,7 @@ void fservAfsReplace(GETFILEINFO* gfi)
 	DWORD FaceID = 0, HairID = 0;
 	char filename[BUFLEN];
 	ZeroMemory(filename, BUFLEN);
-	
+
 	THREEDWORDS* threeDWORDs = GetSpecialAfsFileInfo(gfi->fileId);
 	if (threeDWORDs == NULL) return;
  	
@@ -1050,7 +1071,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 	usedPlayerNumber=ResolvePlayerID(usedPlayerNumber);
 	
 	lastPlayerNumber=usedPlayerNumber;
-	
+
 	lastWasFromGDB=false;
 	lastFaceID=0xffffffff;
 	

@@ -34,7 +34,7 @@ enum {
     ISMATCHOVER_FLAG1, DIFFICULTY,
 };
 
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
 	// PES6
 	{
 	 0x10c9947, 0x3be094c,
@@ -50,7 +50,7 @@ DWORD dataArray[][DATALEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 
 typedef DWORD (*ISMATCHOVER)();
 
@@ -108,7 +108,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
         }
 		
 		memcpy(code, codeArray[v], sizeof(code));
-		memcpy(data, dataArray[v], sizeof(data));
+		memcpy(dta, dtaArray[v], sizeof(dta));
 		
 		HookFunction(hk_D3D_Create,(DWORD)InitPSC);
 		
@@ -189,7 +189,7 @@ DWORD pscMakeStatistics()
 {
 	DWORD res = MasterCallNext();
 	
-	if (*(BYTE*)data[ISMATCHOVER_FLAG1] != 0) return res;
+	if (*(BYTE*)dta[ISMATCHOVER_FLAG1] != 0) return res;
 	DWORD isMatchOver = ((ISMATCHOVER)(code[C_ISMATCHOVER]))();
 	if (isMatchOver == 0) return res;
 

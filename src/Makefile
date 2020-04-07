@@ -2,10 +2,13 @@ CC=cl
 LINK=link
 RC=rc
 
-CFLAGS=/nologo /EHsc /wd4731 /D_WINNT_WIN32=0x501 /DKS_JMP_SHIFT=4 $(EXTRA_CFLAGS) /DUSE_HASHMAPS
-LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
+CFLAGS=/nologo /MT /EHsc /wd4731 /wd4477 /D_WINNT_WIN32=0x501 /DKS_JMP_SHIFT=4 $(EXTRA_CFLAGS) /DUSE_HASHMAPS
+LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib /LIBPATH:soft\dxsdk81\lib
 LIBS=user32.lib gdi32.lib advapi32.lib
 LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
+
+INCLUDE=$(INCLUDE);soft\dxsdk81\include
+LIB=$(LIB);soft\dxsdk81\lib
 
 INCPNGDIB=soft\pngdib
 LPPNGDIB=soft\pngdib 
@@ -46,8 +49,11 @@ all_apps: apps
 dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
-release:
-	$(MAKE) EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
+!if "$(debug)"=="1"
+EXTRA_CFLAGS=/DDEBUG
+!else
+EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
+!endif
 
 diag: diag.exe
 setup: setup.exe

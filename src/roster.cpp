@@ -14,7 +14,7 @@ char _versionString[17] = "1.66-FakeVersion";
 int _login_credentials = 0;
 char _cred_key[31] = "djkj93rajf8123bvdfg9475hpok43k";
 
-//static DWORD data[DATALEN];
+//static DWORD dta[DATALEN];
 
 class roster_config_t
 {
@@ -37,7 +37,7 @@ bool readConfig(roster_config_t& config);
 void rosterVersionReadCallPoint();
 void rosterVersionRead(char* version);
 void copyPlayerDataCallPoint();
-void beforeCopyPlayerData(BYTE* data, DWORD numDwords);
+void beforeCopyPlayerData(BYTE* dta, DWORD numDwords);
 void afterComputeHashCallPoint();
 void afterComputeHash(BYTE* pHash);
 //void loginReadCallPoint();
@@ -108,7 +108,7 @@ EXTERN_C BOOL WINAPI DllMain(
 		RegisterKModule(&k_roster);
 
         // initialize addresses
-        memcpy(data, dataArray[v], sizeof(data));
+        memcpy(dta, dtaArray[v], sizeof(dta));
 		
 		HookFunction(hk_D3D_Create,(DWORD)initModule);
 	}
@@ -185,16 +185,16 @@ bool readConfig(roster_config_t& config)
 
 void initModule()
 {
-    //HookCallPoint(data[CODE_READ_VERSION_STRING], 
+    //HookCallPoint(dta[CODE_READ_VERSION_STRING], 
     //        rosterVersionReadCallPoint, 6, 3, false);
-    //HookCallPoint(data[CODE_READ_CRED_FLAG], 
+    //HookCallPoint(dta[CODE_READ_CRED_FLAG], 
     //        loginReadCallPoint, 6, 2, false);
-    //HookCallPoint(data[CODE_WRITE_CRED_FLAG], 
+    //HookCallPoint(dta[CODE_WRITE_CRED_FLAG], 
     //        loginWriteCallPoint, 6, 2, false);
     
-    HookCallPoint(data[C_COMPUTE_HASH]+5, 
+    HookCallPoint(dta[C_COMPUTE_HASH]+5, 
             afterComputeHashCallPoint, 6, 2, false);
-    HookCallPoint(data[C_COPY_PLAYER_DATA], 
+    HookCallPoint(dta[C_COPY_PLAYER_DATA], 
             copyPlayerDataCallPoint, 6, 0, false);
 
     Log(&k_roster, "Network module initialized.");
@@ -208,7 +208,7 @@ void initModule()
     //LogWithNumber(&k_roster, "_config.rememberLogin = %d", 
     //        _config.rememberLogin);
 
-    //_login_credentials = data[CREDENTIALS];
+    //_login_credentials = dta[CREDENTIALS];
 }
 
 void computeHash(void* lpBuffer, size_t len)
@@ -329,7 +329,7 @@ void loginWriteCallPoint()
 /*
 void loginRead()
 {
-    LOGIN_CREDENTIALS* lc = (LOGIN_CREDENTIALS*)data[CREDENTIALS];
+    LOGIN_CREDENTIALS* lc = (LOGIN_CREDENTIALS*)dta[CREDENTIALS];
     if (_config.rememberLogin && lc) {
         // read registry key
         HKEY handle;
@@ -355,7 +355,7 @@ void loginRead()
 
 void loginWrite()
 {
-    LOGIN_CREDENTIALS* lc = (LOGIN_CREDENTIALS*)data[CREDENTIALS];
+    LOGIN_CREDENTIALS* lc = (LOGIN_CREDENTIALS*)dta[CREDENTIALS];
     if (_config.rememberLogin && lc) {
         lc->initialized = 1;
 
@@ -422,10 +422,10 @@ void copyPlayerDataCallPoint()
     }
 }
 
-void beforeCopyPlayerData(BYTE* data, DWORD numDwords)
+void beforeCopyPlayerData(BYTE* dta, DWORD numDwords)
 {
     // compute roster hash
-    computeHash(data, numDwords*4);
+    computeHash(dta, numDwords*4);
 }
 
 void afterComputeHashCallPoint()

@@ -23,7 +23,7 @@
 #include "d3dx8tex.h"
 
 #include <pngdib.h>
-#include <hash_map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -133,8 +133,8 @@ typedef struct _TextureBinding {
     UINT levels;
 } TextureBinding;
 
-hash_map<DWORD,DWORD> _texture_to_id;
-hash_map<DWORD,DWORD> _source_to_id;
+unordered_map<DWORD,DWORD> _texture_to_id;
+unordered_map<DWORD,DWORD> _source_to_id;
 vector<TextureBinding> _textureBindings;
 
 // textures for strip-selection
@@ -149,7 +149,7 @@ IDirect3DTexture8* g_gloves_left_tex = NULL;
 
 using namespace std;
 // map of textures for 2Dkits
-hash_map<string,IDirect3DTexture8*> g_kitTextureMap;
+unordered_map<string,IDirect3DTexture8*> g_kitTextureMap;
 
 // kit collection iterators
 typedef StringKitMap::iterator KitIterator;
@@ -249,7 +249,7 @@ WORD g_last_away = 0xff;
 #define DATALEN 22
 #define CODELEN 21
 
-// data array names
+// dta array names
 enum {
 	TEAM_IDS, TEAM_STRIPS, KIT_SLOTS, 
 	ANOTHER_KIT_SLOTS, MLDATA_PTRS, TEAM_COLLARS_PTR,
@@ -264,7 +264,7 @@ enum {
 };
 
 // Data addresses.
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES6
     { 0x3be0940, 0x3be6078, 0,
       0, 0, 0,
@@ -364,13 +364,13 @@ DWORD codeArray[][CODELEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 
-std::hash_map<DWORD,bool> g_AFS_idMap;
+std::unordered_map<DWORD,bool> g_AFS_idMap;
 
 // saves modified kitpack info
-std::hash_map<DWORD,TEAMKITINFO*> g_teamKitInfo;
-std::hash_map<DWORD,TEAMKITINFO*>::iterator g_teamKitInfoIterator;
+std::unordered_map<DWORD,TEAMKITINFO*> g_teamKitInfo;
+std::unordered_map<DWORD,TEAMKITINFO*>::iterator g_teamKitInfoIterator;
 
 // Actual number of teams in the game
 int g_numTeams = 0; 
@@ -1383,11 +1383,11 @@ void NarrowBackCorrection(CUSTOMVERTEX2* dest, CUSTOMVERTEX2* src, int n)
     }
 }
 
-HRESULT MakeVertexBuffer(IDirect3DDevice8* dev, CUSTOMVERTEX* data, 
-        size_t dataSize, float x, IDirect3DVertexBuffer8** ppVB)
+HRESULT MakeVertexBuffer(IDirect3DDevice8* dev, CUSTOMVERTEX* dta, 
+        size_t dtaSize, float x, IDirect3DVertexBuffer8** ppVB)
 {
 	VOID* pVertices;
-	if (FAILED(dev->CreateVertexBuffer(dataSize*2, D3DUSAGE_WRITEONLY, 
+	if (FAILED(dev->CreateVertexBuffer(dtaSize*2, D3DUSAGE_WRITEONLY, 
 					D3DFVF_CUSTOMVERTEX, D3DPOOL_MANAGED, ppVB)))
 	{
 		Log(&k_mydll,"CreateVertexBuffer() failed.");
@@ -1395,24 +1395,24 @@ HRESULT MakeVertexBuffer(IDirect3DDevice8* dev, CUSTOMVERTEX* data,
 	}
 	Log(&k_mydll,"CreateVertexBuffer() done.");
 
-	if (FAILED((*ppVB)->Lock(0, dataSize*2, (BYTE**)&pVertices, 0)))
+	if (FAILED((*ppVB)->Lock(0, dtaSize*2, (BYTE**)&pVertices, 0)))
 	{
 		Log(&k_mydll,"(*ppVB)->Lock() failed.");
 		return E_FAIL;
 	}
-	memcpy(pVertices, data, dataSize);
-	memcpy((BYTE*)pVertices + dataSize, data, dataSize);
-	SetPosition((CUSTOMVERTEX*)pVertices, data, dataSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT);
-	SetPosition((CUSTOMVERTEX*)pVertices + dataSize/sizeof(CUSTOMVERTEX), data, dataSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT_ONLINE);
+	memcpy(pVertices, dta, dtaSize);
+	memcpy((BYTE*)pVertices + dtaSize, dta, dtaSize);
+	SetPosition((CUSTOMVERTEX*)pVertices, dta, dtaSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT);
+	SetPosition((CUSTOMVERTEX*)pVertices + dtaSize/sizeof(CUSTOMVERTEX), dta, dtaSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT_ONLINE);
 	g_pVB_gloves_left->Unlock();
     return S_OK;
 }
 
-HRESULT MakeVertexBuffer2(IDirect3DDevice8* dev, CUSTOMVERTEX2* data, size_t dataSize, 
+HRESULT MakeVertexBuffer2(IDirect3DDevice8* dev, CUSTOMVERTEX2* dta, size_t dtaSize, 
         float x, IDirect3DVertexBuffer8** ppVB)
 {
 	VOID* pVertices;
-	if (FAILED(dev->CreateVertexBuffer(dataSize*2, D3DUSAGE_WRITEONLY, 
+	if (FAILED(dev->CreateVertexBuffer(dtaSize*2, D3DUSAGE_WRITEONLY, 
 					D3DFVF_CUSTOMVERTEX2, D3DPOOL_MANAGED, ppVB)))
 	{
 		Log(&k_mydll,"CreateVertexBuffer() failed.");
@@ -1420,15 +1420,15 @@ HRESULT MakeVertexBuffer2(IDirect3DDevice8* dev, CUSTOMVERTEX2* data, size_t dat
 	}
 	Log(&k_mydll,"CreateVertexBuffer() done.");
 
-	if (FAILED((*ppVB)->Lock(0, dataSize*2, (BYTE**)&pVertices, 0)))
+	if (FAILED((*ppVB)->Lock(0, dtaSize*2, (BYTE**)&pVertices, 0)))
 	{
 		Log(&k_mydll,"(*ppVB)->Lock() failed.");
 		return E_FAIL;
 	}
-	memcpy(pVertices, data, dataSize);
-	memcpy((BYTE*)pVertices + dataSize, data, dataSize);
-	SetPosition((CUSTOMVERTEX2*)pVertices, data, dataSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT);
-	SetPosition((CUSTOMVERTEX2*)pVertices + dataSize/sizeof(CUSTOMVERTEX2), data, dataSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT_ONLINE);
+	memcpy(pVertices, dta, dtaSize);
+	memcpy((BYTE*)pVertices + dtaSize, dta, dtaSize);
+	SetPosition((CUSTOMVERTEX2*)pVertices, dta, dtaSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT);
+	SetPosition((CUSTOMVERTEX2*)pVertices + dtaSize/sizeof(CUSTOMVERTEX2), dta, dtaSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT_ONLINE);
 	g_pVB_gloves_left->Unlock();
     return S_OK;
 }
@@ -1887,7 +1887,7 @@ BOOL StripChange(int which, BYTE strip)
 
 KITPACKINFO* GetKitPackInfo(int which)
 {
-    WORD id = ((WORD*)data[TEAM_IDS])[which];
+    WORD id = ((WORD*)dta[TEAM_IDS])[which];
     return GetKitPackInfoById(id, which);
 }
 
@@ -1895,25 +1895,25 @@ KITPACKINFO* GetKitPackInfoById(WORD id, int which)
 {
     //LogWithTwoNumbers(&k_mydll,"GetKitPackInfoById: id=%08x, which=%d", id, which);
     if (id < 0x40) {
-        NATIONALKITINFO* nki = *(NATIONALKITINFO**)data[NATIONAL_TEAMS_ADDR];
+        NATIONALKITINFO* nki = *(NATIONALKITINFO**)dta[NATIONAL_TEAMS_ADDR];
         return &nki[id].kits;
 
     } else if (id < 204) {
-        CLUBKITINFO* cki = *(CLUBKITINFO**)data[CLUB_TEAMS_ADDR];
+        CLUBKITINFO* cki = *(CLUBKITINFO**)dta[CLUB_TEAMS_ADDR];
         return &cki[id - 0x40].kits;
 
     } else if (id == 0x126) {
-        return (KITPACKINFO*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x58);
+        return (KITPACKINFO*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x58);
 
     } else if (id == 0x127) {
-        return (KITPACKINFO*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x58);
+        return (KITPACKINFO*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x58);
 
     } else {
         switch (which) {
             case HOME:
-                return (KITPACKINFO*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x58);
+                return (KITPACKINFO*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x58);
             case AWAY:
-                return (KITPACKINFO*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x58);
+                return (KITPACKINFO*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x58);
         }
     }
     return NULL;
@@ -1925,15 +1925,15 @@ KITPACKINFO* GetKitPackInfoById(WORD id, int which)
 WORD GetTeamId(int which)
 {
     BYTE* mlData;
-    if (data[TEAM_IDS]==0) return 0xffff;
-    WORD id = ((WORD*)data[TEAM_IDS])[which];
+    if (dta[TEAM_IDS]==0) return 0xffff;
+    WORD id = ((WORD*)dta[TEAM_IDS])[which];
     if (id==0x126 || id==0x127) {
         WORD id1,id2;
         switch (id) {
             case 0x126:
                 // saved team (home)
-                id1 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x36);
-                id2 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x40);
+                id1 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x36);
+                id2 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x40);
                 if (id1 != 0) {
                     id = id1;
                 } else {
@@ -1942,8 +1942,8 @@ WORD GetTeamId(int which)
                 break;
             case 0x127:
                 // saved team (away)
-                id1 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x36);
-                id2 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x40);
+                id1 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x36);
+                id2 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x40);
                 if (id1 != 0) {
                     id = id1;
                 } else {
@@ -1960,21 +1960,21 @@ WORD GetTeamId(int which)
  */
 BYTE GetTeamStrips(int which)
 {
-//LogWithTwoNumbers(&k_mydll, "GetTeamStrips(%d) = %d", which, ((BYTE*)data[TEAM_STRIPS])[which]);
-//    if (data[TEAM_STRIPS]==0) return 0xff;
-//    return ((BYTE*)data[TEAM_STRIPS])[which];
+//LogWithTwoNumbers(&k_mydll, "GetTeamStrips(%d) = %d", which, ((BYTE*)dta[TEAM_STRIPS])[which]);
+//    if (dta[TEAM_STRIPS]==0) return 0xff;
+//    return ((BYTE*)dta[TEAM_STRIPS])[which];
     switch (which) {
-        case HOME: return (data[TEAM_STRIPS_HOME]!=0) ? *(BYTE*)data[TEAM_STRIPS_HOME] : 0;
-        case AWAY: return (data[TEAM_STRIPS_AWAY]!=0) ? *(BYTE*)data[TEAM_STRIPS_AWAY] : 0;
+        case HOME: return (dta[TEAM_STRIPS_HOME]!=0) ? *(BYTE*)dta[TEAM_STRIPS_HOME] : 0;
+        case AWAY: return (dta[TEAM_STRIPS_AWAY]!=0) ? *(BYTE*)dta[TEAM_STRIPS_AWAY] : 0;
     }
     return 0;
 }
 
 void GetTeamStrips(BYTE* strips)
 {
-    if (data[TEAM_STRIPS_HOME]==0 || data[TEAM_STRIPS_AWAY]==0) return;
-    strips[0] = *(BYTE*)data[TEAM_STRIPS_HOME];
-    strips[1] = *(BYTE*)data[TEAM_STRIPS_AWAY];
+    if (dta[TEAM_STRIPS_HOME]==0 || dta[TEAM_STRIPS_AWAY]==0) return;
+    strips[0] = *(BYTE*)dta[TEAM_STRIPS_HOME];
+    strips[1] = *(BYTE*)dta[TEAM_STRIPS_AWAY];
 }
 
 /**
@@ -2349,11 +2349,11 @@ BOOL IsNarrowBack(int which )
 
 int GetTemplateTypeForModel(BYTE model)
 {
-    hash_map<int,bool>::iterator it0 = g_config.wideBackModels.find(model);
+    unordered_map<int,bool>::iterator it0 = g_config.wideBackModels.find(model);
     if (it0 != g_config.wideBackModels.end()) return 0;
-    hash_map<int,bool>::iterator it1 = g_config.narrowBackModels.find(model);
+    unordered_map<int,bool>::iterator it1 = g_config.narrowBackModels.find(model);
     if (it1 != g_config.narrowBackModels.end()) return 1;
-    hash_map<int,bool>::iterator it2 = g_config.squashedWithLogoModels.find(model);
+    unordered_map<int,bool>::iterator it2 = g_config.squashedWithLogoModels.find(model);
     if (it2 != g_config.squashedWithLogoModels.end()) return 2;
     return 3;
 }
@@ -2538,7 +2538,7 @@ void Draw2Dkits(IDirect3DDevice8* dev)
     // load textures from GDB (if needed)
     Load2Dkits();
 
-    BYTE onlineFlag = 1 - *(BYTE*)data[OFFLINE_FLAG];
+    BYTE onlineFlag = 1 - *(BYTE*)dta[OFFLINE_FLAG];
 
 	// render
 	dev->BeginScene();
@@ -2697,7 +2697,7 @@ void DrawKitLabels(IDirect3DDevice8* dev)
 
 	WORD id = 0xffff;
 	WORD kitId = 0xffff;
-	BYTE* strips = (BYTE*)data[TEAM_STRIPS];
+	BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 
 	// HOME PLAYER
 	ZeroMemory(buf, 255);
@@ -2858,7 +2858,7 @@ int GetKitSlot(int kitId)
 	int slot = -1;
 	for (int i=0; i<4; i++) 
 	{
-		WORD id = *((WORD*)(data[KIT_SLOTS] + i*0x38 + 0x0a));
+		WORD id = *((WORD*)(dta[KIT_SLOTS] + i*0x38 + 0x0a));
 		if (kitId == id) { slot = i; break; }
 	}
 	return slot;
@@ -2894,7 +2894,7 @@ void JucePresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND
 	if (g_triggerLoad3rdKit > 0)
 	{
 		int kitId = 0, slot = -1;
-		BYTE* strips = (BYTE*)data[TEAM_STRIPS];
+		BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 
 		switch (g_triggerLoad3rdKit)
 		{
@@ -2905,9 +2905,9 @@ void JucePresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND
 				slot = GetKitSlot(kitId);
 				if (slot != -1)
 				{
-					ZeroMemory((BYTE*)data[KIT_SLOTS] + slot * 0x38, 0x38);
+					ZeroMemory((BYTE*)dta[KIT_SLOTS] + slot * 0x38, 0x38);
 					// set uni-reload flag
-					*((DWORD*)data[KIT_CHECK_TRIGGER]) = 1;
+					*((DWORD*)dta[KIT_CHECK_TRIGGER]) = 1;
 				}
 				break;
 
@@ -2918,9 +2918,9 @@ void JucePresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND
 				slot = GetKitSlot(kitId);
 				if (slot != -1)
 				{
-					ZeroMemory((BYTE*)data[KIT_SLOTS] + slot * 0x38, 0x38);
+					ZeroMemory((BYTE*)dta[KIT_SLOTS] + slot * 0x38, 0x38);
 					// set uni-reload flag
-					*((DWORD*)data[KIT_CHECK_TRIGGER]) = 1;
+					*((DWORD*)dta[KIT_CHECK_TRIGGER]) = 1;
 				}
 				break;
 		}
@@ -3085,14 +3085,14 @@ void InitKserv()
     if (v != -1)
     {
         memcpy(code, codeArray[v], sizeof(code));
-        memcpy(data, dataArray[v], sizeof(data));
+        memcpy(dta, dtaArray[v], sizeof(dta));
 
 		// mark the files we need to replace
-		for (int i=data[FIRST_ID]; i <= data[LAST_ID]; i++) {
+		for (int i=dta[FIRST_ID]; i <= dta[LAST_ID]; i++) {
     		g_AFS_idMap[i] = true;
 		}
 
-        // Load GDB database
+        // Load GDB dtabase
         gdb = gdbLoad(GetPESInfo()->gdbDir);
         if (!gdb) {
             Log(&k_mydll,"Unable to load GDB.");
@@ -3263,7 +3263,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 // returns TRUE if specified slot contains edited kit.
 BOOL IsEditedKit(int slot) 
 {
-	KitSlot* kitSlot = (KitSlot*)(data[ANOTHER_KIT_SLOTS] + slot*sizeof(KitSlot));
+	KitSlot* kitSlot = (KitSlot*)(dta[ANOTHER_KIT_SLOTS] + slot*sizeof(KitSlot));
 	return kitSlot->isEdited;
 }
 
@@ -3849,7 +3849,7 @@ EXTERN_C LIBSPEC void GetKdbDir(char* gdbDir)
 }
 
 /**
- * Utility function to dump any data to file.
+ * Utility function to dump any dta to file.
  */
 void DumpData(BYTE* addr, DWORD size)
 {
@@ -3869,7 +3869,7 @@ void DumpData(BYTE* addr, DWORD size)
 }
 
 /**
- * Utility function to dump any data to a named file.
+ * Utility function to dump any dta to a named file.
  */
 void DumpData(BYTE* addr, DWORD size, char* filename)
 {
@@ -3940,7 +3940,7 @@ void DumpImagePack(TEXIMGPACKHEADER* imagePackHeader)
 }
 
 // Read a file into a memory block.
-static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize)
+static int read_file_to_mem(char *fn,unsigned char **ppfiledta, int *pfilesize)
 {
 	HANDLE hfile;
 	DWORD fsize;
@@ -3960,7 +3960,7 @@ static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize)
 		if(fbuf) {
 			if(ReadFile(hfile,(void*)fbuf,fsize,&bytesread,NULL)) {
 				if(bytesread==fsize) { 
-					(*ppfiledata)  = fbuf;
+					(*ppfiledta)  = fbuf;
 					(*pfilesize) = (int)fsize;
 					CloseHandle(hfile);
 					return 0;   // success
@@ -4078,7 +4078,7 @@ DWORD LoadTexture(BITMAPINFO** tex, char* filename)
 	return size;
 }
 
-// Substiture kit textures with data from DIB
+// Substiture kit textures with dta from DIB
 void ApplyDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"Applying DIB texture");
@@ -4185,7 +4185,7 @@ void ApplyDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 	}
 }
 
-// OR kit textures with data from DIB
+// OR kit textures with dta from DIB
 void OrDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"ORing DIB texture");
@@ -4274,7 +4274,7 @@ void OrDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 	}
 }
 
-// Substiture kit textures with data from DIB
+// Substiture kit textures with dta from DIB
 void ApplyDIBTextureMipMap(TEXIMGPACKHEADER* orgKit, int ordinal, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"Applying DIB texture (mipmap)");
@@ -4356,7 +4356,7 @@ void Apply4BitDIBPalette(TEXIMGHEADER* tex, BITMAPINFO* bitmap)
     TRACE(&k_mydll,"Palette copied.");
 }
 
-// Substiture kit textures with data from DIB.
+// Substiture kit textures with dta from DIB.
 void Apply4BitDIBTexture(TEXIMGPACKHEADER* pack, BITMAPINFO* bitmap, BOOL usePalette)
 {
     TRACE(&k_mydll,"Applying DIB image to 4-bit texture");
@@ -4390,12 +4390,12 @@ void Apply4BitDIBTexture(TEXIMGPACKHEADER* pack, BITMAPINFO* bitmap, BOOL usePal
 	}
 
     if (bih->biBitCount == 4) {
-        // copy data as is
+        // copy dta as is
         int k, m, j;
         for (k=0, m=bih->biHeight-1; k<tex->height, m>=0; k++, m--)
         {
             memcpy(buf + k*(tex->width/2), srcTex + bitsOff + m*(bih->biWidth/2), tex->width/2);
-            // shuffle pixel data
+            // shuffle pixel dta
             for (j=0; j<tex->width/2; j++) {
                 BYTE src = buf[k*(tex->width/2)+j];
                 buf[k*(tex->width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
@@ -4403,12 +4403,12 @@ void Apply4BitDIBTexture(TEXIMGPACKHEADER* pack, BITMAPINFO* bitmap, BOOL usePal
         }
 
     } else if (bih->biBitCount == 8) {
-        // need to convert 8-bit data to 4-bit
+        // need to convert 8-bit dta to 4-bit
         int k, m, j;
         for (k=0, m=bih->biHeight-1; k<tex->height, m>=0; k++, m--)
         {
             for (j=0; j<bih->biWidth; j+=2) {
-                // combine two bytes of data into one
+                // combine two bytes of dta into one
                 // (shuffling it as well)
                 buf[k*(tex->width/2)+j/2] = 
                     (srcTex[bitsOff + m*(bih->biWidth) + j] & 0x0f) |
@@ -4788,7 +4788,7 @@ DWORD src, bool* IsProcessed)
             char filename3[BUFLEN] = {0};
             char maskfilename[BUFLEN] = {0};
             char overlayfilename[BUFLEN] = {0};
-            int fileType = (g_currentAfsId - data[FIRST_ID]) % FILES_PER_TEAM;
+            int fileType = (g_currentAfsId - dta[FIRST_ID]) % FILES_PER_TEAM;
             int fileTypeBase = fileType / 3;
             // shirt
             DWORD texType1 = FindImageFileForId(g_currentAfsId, "", filename1, &needsMask);
@@ -4947,7 +4947,7 @@ DWORD src, bool* IsProcessed)
     if (width == 512 && height == 256) {
         g_unidecode_flag = false;
 
-        hash_map<DWORD,DWORD>::iterator mit = _source_to_id.find(src);
+        unordered_map<DWORD,DWORD>::iterator mit = _source_to_id.find(src);
         if (mit != _source_to_id.end()) {
             LogWithThreeNumbers(&k_mydll,"JuceCreateTexture: (%dx%d), levels = %d", width, height, levels);
             LogWithNumber(&k_mydll,"JuceCreateTexture: (found entry): src = %08x", mit->first);
@@ -4959,7 +4959,7 @@ DWORD src, bool* IsProcessed)
             char filename3[BUFLEN] = {0};
             char maskfilename[BUFLEN] = {0};
             char overlayfilename[BUFLEN] = {0};
-            int fileType = (mit->second - data[FIRST_ID]) % FILES_PER_TEAM;
+            int fileType = (mit->second - dta[FIRST_ID]) % FILES_PER_TEAM;
             int fileTypeBase = fileType / 3;
             // shirt
             DWORD texType1 = FindImageFileForId(mit->second, "", filename1, &needsMask);
@@ -5188,8 +5188,8 @@ string GetKitFolderKey(DWORD id)
 {
     //LogWithNumber(&k_mydll,"GetKitFolderKey: fileType = %d", fileType);
     
-    WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - data[FIRST_ID]) / FILES_PER_TEAM);
-    int fileType = ((id & 0x7fffffff) - data[FIRST_ID]) % FILES_PER_TEAM;
+    WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - dta[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = ((id & 0x7fffffff) - dta[FIRST_ID]) % FILES_PER_TEAM;
     if (id & 0x80000000) fileType += FILES_PER_TEAM;
     return GetKitFolderKeyByTeamId(teamId, fileType);
 }
@@ -5208,7 +5208,7 @@ string GetKitFolderKeyByTeamId(WORD teamId, int fileType)
 
     BOOL isHome = TRUE;
     if (home == away) {
-        //BYTE* strips = (BYTE*)data[TEAM_STRIPS];
+        //BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
         BYTE strips[2];
         GetTeamStrips(strips);
         // special case. We need to find out then
@@ -5332,19 +5332,19 @@ string GetKitFolderKeyByTeamId(WORD teamId, int fileType)
 WORD GetTeamIdByOrdinalAFS(WORD ord)
 {
     //return g_licensed_ordinals[ord];
-    WORD* list = (WORD*)data[LICENSED_LIST];
+    WORD* list = (WORD*)dta[LICENSED_LIST];
     return list[ord];
 }
 
 BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOOL* pNeedsMask)
 {
     // sanity check
-    if (id < data[FIRST_ID]) {
+    if (id < dta[FIRST_ID]) {
         return FALSE;
     }
 
-	WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - data[FIRST_ID]) / FILES_PER_TEAM);
-	int fileType = ((id & 0x7fffffff) - data[FIRST_ID]) % FILES_PER_TEAM;
+	WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - dta[FIRST_ID]) / FILES_PER_TEAM);
+	int fileType = ((id & 0x7fffffff) - dta[FIRST_ID]) % FILES_PER_TEAM;
 	if (id & 0x80000000) {
 		fileType += FILES_PER_TEAM;
     }
@@ -5537,8 +5537,8 @@ DWORD FindImageFileForId(DWORD id, char* suffix, char* filename)
 
 DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename)
 {
-    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
-    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+    WORD teamId = GetTeamIdByOrdinalAFS((id - dta[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
@@ -5574,8 +5574,8 @@ DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename
 
 DWORD FindMaskFileForId(DWORD id, char* filename)
 {
-    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
-    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+    WORD teamId = GetTeamIdByOrdinalAFS((id - dta[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
@@ -5619,8 +5619,8 @@ DWORD FindMaskFileForId(DWORD id, char* filename)
 
 DWORD FindOverlayFileForId(DWORD id, char* filename)
 {
-    WORD teamId = GetTeamIdByOrdinalAFS((id - data[FIRST_ID]) / FILES_PER_TEAM);
-    int fileType = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+    WORD teamId = GetTeamIdByOrdinalAFS((id - dta[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
@@ -5669,7 +5669,7 @@ DWORD FindOverlayFileForId(DWORD id, char* filename)
 
 BOOL IsNumOrFontTexture(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_NUMBERS:
 		case GA_FONT:
@@ -5686,7 +5686,7 @@ BOOL IsNumOrFontTexture(DWORD id)
 
 BOOL IsNumbersTexture(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_NUMBERS:
 		case GB_NUMBERS:
@@ -5699,7 +5699,7 @@ BOOL IsNumbersTexture(DWORD id)
 
 BOOL IsGK(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_KIT:
 		case GB_KIT:
@@ -5710,7 +5710,7 @@ BOOL IsGK(DWORD id)
 
 BOOL IsGKTexture(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_KIT:
 		case GA_UNKNOWN1:
@@ -5729,7 +5729,7 @@ BOOL IsGKTexture(DWORD id)
 
 BOOL IsShirt(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_KIT:
 		case GB_KIT:
@@ -5742,7 +5742,7 @@ BOOL IsShirt(DWORD id)
 
 BOOL IsShortsOrSocks(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_UNKNOWN1:
 		case GA_UNKNOWN2:
@@ -5759,7 +5759,7 @@ BOOL IsShortsOrSocks(DWORD id)
 
 BOOL IsKitTexture(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case GA_KIT:
 		case GB_KIT:
@@ -5776,7 +5776,7 @@ BOOL IsKitTexture(DWORD id)
 
 DWORD GetSplitKitOffset(DWORD id)
 {
-	DWORD ordinal = (id - data[FIRST_ID]) % FILES_PER_TEAM;
+	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
 	switch (ordinal) {
 		case PA_SHIRT:
 		case PB_SHIRT:
@@ -5878,7 +5878,7 @@ DWORD kservSetRadarColor()
 	for (int i=0; i<2; i++) {
 		if (savedRadarColor[i]) {
 			DWORD dwColor=RGBAColor2DWORD(*savedRadarColor[i]);
-			((DWORD*)data[RADARCOLORS])[i]=dwColor;
+			((DWORD*)dta[RADARCOLORS])[i]=dwColor;
 			//LogWithTwoNumbers(&k_mydll, "Set radar color %d to %.8x", i, dwColor);
 		};
 	};
@@ -5969,11 +5969,11 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
 
 	if (id == 0xf2) {
 		// master league team (home)
-		BYTE* mlData = *((BYTE**)data[ML_HOME_AREA]);
+		BYTE* mlData = *((BYTE**)dta[ML_HOME_AREA]);
 		id = *((DWORD*)(mlData + 0x6c)) & 0xffff; // 3rd byte is a flag of "edited" kit
 	} else if (id == 0xf3) {
 		// master league team (away)
-		BYTE* mlData = *((BYTE**)data[ML_AWAY_AREA]);
+		BYTE* mlData = *((BYTE**)dta[ML_AWAY_AREA]);
 		id = *((DWORD*)(mlData + 0x6c)) & 0xffff; // 3rd byte is a flag of "edited" kit
 	}
 
@@ -5998,14 +5998,14 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
 
         KitCollection* col = MAP_FIND(gdb->uni,id);
         if (col) {
-            Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GA_KIT));
-            Kit* gb = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GB_KIT));
-            Kit* gaShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GA_UNKNOWN1));
-            Kit* gbShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+GB_UNKNOWN1));
-            Kit* pa = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PA_SHIRT));
-            Kit* pb = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PB_SHIRT));
-            Kit* paShorts = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PA_SHORTS));
-            Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKey(data[FIRST_ID]+id*FILES_PER_TEAM+PB_SHORTS));
+            Kit* ga = MAP_FIND(col->goalkeepers,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+GA_KIT));
+            Kit* gb = MAP_FIND(col->goalkeepers,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+GB_KIT));
+            Kit* gaShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+GA_UNKNOWN1));
+            Kit* gbShorts = MAP_FIND(col->goalkeepers,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+GB_UNKNOWN1));
+            Kit* pa = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PA_SHIRT));
+            Kit* pb = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PB_SHIRT));
+            Kit* paShorts = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PA_SHORTS));
+            Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PB_SHORTS));
             
             //BOOL editable = kDB->editable[id];
             BOOL editable = TRUE;
@@ -6027,7 +6027,7 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
 void restoreLicensedOrdinals()
 {
 	Log(&k_mydll,"restoreLicensedOrdinals: putting back 4 and 6");
-    WORD* licensed_ids = (WORD*)data[LICENSED_LIST];
+    WORD* licensed_ids = (WORD*)dta[LICENSED_LIST];
     licensed_ids[0] = g_licensed_ordinals[0];
     licensed_ids[1] = g_licensed_ordinals[1];
 }
@@ -6241,14 +6241,14 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
     DWORD result = MasterCallNext(dest,src);
     LogWithNumber(&k_mydll, "kservProcessKit: kit buffer addresses stored here: %08x", result);
 
-    hash_map<DWORD,DWORD>::iterator it = _texture_to_id.find(src - 0x10);
+    unordered_map<DWORD,DWORD>::iterator it = _texture_to_id.find(src - 0x10);
     if (it != _texture_to_id.end()) {
         _source_to_id[dest] = it->second;
         _texture_to_id.erase(it);
         LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, it->second);
 
     } else {
-        hash_map<DWORD,DWORD>::iterator sit = _texture_to_id.find(src - 0x20);
+        unordered_map<DWORD,DWORD>::iterator sit = _texture_to_id.find(src - 0x20);
         if (sit != _texture_to_id.end()) {
             _source_to_id[dest] = sit->second;
             _texture_to_id.erase(sit);
@@ -6258,7 +6258,7 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
             // nothing found. Make sure that we remove this dest key from _source_to_id, 
             // if it exists in there
             /*
-            hash_map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
+            unordered_map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
             if (dit != _source_to_id.end()) {
                 _source_to_id.erase(dit);
             }
@@ -6339,7 +6339,7 @@ void setTeamKitInfo()
             memset(padding,0,len);
 
             if (!IsLicensed(home)) {
-                WORD* list = (WORD*)data[LICENSED_LIST];
+                WORD* list = (WORD*)dta[LICENSED_LIST];
                 list[(away!=4)?0:1] = home;
             }
         }
@@ -6402,7 +6402,7 @@ void setTeamKitInfo()
             memset(padding,0,len);
 
             if (!IsLicensed(away)) {
-                WORD* list = (WORD*)data[LICENSED_LIST];
+                WORD* list = (WORD*)dta[LICENSED_LIST];
                 list[(home!=6)?1:0] = away;
             }
         }
@@ -6478,13 +6478,13 @@ DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal)
 
             if (teamId == GetTeamId(HOME)) {
                 if (!IsLicensed(teamId)) {
-                    WORD* list = (WORD*)data[LICENSED_LIST];
+                    WORD* list = (WORD*)dta[LICENSED_LIST];
                     list[(teamId!=4)?0:1] = teamId;
                 }
             }
             if (teamId == GetTeamId(AWAY)) {
                 if (!IsLicensed(teamId)) {
-                    WORD* list = (WORD*)data[LICENSED_LIST];
+                    WORD* list = (WORD*)dta[LICENSED_LIST];
                     list[(teamId!=6)?1:0] = teamId;
                 }
             }
@@ -6552,7 +6552,7 @@ void JuceClear2Dkits()
     // Special logic for a case when team is playing against itself
     WORD id = GetTeamId(HOME); 
     if (id == GetTeamId(AWAY) && id != 0xffff & TeamDirExists(id)) {
-        BYTE* strips = (BYTE*)data[TEAM_STRIPS];
+        BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 
         // home: set bits to 0,0,0,0,0,0
         strips[0] = (((strips[0] & STRIP_PL_SHIRT_C) & STRIP_PL_SHORTS_C) & STRIP_PL_SOCKS_C);
@@ -6563,8 +6563,8 @@ void JuceClear2Dkits()
         strips[1] = (((strips[1] | STRIP_GK_SHIRT) | STRIP_GK_SHORTS) | STRIP_GK_SOCKS);
 
         //LogWithTwoNumbers(&k_mydll,"strip = %02x %02x", strips[0], strips[1]);
-        *(BYTE*)data[TEAM_STRIPS_HOME] = strips[0];
-        *(BYTE*)data[TEAM_STRIPS_AWAY] = strips[1];
+        *(BYTE*)dta[TEAM_STRIPS_HOME] = strips[0];
+        *(BYTE*)dta[TEAM_STRIPS_AWAY] = strips[1];
     }
 
     g_homeStrip = 0xff;
@@ -6642,7 +6642,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
         g_currentAfsId = fileId;
 
         LogWithNumber(&k_mydll,"JuceUniDecode: Loading id = %d", fileId);
-        if (fileId == data[TRAINING_KIT]) {
+        if (fileId == dta[TRAINING_KIT]) {
             return;
         }
 
@@ -6701,7 +6701,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
 
 	    bool replaced = FALSE;
 	
-	    //BYTE* strips = (BYTE*)data[TEAM_STRIPS];
+	    //BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 	    //LogWithTwoNumbers(&k_mydll,"strip = %02x %02x", strips[0], strips[1]);
 		
         LogWithNumber(&k_mydll,"JuceUnpack: Loading id = %d", fileId);
@@ -6748,7 +6748,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
             TEXIMGHEADER* palAtex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[1]);
 
             int id1 = fileId;
-            int fileType = (fileId - data[FIRST_ID]) % FILES_PER_TEAM;
+            int fileType = (fileId - dta[FIRST_ID]) % FILES_PER_TEAM;
             switch (fileType) {
                 //case GA_NUMBERS: id1 = fileId - GA_NUMBERS + GA_UNKNOWN1; break;
                 //case GB_NUMBERS: id1 = fileId - GB_NUMBERS + GA_UNKNOWN1; break;
@@ -6856,7 +6856,7 @@ HRESULT SaveAs4bitBMP(char* filename, BYTE* buf, BYTE* pal, LONG width, LONG hei
 {
 	BITMAPFILEHEADER fhdr;
 	BITMAPINFOHEADER infoheader;
-	SIZE_T size = (buf)? width * height : 8; // size of data in bytes
+	SIZE_T size = (buf)? width * height : 8; // size of dta in bytes
 
 	// fill in the headers
 	fhdr.bfType = 0x4D42; // "BM"
@@ -6914,25 +6914,25 @@ HRESULT SaveAs4bitBMP(char* filename, BYTE* buf, BYTE* pal, LONG width, LONG hei
 			WriteFile(hFile, pal + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
 		}
 
-		// write pixel data
+		// write pixel dta
 		if (buf) {
 			for (int k=height-1; k>=0; k--)
 			{
 				int j;
-				// unshuffle pixel data
+				// unshuffle pixel dta
 				for (j=0;j<width/2;j++) {
 					BYTE src = buf[k*(width/2)+j];
 					buf[k*(width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
 				}
 				WriteFile(hFile, buf + k*(width/2), width/2, (LPDWORD)&wbytes, NULL);
-				// reshuffle pixel data
+				// reshuffle pixel dta
 				for (j=0;j<width/2;j++) {
 					BYTE src = buf[k*(width/2)+j];
 					buf[k*(width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
 				}
 			}
 		} else {
-			// palette-only data: write sample stuff
+			// palette-only dta: write sample stuff
 			BYTE sample[] = {0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef};
 			WriteFile(hFile, sample, sizeof(sample), (LPDWORD)&wbytes, NULL);
 		}
@@ -6963,7 +6963,7 @@ HRESULT SaveAs8bitBMP(char* filename, BYTE* buf, BYTE* pal, LONG width, LONG hei
 {
 	BITMAPFILEHEADER fhdr;
 	BITMAPINFOHEADER infoheader;
-	SIZE_T size = width * height; // size of data in bytes
+	SIZE_T size = width * height; // size of dta in bytes
 
 	// fill in the headers
 	fhdr.bfType = 0x4D42; // "BM"
@@ -7045,7 +7045,7 @@ HRESULT SaveAs8bitBMP(char* filename, BYTE* buf, BYTE* pal, LONG width, LONG hei
 				WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
 			}
 		}
-		// write pixel data
+		// write pixel dta
 		for (int k=height-1; k>=0; k--)
 		{
 			WriteFile(hFile, buf + k*width, width, (LPDWORD)&wbytes, NULL);
@@ -7159,7 +7159,7 @@ TeamAttr* utilGetTeamAttr(WORD id)
 	if (id < 0 || id > 255)
 		return NULL;
 
-	DWORD teamAttrBase = *((DWORD*)data[TEAM_COLLARS_PTR]);
+	DWORD teamAttrBase = *((DWORD*)dta[TEAM_COLLARS_PTR]);
 	return (TeamAttr*)(teamAttrBase + id*sizeof(TeamAttr));
 }
 
@@ -7168,7 +7168,7 @@ TeamAttr* utilGetTeamAttr(WORD id)
 void VerifyTeams()
 {
 	g_currTeams[0] = g_currTeams[1] = 0xffff;
-	WORD* teams = (WORD*)data[TEAM_IDS];
+	WORD* teams = (WORD*)dta[TEAM_IDS];
 
 	// try to define both teams.
 	if (teams[0] >=0 && teams[0] <= g_numTeams) g_currTeams[0] = teams[0];
@@ -7180,7 +7180,7 @@ void VerifyTeams()
 		int which = (teams[0] == 0x0122) ? 1 : 0;
 
 		// looks like it's an ML team.
-		DWORD* mlPtrs = (DWORD*)data[MLDATA_PTRS];
+		DWORD* mlPtrs = (DWORD*)dta[MLDATA_PTRS];
 		if (mlPtrs[which] != NULL)
 		{
 			WORD* mlData = (WORD*)(mlPtrs[which] + 0x278);
@@ -7196,7 +7196,7 @@ void VerifyTeams()
 		int which = (teams[1] == 0x0122) ? 1 : 0;
 
 		// looks like it's an ML team.
-		DWORD* mlPtrs = (DWORD*)data[MLDATA_PTRS];
+		DWORD* mlPtrs = (DWORD*)dta[MLDATA_PTRS];
 		if (mlPtrs[which] != NULL)
 		{
 			WORD* mlData = (WORD*)(mlPtrs[which] + 0x278);

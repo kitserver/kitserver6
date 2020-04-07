@@ -113,13 +113,13 @@ DWORD codeArray[][CODELEN] = {
     },
 };
 
-// data addresses
+// dta addresses
 #define DATALEN 11
 enum { INPUT_TABLE, STACK_SHIFT, RESMEM1, RESMEM2, RESMEM3,
 	PLAYERS_LINEUP, LINEUP_RECORD_SIZE, PLAYERDATA_BASE, GAME_MODE, EDITMODE_FLAG,
 	EDITPLAYER_ID };
 
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     //PES6
     {
         0x3a71254, 0, 0x8c7b6d, 0x8c7b82, 0x8c7b99,
@@ -176,7 +176,7 @@ DWORD gpiArray[][GPILEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 DWORD gpi[GPILEN];
 
 /* function pointers */
@@ -796,7 +796,7 @@ DWORD NewBeginUniSelect()
 	SetNewDrawKitInfoMenu(0,true);
 
     // hook inputs
-    HookGameInput(code[C_CLEANINPUTTABLE_HOOK], data[INPUT_TABLE]);
+    HookGameInput(code[C_CLEANINPUTTABLE_HOOK], dta[INPUT_TABLE]);
 	
 	ALLVOID NextCall=NULL;
 	for (int i=0;i<(l_BeginUniSelect.num);i++)
@@ -1306,16 +1306,16 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
     // it appears that the calls to CreateTexture is done via some sort of proxy
     // dll (d3dw.dll), so we have to account for extra space occupied on the stack
     
-	if (*(DWORD*)(oldEBP+4+data[STACK_SHIFT])==code[C_CALL050]+3) {
-		src=*(DWORD*)(oldEBP+0x74+data[STACK_SHIFT]);
+	if (*(DWORD*)(oldEBP+4+dta[STACK_SHIFT])==code[C_CALL050]+3) {
+		src=*(DWORD*)(oldEBP+0x74+dta[STACK_SHIFT]);
 		if (src!=0 && !IsBadReadPtr((LPVOID)src,4)) {
 			src=*(DWORD*)(src+0x18);
 			//TRACE2(&k_kload,"src = %x",src);
 		} else
 			src=0;
 	}
-    else if (*(DWORD*)(oldEBP+4+data[STACK_SHIFT]+GAMECAM_SHIFT)==code[C_CALL050]+3) {
-		src=*(DWORD*)(oldEBP+0x74+data[STACK_SHIFT]+GAMECAM_SHIFT);
+    else if (*(DWORD*)(oldEBP+4+dta[STACK_SHIFT]+GAMECAM_SHIFT)==code[C_CALL050]+3) {
+		src=*(DWORD*)(oldEBP+0x74+dta[STACK_SHIFT]+GAMECAM_SHIFT);
 		if (src!=0 && !IsBadReadPtr((LPVOID)src,4)) {
 			src=*(DWORD*)(src+0x18);
 			//TRACE2(&k_kload,"src = %x",src);
@@ -1447,7 +1447,7 @@ HRESULT STDMETHODCALLTYPE NewPresent(IDirect3DDevice8* self, CONST RECT* src, CO
 };
 
 /* New Reset function */
-HRESULT STDMETHODCALLTYPE NewReset(IDirect3DDevice8* self, LPVOID params)
+HRESULT STDMETHODCALLTYPE NewReset(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS *params)
 {
 	LogWithNumber(&k_kload,"NewReset: CALLED. caller = %08x", (DWORD)(*(&self-4)));
 	
@@ -1633,37 +1633,37 @@ void DumpTexture(IDirect3DTexture8* const ptexture)
 
 KEXPORT bool isEditMode()
 {
-    return *(BYTE*)data[EDITMODE_FLAG] == 1;
+    return *(BYTE*)dta[EDITMODE_FLAG] == 1;
 }
 
 KEXPORT DWORD editPlayerId()
 {
-	DWORD playerId = *(WORD*)data[EDITPLAYER_ID];
+	DWORD playerId = *(WORD*)dta[EDITPLAYER_ID];
 	return playerId;
 };
 
 KEXPORT bool isTrainingMode()
 {
 	if (isEditMode()) return false;
-	return *(BYTE*)data[GAME_MODE] == 5;
+	return *(BYTE*)dta[GAME_MODE] == 5;
 };
 
 KEXPORT bool isWatchReplayMode()
 {
 	if (isEditMode()) return false;
-	return *(BYTE*)data[GAME_MODE] == 10;
+	return *(BYTE*)dta[GAME_MODE] == 10;
 };
 
 KEXPORT bool isMLMode()
 {
 	if (isEditMode()) return false;
-	return *(BYTE*)data[GAME_MODE] == 4;
+	return *(BYTE*)dta[GAME_MODE] == 4;
 };
 
 KEXPORT PLAYER_RECORD* playerRecord(BYTE pos)
 {
 	if (pos>22) pos=1;
-	return (PLAYER_RECORD*)(data[PLAYERS_LINEUP] + pos*data[LINEUP_RECORD_SIZE]);
+	return (PLAYER_RECORD*)(dta[PLAYERS_LINEUP] + pos*dta[LINEUP_RECORD_SIZE]);
 };
 
 KEXPORT DWORD getRecordPlayerId(BYTE pos)
@@ -1673,7 +1673,7 @@ KEXPORT DWORD getRecordPlayerId(BYTE pos)
 	
 	//if (!isWatchReplayMode()) {
 		PLAYER_RECORD* rec = playerRecord(pos);
-		id=*(WORD*)(data[PLAYERDATA_BASE] + (rec->team*0x20 + rec->posInTeam)*0x348 + 0x2a);
+		id=*(WORD*)(dta[PLAYERDATA_BASE] + (rec->team*0x20 + rec->posInTeam)*0x348 + 0x2a);
 	/*} else {
 		id=195;
 	};*/
@@ -2013,7 +2013,7 @@ void InitAddresses(int v)
 {
 	// select correct addresses
 	memcpy(code, codeArray[v], sizeof(code));
-    memcpy(data, dataArray[v], sizeof(data));
+    memcpy(dta, dtaArray[v], sizeof(dta));
 	memcpy(gpi, gpiArray[v], sizeof(gpi));
 
 	// assign pointers	
@@ -2034,19 +2034,19 @@ void InitAddresses(int v)
 void FixReservedMemory()
 {
 	//make PES reserve more memory to avoid problems with HD adboards
-	if (data[RESMEM1]==0 || data[RESMEM2]==0 || data[RESMEM3]==0)
+	if (dta[RESMEM1]==0 || dta[RESMEM2]==0 || dta[RESMEM3]==0)
 		return;
 		
-	DWORD oldResMem=*(DWORD*)data[RESMEM1];
+	DWORD oldResMem=*(DWORD*)dta[RESMEM1];
 		
 	if (g_config.newResMem <= oldResMem)
 		return;
 	
 	DWORD protection=0, newProtection=PAGE_EXECUTE_READWRITE;
-	if (VirtualProtect((BYTE*)data[RESMEM1], 0xff, newProtection, &protection)) {
-		*(DWORD*)data[RESMEM1]=g_config.newResMem;
-		*(DWORD*)data[RESMEM2]=g_config.newResMem>>2;
-		*(DWORD*)data[RESMEM3]=g_config.newResMem;
+	if (VirtualProtect((BYTE*)dta[RESMEM1], 0xff, newProtection, &protection)) {
+		*(DWORD*)dta[RESMEM1]=g_config.newResMem;
+		*(DWORD*)dta[RESMEM2]=g_config.newResMem>>2;
+		*(DWORD*)dta[RESMEM3]=g_config.newResMem;
 		LogWithNumber(&k_kload,"Increased reserved memory to %d bytes",g_config.newResMem);
 	};
 	

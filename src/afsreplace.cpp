@@ -10,7 +10,7 @@
 #include "numpages.h"
 #include "afsreplace.h"
 
-#include <hash_map>
+#include <unordered_map>
 
 extern KMOD k_kload;
 extern PESINFO g_pesinfo;
@@ -51,7 +51,7 @@ static DWORD codeArray[][CODELEN] = {
 enum {
     AFS_PAGELEN_TABLE, FILEINFO_BASE,
 };
-static DWORD dataArray[][DATALEN] = {
+static DWORD dtaArray[][DATALEN] = {
     // PES6
     {
         0x3b5cbc0, 0x1246860,
@@ -67,7 +67,7 @@ static DWORD dataArray[][DATALEN] = {
 };
 
 static DWORD code[CODELEN];
-static DWORD data[DATALEN];
+static DWORD dta[DATALEN];
 
 typedef DWORD  (*ORGUNPACK)(DWORD, DWORD, DWORD, DWORD, DWORD*);
 ORGUNPACK orgUnpack = NULL;
@@ -99,11 +99,11 @@ vector<unidecode_callback_t> _unidecode_vec;
 // of NewFileFromAFS() and are called before AfterFileFromAFS()
 GETFILEINFO* lastGetFileInfo = NULL;
 DWORD nextUniqueId = 0;
-std::hash_map<DWORD,GETFILEINFO*> g_Files;
-std::hash_map<DWORD,GETFILEINFO*>::iterator g_FilesIterator;
+std::unordered_map<DWORD,GETFILEINFO*> g_Files;
+std::unordered_map<DWORD,GETFILEINFO*>::iterator g_FilesIterator;
 
-std::hash_map<DWORD,GETFILEINFO*> g_addressMap;
-std::hash_map<DWORD,GETFILEINFO*> _fileInfoMap;
+std::unordered_map<DWORD,GETFILEINFO*> g_addressMap;
+std::unordered_map<DWORD,GETFILEINFO*> _fileInfoMap;
 
 #define HASREPLACEBUFFER (lastGetFileInfo->replaceBuf != NULL && lastGetFileInfo->replaceSize > 0)
 #define NEEDSUNPACK (lastGetFileInfo->needsUnpack)
@@ -134,7 +134,7 @@ KEXPORT void InitAfsReplace()
     if (v != -1)
     {
         memcpy(code, codeArray[v], sizeof(code));
-        memcpy(data, dataArray[v], sizeof(data));
+        memcpy(dta, dtaArray[v], sizeof(dta));
         
         orgUnpack = (ORGUNPACK)code[C_UNPACK];
 
@@ -207,7 +207,7 @@ KEXPORT void HookAfsReplace()
             6, 1, false);
     HookCallPoint(code[C_CLOSEHANDLE_CS], closeHandleCallPoint, 
             6, 2, false);
-    _fileInfoAddr = data[FILEINFO_BASE];
+    _fileInfoAddr = dta[FILEINFO_BASE];
 	return;
 }
 
@@ -320,7 +320,7 @@ DWORD afsNewFileFromAFS()
 	
 	// This is the call to the modules where parameters can be changed
 	// only isProcessed and fileId should be changed directly, to replace
-	// a file with other data, use makeReplaceBuffer() or loadReplaceFile()
+	// a file with other dta, use makeReplaceBuffer() or loadReplaceFile()
 	for (vector<afsreplace_callback_t>::iterator it = _afsreplace_vec.begin(); it != _afsreplace_vec.end(); it++) {
 		(*it)(lastGetFileInfo);
 	}
@@ -391,7 +391,7 @@ void afsNewFileFromAFS2(DWORD* fileId)
 	
 	// This is the call to the modules where parameters can be changed
 	// only isProcessed and fileId should be changed directly, to replace
-	// a file with other data, use makeReplaceBuffer() or loadReplaceFile()
+	// a file with other dta, use makeReplaceBuffer() or loadReplaceFile()
 	for (vector<afsreplace_callback_t>::iterator it = _afsreplace_vec.begin(); it != _afsreplace_vec.end(); it++) {
 		(*it)(lastGetFileInfo);
 	}
@@ -458,7 +458,7 @@ bool afsGetNumPages(DWORD fileId, DWORD afsId, DWORD* retval)
 	return true;
 }
 
-// If we need to replace data, save the address of a header which later connects
+// If we need to replace dta, save the address of a header which later connects
 // the GETFILEINFO structure to the file read in ReadFile()
 DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 {
@@ -475,7 +475,7 @@ DWORD afsAllocateBuffers(DWORD p1, DWORD p2, DWORD*** p3, DWORD p4, DWORD p5)
 		bufHeader = *( *( *(p3 + 1) + 2) + 1);
 		lastGetFileInfo->firstPage = *((DWORD*)p3 + 12);
 	 } catch (...) {
-	 	// we can't replace the data later without this information, so
+	 	// we can't replace the dta later without this information, so
 	 	// free the buffer
 	 	if (HASREPLACEBUFFER) {
 	 		makeReplaceBuffer(0);
@@ -525,7 +525,7 @@ DWORD GetAfsId(char* shortName)
 {
     for (int i=0; i<8; i++)
     {
-        char* afsData = (char*)(((DWORD*)data[AFS_PAGELEN_TABLE])[i]);
+        char* afsData = (char*)(((DWORD*)dta[AFS_PAGELEN_TABLE])[i]);
         if (afsData==NULL)
             continue;
         char* name = afsData + 0x10;
@@ -537,7 +537,7 @@ DWORD GetAfsId(char* shortName)
 
 bool GetBinInfo(DWORD afsId, DWORD currPage, DWORD& binId, DWORD& firstPage)
 {
-    BYTE* afsData = (BYTE*)(((DWORD*)data[AFS_PAGELEN_TABLE])[afsId]);
+    BYTE* afsData = (BYTE*)(((DWORD*)dta[AFS_PAGELEN_TABLE])[afsId]);
     WORD numFiles = *(WORD*)(afsData + 8);
     DWORD page = *(DWORD*)(afsData + 0x118);
     DWORD* begin = (DWORD*)(afsData + 0x11c);
@@ -576,7 +576,7 @@ GETFILEINFO* FindFileInfo(BYTE* bufHeader)
         //        binId, firstPage);
         DWORD fileId = ((afsId<<16)&0xffff0000)|(binId&0xffff);
         //LogWithNumber(&k_kload, "fileId = %08x", fileId);
-        hash_map<DWORD,GETFILEINFO*>::iterator git;
+        unordered_map<DWORD,GETFILEINFO*>::iterator git;
         git = _fileInfoMap.find(fileId);
         if (git != _fileInfoMap.end())
         {
@@ -622,9 +622,9 @@ BOOL STDMETHODCALLTYPE afsReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberO
 	// call original function	
 	BOOL result=ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 
-	// check if we have some data to replace this file
+	// check if we have some dta to replace this file
     GETFILEINFO* gfi = NULL;
-    hash_map<DWORD,GETFILEINFO*>::iterator fit;
+    unordered_map<DWORD,GETFILEINFO*>::iterator fit;
     fit = g_Files.find(lastBufHeader);
 	if (fit != g_Files.end())
     {
@@ -717,8 +717,8 @@ void doUnpackGetSizeCallbacks(DWORD srcAddress, DWORD part, DWORD* size)
 	return;
 }
 
-// second call: decoding is done, now the data can be replaced
-// this calls should be done right after the other, so the replacing data
+// second call: decoding is done, now the dta can be replaced
+// this calls should be done right after the other, so the replacing dta
 // can already be prepared during the first call
 void doUnpackCallbacks(DWORD decBuf)
 {
@@ -847,12 +847,12 @@ KEXPORT DWORD splitFileId(DWORD fileId, DWORD* afsId)
 // returns the size which is usually reserved for a specific file
 KEXPORT DWORD getAfsFileSize(DWORD fileId, DWORD afsId)
 {
-	DWORD* g_pageLenTable = (DWORD*)data[AFS_PAGELEN_TABLE];
+	DWORD* g_pageLenTable = (DWORD*)dta[AFS_PAGELEN_TABLE];
 	DWORD* pPageLenTable = (DWORD*)(g_pageLenTable[afsId] + 0x11c);
 	return pPageLenTable[fileId];
 }
 
-// allocate memory, where the data for replacement is stored
+// allocate memory, where the dta for replacement is stored
 // if this is called multiple times for one call to NewFileFromAFS,
 // only the last buffer will be used, all others will be freed.
 // the used buffer will be freed after ReadFile completed for all

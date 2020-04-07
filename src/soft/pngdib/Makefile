@@ -2,7 +2,7 @@ INC=$(INC) /I "..\libpng-1.2.8-lib\include"
 
 CFLAGS=/nologo /EHsc $(EXTRA_CFLAGS)
 LFLAGS=/NOLOGO /NODEFAULTLIB:libci.lib
-LIBS=$(LIB) user32.lib gdi32.lib advapi32.lib libcpmt.lib
+LIBS=$(LIB) user32.lib gdi32.lib advapi32.lib
 LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
 
 ZLIBINC=/I "..\zlib123-dll\include"

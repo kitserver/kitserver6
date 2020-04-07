@@ -65,7 +65,7 @@ enum {C_CAMERACHECK_CS,
     CULL_W, PROJ_W,
 };
     
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES6
 	{0x964130, 
      0x8afb90, 0x8afc50, 0x8afd10, 0x8afdd0, 0x8afe70, 
@@ -112,7 +112,7 @@ DWORD codeArray[][CODELEN] = {
     },
 };
 
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 DWORD code[CODELEN];
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
@@ -192,19 +192,19 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 void InitLodmixer()
 {
     Log(&k_lodmixer, "InitLodMixer called.");
-	memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
+	memcpy(dta, dtaArray[GetPESInfo()->GameVersion], sizeof(dta));
 	memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
 	
-	// configure LOD-mixer data
+	// configure LOD-mixer dta
 	InitLODMixerData();
 
 	HookFunction(hk_SetLodMixerData,(DWORD)JuceSetLodMixerData);
 	
 	// disable camera-check (a.k.a. "crowd unblock")
-    if (data[C_CAMERACHECK_CS] && g_crowdCheck) {
+    if (dta[C_CAMERACHECK_CS] && g_crowdCheck) {
         DWORD protection = 0;
         DWORD newProtection = PAGE_EXECUTE_READWRITE;
-        BYTE* addr = (BYTE*)data[C_CAMERACHECK_CS];
+        BYTE* addr = (BYTE*)dta[C_CAMERACHECK_CS];
         if (VirtualProtect(addr, 4, newProtection, &protection))
         {
             *addr = 0xc3; // retn
@@ -213,11 +213,11 @@ void InitLodmixer()
     };
 
    	// disable Japan-check
-    if (data[C_JAP0] && g_JapanCheck) {
+    if (dta[C_JAP0] && g_JapanCheck) {
         DWORD protection = 0;
         DWORD newProtection = PAGE_EXECUTE_READWRITE;
         for (int i=0; i<7; i++) {
-            WORD* addr = (WORD*)(data[C_JAP0+i]+2);
+            WORD* addr = (WORD*)(dta[C_JAP0+i]+2);
             if (VirtualProtect(addr, 4, newProtection, &protection))
             {
                 *addr = 0xffff;
@@ -227,17 +227,17 @@ void InitLodmixer()
     }
     
 	// set LOD levels
-    if (data[LOD_TABLE]) {
+    if (dta[LOD_TABLE]) {
         DWORD protection = 0;
         DWORD newProtection = PAGE_EXECUTE_READWRITE;
-        DWORD* addr = (DWORD*)data[LOD_TABLE];
+        DWORD* addr = (DWORD*)dta[LOD_TABLE];
         if (VirtualProtect(addr, 4*5, newProtection, &protection))
         {
-            addr[0] = data[C_LOD1 + g_lodLevels[0]];
-            addr[1] = data[C_LOD1 + g_lodLevels[1]];
-            addr[2] = data[C_LOD1 + g_lodLevels[2]];
-            addr[3] = data[C_LOD1 + g_lodLevels[3]];
-            addr[4] = data[C_LOD1 + g_lodLevels[4]];
+            addr[0] = dta[C_LOD1 + g_lodLevels[0]];
+            addr[1] = dta[C_LOD1 + g_lodLevels[1]];
+            addr[2] = dta[C_LOD1 + g_lodLevels[2]];
+            addr[3] = dta[C_LOD1 + g_lodLevels[3]];
+            addr[4] = dta[C_LOD1 + g_lodLevels[4]];
             
             char buf[80]; ZeroMemory(buf, 80);
             sprintf(buf, "Lod levels set to %d,%d,%d,%d,%d.",
@@ -248,10 +248,10 @@ void InitLodmixer()
     };
 
     // Konami-weather hack
-    if (data[C_KONAMI_WEATHER_HACK_CS]) {
+    if (dta[C_KONAMI_WEATHER_HACK_CS]) {
         DWORD protection = 0;
         DWORD newProtection = PAGE_EXECUTE_READWRITE;
-        BYTE* addr = (BYTE*)data[C_KONAMI_WEATHER_HACK_CS];
+        BYTE* addr = (BYTE*)dta[C_KONAMI_WEATHER_HACK_CS];
         if (VirtualProtect(addr, 4, newProtection, &protection))
         {
             addr[0] = 0x90; // nop
@@ -269,7 +269,7 @@ DWORD lodOnSetSubs()
 
     // apply substitutions settings
 	ReadMenuData();
-    LCM* inmem = (LCM*)data[TEAM_IDS];
+    LCM* inmem = (LCM*)dta[TEAM_IDS];
     DWORD protection = 0;
     DWORD newProtection = PAGE_EXECUTE_READWRITE;
     if (VirtualProtect(inmem, sizeof(LCM), newProtection, &protection)) {
@@ -290,7 +290,7 @@ void JuceSetLodMixerData()
 	g_lcm.stadium=GetLCMStadium();
 	
     // apply settings
-    LCM* inmem = (LCM*)data[TEAM_IDS];
+    LCM* inmem = (LCM*)dta[TEAM_IDS];
     DWORD protection = 0;
     DWORD newProtection = PAGE_EXECUTE_READWRITE;
     if (VirtualProtect(inmem, sizeof(LCM), newProtection, &protection)) {
@@ -324,7 +324,7 @@ void InitLODMixerData()
 	LCM lcm;
     memset(&lcm,0xff,sizeof(LCM));
 	
-    // load LOD-mixer data
+    // load LOD-mixer dta
     char lodmixerCfg[BUFLEN];
     ZeroMemory(lodmixerCfg, BUFLEN);
     sprintf(lodmixerCfg, "%s\\lodmixer.dat", GetPESInfo()->mydir);
@@ -418,7 +418,7 @@ void SaveLODMixerData()
 	ReadMenuData();
 	g_lcm.stadium=0xff;
 	
-	// save LOD-mixer data
+	// save LOD-mixer dta
     char lodmixerCfg[BUFLEN];
     ZeroMemory(lodmixerCfg, BUFLEN);
     sprintf(lodmixerCfg, "%s\\lodmixer.dat", GetPESInfo()->mydir);
@@ -703,8 +703,8 @@ void correctAspectRatio(UINT width, UINT height)
 
         DWORD protection = 0;
         DWORD newProtection = PAGE_EXECUTE_READWRITE;
-        float* projW = (float*)data[PROJ_W];
-        WORD* cullW = (WORD*)data[CULL_W];
+        float* projW = (float*)dta[PROJ_W];
+        WORD* cullW = (WORD*)dta[CULL_W];
         LogWithNumber(&k_lodmixer, "projW = %08x", (DWORD)projW);
         LogWithNumber(&k_lodmixer, "cullW = %08x", (DWORD)cullW);
         if (projW && cullW && VirtualProtect(cullW, 0x80, newProtection, &protection)) {

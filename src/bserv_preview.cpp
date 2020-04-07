@@ -102,7 +102,7 @@ HRESULT InvalidateDeviceObjects(IDirect3DDevice8* dev);
 HRESULT DeleteDeviceObjects(IDirect3DDevice8* dev);
 HRESULT RestoreDeviceObjects(IDirect3DDevice8* dev);
 void ReadBallModel();
-void ResizeLightingRect(LIGHTVERTEX* data, int n);
+void ResizeLightingRect(LIGHTVERTEX* dta, int n);
 BOOL ReadConfig(BSERV_CFG* config, char* cfgFile);
 void CheckInput();
 
@@ -121,7 +121,7 @@ void bservAfsReplace(GETFILEINFO* gfi);
 void bservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size);
 
 DWORD LoadPNGTexture(BITMAPINFO** tex, char* filename);
-static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize);
+static int read_file_to_mem(char *fn,unsigned char **ppfiledta, int *pfilesize);
 void ApplyAlphaChunk(RGBQUAD* palette, BYTE* memblk, DWORD size);
 void FreePNGTexture(BITMAPINFO* bitmap);
 
@@ -211,7 +211,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		RegisterKModule(&k_bserv);
 		
 		memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
-		memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
+		memcpy(dta, dtaArray[GetPESInfo()->GameVersion], sizeof(dta));
 		
 		strcpy(currTextureName,"\0");
 		
@@ -316,15 +316,15 @@ void InitBserv()
 bool IsBallModel(int id)
 {
     return 
-        (id < data[NOT_A_BALL_FILE] && id%2==0) ||
-        (id > data[NOT_A_BALL_FILE] && id%2==1);
+        (id < dta[NOT_A_BALL_FILE] && id%2==0) ||
+        (id > dta[NOT_A_BALL_FILE] && id%2==1);
 }
 
 bool IsBallTexture(int id)
 {
     return 
-        (id < data[NOT_A_BALL_FILE] && id%2==1) ||
-        (id > data[NOT_A_BALL_FILE] && id%2==0);
+        (id < dta[NOT_A_BALL_FILE] && id%2==1) ||
+        (id > dta[NOT_A_BALL_FILE] && id%2==0);
 }
 
 void bservAfsReplace(GETFILEINFO* gfi)
@@ -336,7 +336,7 @@ void bservAfsReplace(GETFILEINFO* gfi)
 	ZeroMemory(filename, BUFLEN);
 	fileId = splitFileId(gfi->fileId, &afsId);
 	
-	if (afsId == 1 && fileId < data[NUM_BALL_FILES] && fileId != data[NOT_A_BALL_FILE]) {
+	if (afsId == 1 && fileId < dta[NUM_BALL_FILES] && fileId != dta[NOT_A_BALL_FILE]) {
         LogWithTwoNumbers(&k_bserv,"BALL FILE!: 0x%x, 0x%x", afsId, fileId);
         
         updateHomeBall();
@@ -707,7 +707,7 @@ DWORD LoadPNGTexture(BITMAPINFO** tex, char* filename)
 };
 
 // Read a file into a memory block.
-static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize)
+static int read_file_to_mem(char *fn,unsigned char **ppfiledta, int *pfilesize)
 {
 	HANDLE hfile;
 	DWORD fsize;
@@ -727,7 +727,7 @@ static int read_file_to_mem(char *fn,unsigned char **ppfiledata, int *pfilesize)
 		if(fbuf) {
 			if(ReadFile(hfile,(void*)fbuf,fsize,&bytesread,NULL)) {
 				if(bytesread==fsize) { 
-					(*ppfiledata)  = fbuf;
+					(*ppfiledta)  = fbuf;
 					(*pfilesize) = (int)fsize;
 					CloseHandle(hfile);
 					return 0;   // success
@@ -1164,7 +1164,7 @@ void ReadBallModel()
 	BYTE* mdlFile;
 	DWORD mdlFileSize=0;
 	
-	// clear data buffers
+	// clear dta buffers
 	if (g_previewData!=NULL) {
 		HeapFree(GetProcessHeap(), 0, g_previewData);
         g_previewData = NULL;
@@ -1224,13 +1224,13 @@ void ReadBallModel()
 	return;
 };
 
-void ResizeLightingRect(LIGHTVERTEX* data, int n)
+void ResizeLightingRect(LIGHTVERTEX* dta, int n)
 {
     static bool resized = false;
 	if (!resized) { 
         for (int i=0;i<n;i++) {
-            data[i].x=data[i].x*FACTOR;
-            data[i].y=data[i].y*FACTOR;
+            dta[i].x=dta[i].x*FACTOR;
+            dta[i].y=dta[i].y*FACTOR;
         }
         resized = true;
     }
@@ -1354,7 +1354,7 @@ DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, DWOR
 	g_lastBallTex=NULL;
 	
 	if (IsBadReadPtr((BYTE*)src,gdbBallSize) || gdbBallCRC!=GetCRC((BYTE*)src,gdbBallSize)) {
-		//wrong CRC -> data changed
+		//wrong CRC -> dta changed
 		gdbBallAddr=0;
 		gdbBallSize=0;
 		gdbBallCRC=0;
@@ -1429,15 +1429,15 @@ DWORD SetBallName(char** names, DWORD numNames, DWORD p3, DWORD p4, DWORD p5, DW
 WORD GetTeamId(int which)
 {
     BYTE* mlData;
-    if (data[TEAM_IDS]==0) return 0xffff;
-    WORD id = ((WORD*)data[TEAM_IDS])[which];
+    if (dta[TEAM_IDS]==0) return 0xffff;
+    WORD id = ((WORD*)dta[TEAM_IDS])[which];
     if (id==0x126 || id==0x127) {
         WORD id1,id2;
         switch (id) {
             case 0x126:
                 // saved team (home)
-                id1 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x36);
-                id2 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_HOME] + 0x40);
+                id1 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x36);
+                id2 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_HOME] + 0x40);
                 if (id1 != 0) {
                     id = id1;
                 } else {
@@ -1446,8 +1446,8 @@ WORD GetTeamId(int which)
                 break;
             case 0x127:
                 // saved team (away)
-                id1 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x36);
-                id2 = *(WORD*)(*(BYTE**)data[SAVED_TEAM_AWAY] + 0x40);
+                id1 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x36);
+                id2 = *(WORD*)(*(BYTE**)dta[SAVED_TEAM_AWAY] + 0x40);
                 if (id1 != 0) {
                     id = id1;
                 } else {

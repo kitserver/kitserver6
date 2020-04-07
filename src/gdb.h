@@ -3,7 +3,7 @@
 
 #include <windows.h>
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <string>
 
 using namespace std;
@@ -86,7 +86,7 @@ typedef struct _KitCollection {
     BOOL loaded;
 } KitCollection;
 
-typedef hash_map<WORD,KitCollection*> WordKitCollectionMap;
+typedef unordered_map<WORD,KitCollection*> WordKitCollectionMap;
 
 typedef struct _GDB {
     char dir[MAXFILENAME];

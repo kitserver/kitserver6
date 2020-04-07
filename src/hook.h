@@ -208,7 +208,7 @@ UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** pp
 HRESULT STDMETHODCALLTYPE NewPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest,
 	HWND hWnd, LPVOID unused);
 	
-HRESULT STDMETHODCALLTYPE NewReset(IDirect3DDevice8* self, LPVOID params);
+HRESULT STDMETHODCALLTYPE NewReset(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params);
 
 HRESULT STDMETHODCALLTYPE NewSetTexture(IDirect3DDevice8* self, DWORD stage,
 IDirect3DBaseTexture8* pTexture);

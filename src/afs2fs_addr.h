@@ -15,7 +15,7 @@ static DWORD codeArray[][CODELEN] = {
 enum {
     BIN_SIZES_TABLE,
 };
-static DWORD dataArray[][DATALEN] = {
+static DWORD dtaArray[][DATALEN] = {
     // PES6
     {
         0x3b5cbc0,
@@ -31,4 +31,4 @@ static DWORD dataArray[][DATALEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

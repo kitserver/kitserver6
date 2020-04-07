@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <ctime>
-#include <hash_map>
+#include <unordered_map>
 #include "skins.h"
 #include "kload_exp.h"
 
@@ -17,7 +17,7 @@ enum {
     LINEUP_RECORD_SIZE, LINEUP_BLOCKSIZE, PLAYERDATA_SIZE, STACK_SHIFT,
     EDITPLAYERBOOT_FLAG, EDITBOOTS_FLAG,
 };
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES6
     {
         0x112e1c0, 0x112e1c8,
@@ -43,7 +43,7 @@ DWORD dataArray[][DATALEN] = {
         0x112b364, 0x1103298,
     },
 };
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 
 #define CODELEN 2
 enum {
@@ -87,7 +87,7 @@ public:
 //////////////////////////////////////////////////////
 // Globals ///////////////////////////////////////////
 
-hash_map<WORD,TexturePack> g_skinTexturePacks;
+unordered_map<WORD,TexturePack> g_skinTexturePacks;
 DWORD g_skinTexturesColl[5];
 DWORD g_handsTexturesColl[5];
 DWORD g_neckTexturesColl[5];
@@ -169,7 +169,7 @@ void skinInit(IDirect3D8* self, UINT Adapter,
 {
     Log(&k_skin, "Initializing skinserver...");
     memcpy(code, codeArray[GetPESInfo()->GameVersion], sizeof(code));
-    memcpy(data, dataArray[GetPESInfo()->GameVersion], sizeof(data));
+    memcpy(dta, dtaArray[GetPESInfo()->GameVersion], sizeof(dta));
 
     HookFunction(hk_BeginUniSelect,(DWORD)skinBeginUniSelect);
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, skinResetFlag2);
@@ -237,7 +237,7 @@ void readSkinsMap()
 void releaseTextures()
 {
     // release the skin textures, so that we don't consume too much memory for skins
-    hash_map<WORD,TexturePack>::iterator it;
+    unordered_map<WORD,TexturePack>::iterator it;
     for (it = g_skinTexturePacks.begin();
             it != g_skinTexturePacks.end();
             it++) {
@@ -359,7 +359,7 @@ void pasteGloves(IDirect3DTexture8* pSkinTexture, const char* overlayfilename)
 IDirect3DTexture8* getSkinTexture(WORD playerId, bool overlay_gloves)
 {
     IDirect3DTexture8* skinTexture = NULL;
-    hash_map<WORD,TexturePack>::iterator it = g_skinTexturePacks.find(playerId);
+    unordered_map<WORD,TexturePack>::iterator it = g_skinTexturePacks.find(playerId);
     if (it != g_skinTexturePacks.end()) {
         // map has an entry for this player
         if (it->second._bigLoaded && !overlay_gloves) {
@@ -418,17 +418,17 @@ IDirect3DTexture8* getSkinTexture(WORD playerId, bool overlay_gloves)
 
 bool isEditPlayerMode()
 {
-    return *(BYTE*)data[EDITPLAYERMODE_FLAG] == 1;
+    return *(BYTE*)dta[EDITPLAYERMODE_FLAG] == 1;
 }
 
 bool isEditPlayerBootMode()
 {
-    return *(BYTE*)data[EDITPLAYERBOOT_FLAG] == 1;
+    return *(BYTE*)dta[EDITPLAYERBOOT_FLAG] == 1;
 }
 
 bool isEditBootsMode()
 {
-    return *(BYTE*)data[EDITBOOTS_FLAG] == 1;
+    return *(BYTE*)dta[EDITBOOTS_FLAG] == 1;
 }
 
 bool has_gloves = false;
