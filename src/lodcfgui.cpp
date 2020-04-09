@@ -58,9 +58,10 @@ bool BuildControls(HWND parent)
 
 	// TOP SECTION
 
-	borW = WIN_WIDTH - spacer*3;
+	borW = WIN_WIDTH - spacer*4.5;
 	statW = 40;
-	boxW = borW - statW - spacer*3; boxH = 22; statH = 16;
+	boxW = borW - statW - spacer*3;
+	boxH = 22; statH = 16;
 	borH = spacer*3 + boxH*2;
 
 	statW = borW - spacer*4;

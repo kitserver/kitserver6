@@ -6,7 +6,7 @@
 #else
 #define KSERV_WINDOW_TITLE "KitServer 6 Key Binder (debug build)"
 #endif
-#define CREDITS "About: v6.6.4 (05/2009) by Juce."
+#define CREDITS "About: v6.8.0 (04/2020) by Juce."
 
 #define LOG(f,x) if (f != NULL) fprintf x
 

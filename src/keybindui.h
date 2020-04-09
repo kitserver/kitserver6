@@ -5,7 +5,7 @@
 
 #include <windows.h>
 
-#define WIN_WIDTH 470 
+#define WIN_WIDTH 475 
 #define WIN_HEIGHT 275
 #define BUFLEN 2048
 

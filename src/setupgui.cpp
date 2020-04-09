@@ -32,7 +32,7 @@ bool BuildControls(HWND parent)
 
 	// TOP SECTION
 
-	borW = WIN_WIDTH - spacer*3;
+	borW = WIN_WIDTH - spacer*4.5;
 	statW = 120;
 	boxW = borW - statW - spacer*3; boxH = 20; statH = 16;
 	borH = spacer*3 + boxH*2 + 10;
@@ -104,7 +104,7 @@ bool BuildControls(HWND parent)
 	// BOTTOM SECTION - buttons
 
 	butW = 60; butH = 24;
-	x = WIN_WIDTH - spacer*2 - butW;
+	x = spacer + borW - butW;
 
 	g_removeButtonControl = CreateWindowEx(
 			xstyle, "Button", "Remove", style | WS_TABSTOP,

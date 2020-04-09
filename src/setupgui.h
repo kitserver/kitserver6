@@ -5,8 +5,8 @@
 
 #include <windows.h>
 
-#define WIN_WIDTH 510 
-#define WIN_HEIGHT 145
+#define WIN_WIDTH 515 
+#define WIN_HEIGHT 148
 
 extern HWND g_exeListControl;              // displays list of executable files
 //extern HWND g_osListControl;               // displays list of OS choices

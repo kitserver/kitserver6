@@ -338,7 +338,7 @@ bool BuildControls(HWND parent)
 	// BOTTOM SECTION - buttons
 
 	butW = 60; butH = 24;
-	x = WIN_WIDTH - spacer*2 - butW;
+	x = WIN_WIDTH - spacer*3.5 - butW;
 
 	g_saveButtonControl = CreateWindowEx(
 			xstyle, "Button", "Save", style | WS_TABSTOP,
