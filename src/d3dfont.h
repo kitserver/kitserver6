@@ -40,7 +40,7 @@ class CD3DFont
     DWORD   m_dwTexWidth;                 // Texture dimensions
     DWORD   m_dwTexHeight;
     FLOAT   m_fTextScale;
-    FLOAT   m_fTexCoords[256-32-1][4];
+    FLOAT   m_fTexCoords[256-32][4];
 
     // Stateblocks for setting and restoring render states
     DWORD   m_dwSavedStateBlock;
