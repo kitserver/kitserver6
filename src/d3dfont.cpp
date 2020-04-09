@@ -168,10 +168,10 @@ HRESULT CD3DFont::InitDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice )
         str[0] = c;
         GetTextExtentPoint32W( hDC, str, 1, &size );
 
-        if( (DWORD)(x+size.cx+1) > m_dwTexWidth )
+        if( (DWORD)(x+size.cx+4) > m_dwTexWidth )
         {
             x  = 0;
-            y += size.cy+1;
+            y += size.cy+4;
         }
 
         ExtTextOutW( hDC, x+0, y+0, ETO_OPAQUE, NULL, str, 1, NULL );
@@ -181,7 +181,7 @@ HRESULT CD3DFont::InitDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice )
         m_fTexCoords[c-32][2] = ((FLOAT)(x+0+size.cx))/m_dwTexWidth;
         m_fTexCoords[c-32][3] = ((FLOAT)(y+0+size.cy))/m_dwTexHeight;
 
-        x += size.cx+1;
+        x += size.cx+4;
     }
 
     // Lock the surface and write the alpha values for the set pixels
