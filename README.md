@@ -9,8 +9,8 @@ Visual Studio 2019 Community Edition is assumed in the setenv.cmd file, but you
 should be able to use other versions of Visual Studio too.
 
 Build is done from command-line.
-Start cmd.exe, then switch to source directory, then:
+Start cmd.exe, then switch to "src" directory, then:
 
-    setenv.cmd
+    setenv.vs2019.cmd
     nmake
 
