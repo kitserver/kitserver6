@@ -87,7 +87,7 @@ hooklib.obj: hooklib.h hooklib.cpp
 kload.lib: kload.obj detect.obj d3dfont.obj imageutil.obj log.obj kload_config.obj hook.obj numpages.obj afsreplace.obj input.obj keycfg.obj hooklib.obj dxutil.obj
 kload.dll: kload.lib kload.res
 	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj d3dfont.obj dxutil.obj detect.obj imageutil.obj log.obj kload_config.obj hook.obj numpages.obj afsreplace.obj input.obj keycfg.obj hooklib.obj kload.res $(LIBS) d3dx8.lib winmm.lib
-kload.obj: kload.cpp kload.h
+kload.obj: kload.cpp kload.h kload_config.h hook.h log.h keycfg.h
 detect.obj: detect.cpp detect.h
 kload.res: 
 	$(RC) -r -fo kload.res kload.rc
