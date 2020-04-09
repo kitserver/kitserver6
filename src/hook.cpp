@@ -1125,20 +1125,24 @@ KEXPORT void SetActiveDevice(IDirect3DDevice8* n_device)
 
 void kloadMakeFonts(IDirect3DDevice8* dev)
 {
-    g_font12 = new CD3DFont(L"Arial",12*stretchY,D3DFONT_BOLD);
+    DWORD sz12 = 8*g_config.fontSizeFactor*stretchY;
+    DWORD sz16 = 10*g_config.fontSizeFactor*stretchY;
+    DWORD sz20 = 12*g_config.fontSizeFactor*stretchY;
+
+    g_font12 = new CD3DFont(L"Arial", sz12, D3DFONT_BOLD);
     g_font12->InitDeviceObjects(dev);
     g_font12->RestoreDeviceObjects();
+    LogWithTwoNumbers(&k_kload,"Font created: g_font12=%08x (sz:%d)", (DWORD)g_font12, sz12);
 
-    g_font16 = new CD3DFont(L"Arial",16*stretchY,D3DFONT_BOLD);
+    g_font16 = new CD3DFont(L"Arial", sz16, D3DFONT_BOLD);
     g_font16->InitDeviceObjects(dev);
     g_font16->RestoreDeviceObjects();
+    LogWithTwoNumbers(&k_kload,"Font created: g_font16=%08x (sz:%d)", (DWORD)g_font16, sz16);
 
-    g_font20 = new CD3DFont(L"Arial",20*stretchY,D3DFONT_BOLD);
+    g_font20 = new CD3DFont(L"Arial", sz20, D3DFONT_BOLD);
     g_font20->InitDeviceObjects(dev);
     g_font20->RestoreDeviceObjects();
-
-    LogWithThreeNumbers(&k_kload,"Fonts created: g_font12=%08x, g_font16=%08x, g_font20=%08x",
-        (DWORD)g_font12, (DWORD)g_font16, (DWORD)g_font20);
+    LogWithTwoNumbers(&k_kload,"Font created: g_font20=%08x (sz:%d)", (DWORD)g_font20, sz20);
 }
 
 void kloadDestroyFonts()

@@ -20,6 +20,7 @@ typedef struct _KLOAD_CONFIG_STRUCT {
 	BOOL forceSW_TnL;
 	BOOL emulateHW_TnL;
 	DWORD newResMem;
+	float fontSizeFactor;
 } KLOAD_CONFIG;
 
 BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile);

@@ -94,6 +94,13 @@ BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile)
 			LogWithNumber(&k_kload,"ReadConfig: ReservedMemory = (%d)", value);
 			config->newResMem = value;
 		}
+		else if (stricmp(name, "font-size.factor")==0)
+		{
+			float fvalue;
+			if (sscanf(pValue, "%f", &fvalue)!=1) continue;
+			LogWithNumber(&k_kload,"ReadConfig: font-size.factor = (%0.3f)", fvalue);
+			config->fontSizeFactor = fvalue;
+		}
 		else if (lstrcmp(name, "DLL.num")==0)
 		{
 			if (sscanf(pValue, "%d", &value)!=1) continue;
