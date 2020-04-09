@@ -1,7 +1,7 @@
 // roster.h
 
-#define MODID 209
-#define NAMELONG "Roster 6.7.0"
+#define MODID 110
+#define NAMELONG "Roster 6.8.0"
 #define NAMESHORT "ROSTER"
 
 #define DEFAULT_DEBUG 1

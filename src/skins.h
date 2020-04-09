@@ -1,7 +1,7 @@
 // skins.h
 
-#define MODID 197
-#define NAMELONG "Skinserver 1.0.2"
+#define MODID 111
+#define NAMELONG "Skinserver 6.8.0"
 #define NAMESHORT "SKINS"
 
 #define DEFAULT_DEBUG 1

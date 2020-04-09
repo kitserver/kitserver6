@@ -2,8 +2,8 @@
 
 #include "afsreader.h"
 
-#define MODID 106
-#define NAMELONG "Stadium Server 6.6.4"
+#define MODID 113
+#define NAMELONG "Stadium Server 6.8.0"
 #define NAMESHORT "STADIUM"
 
 #define DEFAULT_DEBUG 1

@@ -1,7 +1,7 @@
 // psc.h
 
-#define MODID 108
-#define NAMELONG "PSC 6.6.4"
+#define MODID 109
+#define NAMELONG "PSC 6.8.0"
 #define NAMESHORT "PSC"
 
 #define DEFAULT_DEBUG 1
