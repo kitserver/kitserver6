@@ -184,7 +184,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		// Release the device
-        if (GetActiveDevice()) {
+        if (0) {//GetActiveDevice()) {
             GetActiveDevice()->Release();
         }
         
