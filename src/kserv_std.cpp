@@ -40,7 +40,7 @@
     (dw>>8  & 0x0000ff00) | (dw>>24 & 0x000000ff)
 
 #define SAFEFREE(ptr) if (ptr) { HeapFree(GetProcessHeap(),0,ptr); ptr=NULL; }
-#define IS_CUSTOM_TEAM(id) (id == 0xffff) 
+#define IS_CUSTOM_TEAM(id) (id == 0xffff)
 
 #define MAX_ITERATIONS 1000
 
@@ -50,17 +50,7 @@
 
 KMOD k_mydll={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 
-/**************************************
-Shared by all processes variables
-**************************************/
-//#pragma data_seg(".HKT")
 KSERV_CONFIG g_config;
-//#pragma data_seg()
-//#pragma comment(linker, "/section:.HKT,rws")
-
-/************************** 
-End of shared section 
-**************************/
 
 CRITICAL_SECTION g_cs;
 
@@ -250,11 +240,11 @@ WORD g_last_away = 0xff;
 
 // dta array names
 enum {
-	TEAM_IDS, TEAM_STRIPS, KIT_SLOTS, 
-	ANOTHER_KIT_SLOTS, MLDATA_PTRS, TEAM_COLLARS_PTR,
-	KIT_CHECK_TRIGGER, FIRST_ID, LAST_ID, 
-    NATIONAL_TEAMS_ADDR, CLUB_TEAMS_ADDR, 
-	ML_HOME_AREA, ML_AWAY_AREA,
+    TEAM_IDS, TEAM_STRIPS, KIT_SLOTS,
+    ANOTHER_KIT_SLOTS, MLDATA_PTRS, TEAM_COLLARS_PTR,
+    KIT_CHECK_TRIGGER, FIRST_ID, LAST_ID,
+    NATIONAL_TEAMS_ADDR, CLUB_TEAMS_ADDR,
+    ML_HOME_AREA, ML_AWAY_AREA,
     STRIPS_CONTROL, TEAM_STRIPS_HOME, TEAM_STRIPS_AWAY,
     LICENSED_LIST,
     SAVED_TEAM_HOME, SAVED_TEAM_AWAY,
@@ -267,7 +257,7 @@ DWORD dtaArray[][DATALEN] = {
     // PES6
     { 0x3be0940, 0x3be6078, 0,
       0, 0, 0,
-      0, 5473, 6831, 
+      0, 5473, 6831,
       0x113200c, 0x1132010, 0x1131fe4, 0x1131fe8,
       0x3a71338, 0x3a7133c, 0x3a7134c,
       0xd42e20,
@@ -278,7 +268,7 @@ DWORD dtaArray[][DATALEN] = {
     // PES6 1.10
     { 0x3be1940, 0x3be7078, 0,
       0, 0, 0,
-      0, 5473, 6831, 
+      0, 5473, 6831,
       0x113300c, 0x1133010, 0x1132fe4, 0x1132fe8,
       0x3a72338, 0x3a7233c, 0x3a7234c,
       0xd43f00,
@@ -289,7 +279,7 @@ DWORD dtaArray[][DATALEN] = {
     // WE2007
     { 0x3bdb3c0, 0x3be0af8, 0,
       0, 0, 0,
-      0, 5877, 7235, 
+      0, 5877, 7235,
       0x112ca94, 0x112ca98, 0x112ca6c, 0x112ca70,
       0x3a6bdb8, 0x3a6bdbc, 0x3a6bdcc,
       0xd3cf40,
@@ -299,7 +289,7 @@ DWORD dtaArray[][DATALEN] = {
     },
 };
 
-enum { 
+enum {
     C_GETTEAMINFO, C_GETTEAMINFO_CS,
     C_READTEAMINFO, C_READTEAMINFO_CS,
     C_READTEAMINFO2, C_READTEAMINFO2_CS,
@@ -308,7 +298,7 @@ enum {
     C_SETFLAG_CS,
     C_RESETFLAG_CS,
     C_RESETFLAG2_CS,
-    C_WRITEKITINFO_CS, C_WRITEKITINFO_CS2, C_WRITEKITINFO_CS3, 
+    C_WRITEKITINFO_CS, C_WRITEKITINFO_CS2, C_WRITEKITINFO_CS3,
     C_WRITEKITINFO_CS4, C_WRITEKITINFO,
     C_PROCESSKIT_CS, C_PROCESSKIT,
     C_SETRADARCOLOR_CS,
@@ -325,7 +315,7 @@ DWORD codeArray[][CODELEN] = {
         0x9d9bd9,
         0x9d9c53,
         0x9c15a7,
-        0x6b2487, 0x966e15, 0x966e62, 
+        0x6b2487, 0x966e15, 0x966e62,
         0x80843e, 0x865380,
         0x8b1a59, 0x8d1a60,
         0x9cc37c,
@@ -340,14 +330,14 @@ DWORD codeArray[][CODELEN] = {
         0x9d9d69,
         0x9d9de3,
         0x9c1737,
-        0x6b25a7, 0x966f95, 0x966fe2, 
+        0x6b25a7, 0x966f95, 0x966fe2,
         0x8085ae, 0x8654b0,
         0x8b1b39, 0x8d1b50,
         0x9cc50c,
     },
     // WE2007
     {
-        0x865950, 0x804caa, 
+        0x865950, 0x804caa,
         0x865810, 0xb3c230,
         0x865600, 0xb3c1b9,
         0xb365b0, 0xb32f27,
@@ -355,7 +345,7 @@ DWORD codeArray[][CODELEN] = {
         0x9da3f9,
         0x9da473,
         0x9c1d97,
-        0x6b2467, 0x9675b5, 0x967602, 
+        0x6b2467, 0x9675b5, 0x967602,
         0x8083fe, 0x865a90,
         0x8b2259, 0x8d2230,
         0x9ccb6c,
@@ -372,7 +362,7 @@ std::unordered_map<DWORD,TEAMKITINFO*> g_teamKitInfo;
 std::unordered_map<DWORD,TEAMKITINFO*>::iterator g_teamKitInfoIterator;
 
 // Actual number of teams in the game
-int g_numTeams = 0; 
+int g_numTeams = 0;
 
 TEAMBUFFERINFO g_teamInfo[256];
 char g_afsFileName[BUFLEN];
@@ -390,15 +380,15 @@ GDB* gdb = NULL;
 
 ///// Graphics ////////////////
 
-struct CUSTOMVERTEX { 
-	FLOAT x,y,z,w;
-	DWORD color;
+struct CUSTOMVERTEX {
+    FLOAT x,y,z,w;
+    DWORD color;
 };
 
-struct CUSTOMVERTEX2 { 
-	FLOAT x,y,z,w;
-	DWORD color;
-	FLOAT tu, tv;
+struct CUSTOMVERTEX2 {
+    FLOAT x,y,z,w;
+    DWORD color;
+    FLOAT tu, tv;
 };
 
 // SHIRT
@@ -462,22 +452,22 @@ float PI = 3.1415926f;
 float R = ((float)IHEIGHT)/2.0f;
 float d18 = PI/10.0f;
 float d54 = d18*3.0f;
-float y[] = { R*sin(d18), R, R*sin(d18), -R*sin(d54), -R*sin(d54), R*sin(d18), R*sin(d18) }; 
+float y[] = { R*sin(d18), R, R*sin(d18), -R*sin(d54), -R*sin(d54), R*sin(d18), R*sin(d18) };
 float x[] = { R*cos(d18), 0.0f, -R*cos(d18), -R*cos(d54), R*cos(d54) };
 float x5 = x[4]*(y[1] - y[5])/(y[1] - y[4]);
 float x6 = -x5;
 
 CUSTOMVERTEX g_Vert0[] =
 {
-	{POSX+INDX+R + x[1], POSY+INDY+R - y[1], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x6,   POSY+INDY+R - y[6], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x5,   POSY+INDY+R - y[5], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x[2], POSY+INDY+R - y[2], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x[4], POSY+INDY+R - y[4], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x5,   POSY+INDY+R - y[5], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x[3], POSY+INDY+R - y[3], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x[0], POSY+INDY+R - y[0], 0.0f, 1.0f, 0xff4488ff },
-	{POSX+INDX+R + x6,   POSY+INDY+R - y[6], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x[1], POSY+INDY+R - y[1], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x6,   POSY+INDY+R - y[6], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x5,   POSY+INDY+R - y[5], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x[2], POSY+INDY+R - y[2], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x[4], POSY+INDY+R - y[4], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x5,   POSY+INDY+R - y[5], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x[3], POSY+INDY+R - y[3], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x[0], POSY+INDY+R - y[0], 0.0f, 1.0f, 0xff4488ff },
+    {POSX+INDX+R + x6,   POSY+INDY+R - y[6], 0.0f, 1.0f, 0xff4488ff },
 };
 
 // 2D-kit polygons
@@ -1136,10 +1126,10 @@ CUSTOMVERTEX g_2Dkit_socks_right_outline[][10] = {
 ////////////////// GLOVES //////////////////////////////////////
 
 CUSTOMVERTEX2 g_gloves_left[] = {
-	{0.0f, 0.0f, 0.0f, 1.0f, 0xff4488ff, 0.0f, 0.0f}, //1
-	{0.0f, 64.0f, 0.0f, 1.0f, 0xff4488ff, 0.0f, 1.0f}, //2
-	{64.0f, 0.0f, 0.0f, 1.0f, 0xff4488ff, 1.0f, 0.0f}, //3
-	{64.0f, 64.0f, 0.0f, 1.0f, 0xff4488ff, 1.0f, 1.0f}, //4
+    {0.0f, 0.0f, 0.0f, 1.0f, 0xff4488ff, 0.0f, 0.0f}, //1
+    {0.0f, 64.0f, 0.0f, 1.0f, 0xff4488ff, 0.0f, 1.0f}, //2
+    {64.0f, 0.0f, 0.0f, 1.0f, 0xff4488ff, 1.0f, 0.0f}, //3
+    {64.0f, 64.0f, 0.0f, 1.0f, 0xff4488ff, 1.0f, 1.0f}, //4
 };
 
 /////////////////////////////////////////////////////////////
@@ -1157,12 +1147,12 @@ BOOL g_needsRestore = TRUE;
 int bpp = 0;
 
 /* IDirect3DDevice8 method-types */
-typedef HRESULT (STDMETHODCALLTYPE *PFNCREATETEXTUREPROC)(IDirect3DDevice8* self, 
-UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, 
+typedef HRESULT (STDMETHODCALLTYPE *PFNCREATETEXTUREPROC)(IDirect3DDevice8* self,
+UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool,
 IDirect3DTexture8** ppTexture);
-typedef HRESULT (STDMETHODCALLTYPE *PFNSETTEXTUREPROC)(IDirect3DDevice8* self, 
+typedef HRESULT (STDMETHODCALLTYPE *PFNSETTEXTUREPROC)(IDirect3DDevice8* self,
 DWORD stage, IDirect3DBaseTexture8* pTexture);
-typedef HRESULT (STDMETHODCALLTYPE *PFNSETTEXTURESTAGESTATEPROC)(IDirect3DDevice8* self, 
+typedef HRESULT (STDMETHODCALLTYPE *PFNSETTEXTURESTAGESTATEPROC)(IDirect3DDevice8* self,
 DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value);
 typedef HRESULT (STDMETHODCALLTYPE *PFNUPDATETEXTUREPROC)(IDirect3DDevice8* self,
 IDirect3DBaseTexture8* pSrc, IDirect3DBaseTexture8* pDest);
@@ -1198,10 +1188,10 @@ void setTeamKitInfo();
 void ClearTextureMaps();
 
 HRESULT STDMETHODCALLTYPE JuceCreateTexture(IDirect3DDevice8* self, UINT width, UINT height,
-UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, 
+UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture,
 DWORD src, bool* IsProcessed);
 void kservUnlockRect(IDirect3DTexture8* self,UINT Level);
-HRESULT STDMETHODCALLTYPE JuceSetTexture(IDirect3DDevice8* self, DWORD stage, 
+HRESULT STDMETHODCALLTYPE JuceSetTexture(IDirect3DDevice8* self, DWORD stage,
 IDirect3DBaseTexture8* pTexture);
 HRESULT STDMETHODCALLTYPE JuceSetTextureStageState(IDirect3DDevice8* self, DWORD Stage,
 D3DTEXTURESTAGESTATETYPE Type, DWORD Value);
@@ -1314,7 +1304,7 @@ PALETTEENTRY g_away_socks_pal[0x100];
 
 char nullString[8] = "(null)\0";
 enum {
-	KITPART_SHIRT, KITPART_SHORTS, KITPART_SOCKS, KITPART_NUMBERS, KITPART_FONT,
+    KITPART_SHIRT, KITPART_SHORTS, KITPART_SOCKS, KITPART_NUMBERS, KITPART_FONT,
 };
 
 
@@ -1346,15 +1336,15 @@ void SafeRelease(LPVOID ppObj)
 /* remove keyboard hook */
 void UninstallKeyboardHook(void)
 {
-	if (g_hKeyboardHook != NULL)
-	{
-		UnhookWindowsHookEx( g_hKeyboardHook );
-		Log(&k_mydll,"Keyboard hook uninstalled.");
-		g_hKeyboardHook = NULL;
-	}
+    if (g_hKeyboardHook != NULL)
+    {
+        UnhookWindowsHookEx( g_hKeyboardHook );
+        Log(&k_mydll,"Keyboard hook uninstalled.");
+        g_hKeyboardHook = NULL;
+    }
 }
 
-void SetPosition(CUSTOMVERTEX2* dest, CUSTOMVERTEX2* src, int n, int x, int y) 
+void SetPosition(CUSTOMVERTEX2* dest, CUSTOMVERTEX2* src, int n, int x, int y)
 {
     FLOAT xratio = g_bbWidth / 1024.0;
     FLOAT yratio = g_bbHeight / 768.0;
@@ -1364,7 +1354,7 @@ void SetPosition(CUSTOMVERTEX2* dest, CUSTOMVERTEX2* src, int n, int x, int y)
     }
 }
 
-void SetPosition(CUSTOMVERTEX* dest, CUSTOMVERTEX* src, int n, int x, int y) 
+void SetPosition(CUSTOMVERTEX* dest, CUSTOMVERTEX* src, int n, int x, int y)
 {
     FLOAT xratio = g_bbWidth / 1024.0;
     FLOAT yratio = g_bbHeight / 768.0;
@@ -1382,65 +1372,65 @@ void NarrowBackCorrection(CUSTOMVERTEX2* dest, CUSTOMVERTEX2* src, int n)
     }
 }
 
-HRESULT MakeVertexBuffer(IDirect3DDevice8* dev, CUSTOMVERTEX* dta, 
+HRESULT MakeVertexBuffer(IDirect3DDevice8* dev, CUSTOMVERTEX* dta,
         size_t dtaSize, float x, IDirect3DVertexBuffer8** ppVB)
 {
-	VOID* pVertices;
-	if (FAILED(dev->CreateVertexBuffer(dtaSize*2, D3DUSAGE_WRITEONLY, 
-					D3DFVF_CUSTOMVERTEX, D3DPOOL_MANAGED, ppVB)))
-	{
-		Log(&k_mydll,"CreateVertexBuffer() failed.");
-		return E_FAIL;
-	}
-	Log(&k_mydll,"CreateVertexBuffer() done.");
+    VOID* pVertices;
+    if (FAILED(dev->CreateVertexBuffer(dtaSize*2, D3DUSAGE_WRITEONLY,
+                    D3DFVF_CUSTOMVERTEX, D3DPOOL_MANAGED, ppVB)))
+    {
+        Log(&k_mydll,"CreateVertexBuffer() failed.");
+        return E_FAIL;
+    }
+    Log(&k_mydll,"CreateVertexBuffer() done.");
 
-	if (FAILED((*ppVB)->Lock(0, dtaSize*2, (BYTE**)&pVertices, 0)))
-	{
-		Log(&k_mydll,"(*ppVB)->Lock() failed.");
-		return E_FAIL;
-	}
-	memcpy(pVertices, dta, dtaSize);
-	memcpy((BYTE*)pVertices + dtaSize, dta, dtaSize);
-	SetPosition((CUSTOMVERTEX*)pVertices, dta, dtaSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT);
-	SetPosition((CUSTOMVERTEX*)pVertices + dtaSize/sizeof(CUSTOMVERTEX), dta, dtaSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT_ONLINE);
-	g_pVB_gloves_left->Unlock();
+    if (FAILED((*ppVB)->Lock(0, dtaSize*2, (BYTE**)&pVertices, 0)))
+    {
+        Log(&k_mydll,"(*ppVB)->Lock() failed.");
+        return E_FAIL;
+    }
+    memcpy(pVertices, dta, dtaSize);
+    memcpy((BYTE*)pVertices + dtaSize, dta, dtaSize);
+    SetPosition((CUSTOMVERTEX*)pVertices, dta, dtaSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT);
+    SetPosition((CUSTOMVERTEX*)pVertices + dtaSize/sizeof(CUSTOMVERTEX), dta, dtaSize/sizeof(CUSTOMVERTEX), x, Y_2DKIT_LEFT_ONLINE);
+    g_pVB_gloves_left->Unlock();
     return S_OK;
 }
 
-HRESULT MakeVertexBuffer2(IDirect3DDevice8* dev, CUSTOMVERTEX2* dta, size_t dtaSize, 
+HRESULT MakeVertexBuffer2(IDirect3DDevice8* dev, CUSTOMVERTEX2* dta, size_t dtaSize,
         float x, IDirect3DVertexBuffer8** ppVB)
 {
-	VOID* pVertices;
-	if (FAILED(dev->CreateVertexBuffer(dtaSize*2, D3DUSAGE_WRITEONLY, 
-					D3DFVF_CUSTOMVERTEX2, D3DPOOL_MANAGED, ppVB)))
-	{
-		Log(&k_mydll,"CreateVertexBuffer() failed.");
-		return E_FAIL;
-	}
-	Log(&k_mydll,"CreateVertexBuffer() done.");
+    VOID* pVertices;
+    if (FAILED(dev->CreateVertexBuffer(dtaSize*2, D3DUSAGE_WRITEONLY,
+                    D3DFVF_CUSTOMVERTEX2, D3DPOOL_MANAGED, ppVB)))
+    {
+        Log(&k_mydll,"CreateVertexBuffer() failed.");
+        return E_FAIL;
+    }
+    Log(&k_mydll,"CreateVertexBuffer() done.");
 
-	if (FAILED((*ppVB)->Lock(0, dtaSize*2, (BYTE**)&pVertices, 0)))
-	{
-		Log(&k_mydll,"(*ppVB)->Lock() failed.");
-		return E_FAIL;
-	}
-	memcpy(pVertices, dta, dtaSize);
-	memcpy((BYTE*)pVertices + dtaSize, dta, dtaSize);
-	SetPosition((CUSTOMVERTEX2*)pVertices, dta, dtaSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT);
-	SetPosition((CUSTOMVERTEX2*)pVertices + dtaSize/sizeof(CUSTOMVERTEX2), dta, dtaSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT_ONLINE);
-	g_pVB_gloves_left->Unlock();
+    if (FAILED((*ppVB)->Lock(0, dtaSize*2, (BYTE**)&pVertices, 0)))
+    {
+        Log(&k_mydll,"(*ppVB)->Lock() failed.");
+        return E_FAIL;
+    }
+    memcpy(pVertices, dta, dtaSize);
+    memcpy((BYTE*)pVertices + dtaSize, dta, dtaSize);
+    SetPosition((CUSTOMVERTEX2*)pVertices, dta, dtaSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT);
+    SetPosition((CUSTOMVERTEX2*)pVertices + dtaSize/sizeof(CUSTOMVERTEX2), dta, dtaSize/sizeof(CUSTOMVERTEX2), x, Y_2DKIT_LEFT_ONLINE);
+    g_pVB_gloves_left->Unlock();
     return S_OK;
 }
 
 /* creates vertex buffers */
 HRESULT InitVB(IDirect3DDevice8* dev)
 {
-	// create vertex buffers
+    // create vertex buffers
 
-	// gloves-left
+    // gloves-left
     if (FAILED(MakeVertexBuffer2(dev,
                 g_gloves_left,sizeof(g_gloves_left),
-                481, &g_pVB_gloves_left))) 
+                481, &g_pVB_gloves_left)))
     {
         Log(&k_mydll, "MakeVertexBuffer2 failed for gloves");
         return E_FAIL;
@@ -1453,55 +1443,55 @@ HRESULT InitVB(IDirect3DDevice8* dev)
     for (i=0; i<4; i++) {
         if (FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shirt_left[i],sizeof(g_2Dkit_shirt_left[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shirt_left[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shirt_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shirt_right[i],sizeof(g_2Dkit_shirt_right[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shirt_right[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shirt_right[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_sleeve_left[i],sizeof(g_2Dkit_sleeve_left[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_sleeve_left[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_sleeve_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_sleeve_right[i],sizeof(g_2Dkit_sleeve_right[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_sleeve_right[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_sleeve_right[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_shirt_outline[i],sizeof(g_2Dkit_shirt_outline[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shirt_outline[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shirt_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_sleeve_left_outline[i],sizeof(g_2Dkit_sleeve_left_outline[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_sleeve_left_outline[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_sleeve_left_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_sleeve_right_outline[i],sizeof(g_2Dkit_sleeve_right_outline[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_sleeve_right_outline[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_sleeve_right_outline[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shorts[i],sizeof(g_2Dkit_shorts[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shorts[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shorts[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shorts_2[i],sizeof(g_2Dkit_shorts_2[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shorts_2[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shorts_2[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_shorts_outline[i],sizeof(g_2Dkit_shorts_outline[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shorts_outline[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shorts_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_shorts_2_outline[i],sizeof(g_2Dkit_shorts_2_outline[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_shorts_2_outline[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_shorts_2_outline[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_shin_left[i],sizeof(g_2Dkit_socks_shin_left[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_socks_shin_left[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_socks_shin_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_shin_right[i],sizeof(g_2Dkit_socks_shin_right[i]),
-                        X_2DKIT_LEFT + SOCK_SHIFT, &g_pVB_home_socks_shin_right[i])) 
+                        X_2DKIT_LEFT + SOCK_SHIFT, &g_pVB_home_socks_shin_right[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_foot_left[i],sizeof(g_2Dkit_socks_foot_left[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_socks_foot_left[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_socks_foot_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_foot_right[i],sizeof(g_2Dkit_socks_foot_right[i]),
-                        X_2DKIT_LEFT + SOCK_SHIFT, &g_pVB_home_socks_foot_right[i])) 
+                        X_2DKIT_LEFT + SOCK_SHIFT, &g_pVB_home_socks_foot_right[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_socks_left_outline[i],sizeof(g_2Dkit_socks_left_outline[i]),
-                        X_2DKIT_LEFT, &g_pVB_home_socks_left_outline[i])) 
+                        X_2DKIT_LEFT, &g_pVB_home_socks_left_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_socks_right_outline[i],sizeof(g_2Dkit_socks_right_outline[i]),
-                        X_2DKIT_LEFT + SOCK_SHIFT, &g_pVB_home_socks_right_outline[i])) 
+                        X_2DKIT_LEFT + SOCK_SHIFT, &g_pVB_home_socks_right_outline[i]))
            ) {
             Log(&k_mydll,"CreateVertexBuffer() for HOME failed.");
             return E_FAIL;
@@ -1509,66 +1499,66 @@ HRESULT InitVB(IDirect3DDevice8* dev)
     }
 
     ///// AWAY /////////////////////////////////
-    
+
     for (i=0; i<4; i++) {
         if (FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shirt_left[i],sizeof(g_2Dkit_shirt_left[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shirt_left[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shirt_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shirt_right[i],sizeof(g_2Dkit_shirt_right[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shirt_right[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shirt_right[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_sleeve_left[i],sizeof(g_2Dkit_sleeve_left[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_left[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_sleeve_right[i],sizeof(g_2Dkit_sleeve_right[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_right[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_right[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_shirt_outline[i],sizeof(g_2Dkit_shirt_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shirt_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shirt_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_sleeve_left_outline[i],sizeof(g_2Dkit_sleeve_left_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_left_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_left_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_sleeve_right_outline[i],sizeof(g_2Dkit_sleeve_right_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_right_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_sleeve_right_outline[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shorts[i],sizeof(g_2Dkit_shorts[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_shorts_2[i],sizeof(g_2Dkit_shorts_2[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts_2[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts_2[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_shorts_outline[i],sizeof(g_2Dkit_shorts_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_shorts_2_outline[i],sizeof(g_2Dkit_shorts_2_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts_2_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_shorts_2_outline[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_shin_left[i],sizeof(g_2Dkit_socks_shin_left[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_socks_shin_left[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_socks_shin_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_shin_right[i],sizeof(g_2Dkit_socks_shin_right[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT + SOCK_SHIFT, &g_pVB_away_socks_shin_right[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT + SOCK_SHIFT, &g_pVB_away_socks_shin_right[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_foot_left[i],sizeof(g_2Dkit_socks_foot_left[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_socks_foot_left[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_socks_foot_left[i]))
             || FAILED(MakeVertexBuffer2(dev,
                         g_2Dkit_socks_foot_right[i],sizeof(g_2Dkit_socks_foot_right[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT + SOCK_SHIFT, &g_pVB_away_socks_foot_right[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT + SOCK_SHIFT, &g_pVB_away_socks_foot_right[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_socks_left_outline[i],sizeof(g_2Dkit_socks_left_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_socks_left_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT, &g_pVB_away_socks_left_outline[i]))
             || FAILED(MakeVertexBuffer(dev,
                         g_2Dkit_socks_right_outline[i],sizeof(g_2Dkit_socks_right_outline[i]),
-                        X_2DKIT_LEFT + AWAY_KIT_SHIFT + SOCK_SHIFT, &g_pVB_away_socks_right_outline[i])) 
+                        X_2DKIT_LEFT + AWAY_KIT_SHIFT + SOCK_SHIFT, &g_pVB_away_socks_right_outline[i]))
            ) {
             Log(&k_mydll,"CreateVertexBuffer() for AWAY failed.");
             return E_FAIL;
         }
     }
 
-	return S_OK;
+    return S_OK;
 }
 
 //-----------------------------------------------------------------------------
@@ -1580,15 +1570,15 @@ HRESULT RestoreDeviceObjects(IDirect3DDevice8* dev)
     HRESULT hr = InitVB(dev);
     if (FAILED(hr))
     {
-		Log(&k_mydll,"InitVB() failed.");
+        Log(&k_mydll,"InitVB() failed.");
         return hr;
     }
-	Log(&k_mydll,"InitVB() done.");
+    Log(&k_mydll,"InitVB() done.");
 
-	// Create the state blocks for rendering overlay graphics
-	for( UINT which=0; which<2; which++ )
-	{
-		dev->BeginStateBlock();
+    // Create the state blocks for rendering overlay graphics
+    for( UINT which=0; which<2; which++ )
+    {
+        dev->BeginStateBlock();
 
         dev->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1 );
         dev->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_TEXTURE );
@@ -1601,21 +1591,21 @@ HRESULT RestoreDeviceObjects(IDirect3DDevice8* dev)
 
         // Set diffuse blending for alpha set in vertices.
         dev->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-        
-		if( which==0 )
-			dev->EndStateBlock( &g_dwSavedStateBlock );
-		else
-			dev->EndStateBlock( &g_dwDrawOverlayStateBlock );
-	}
+
+        if( which==0 )
+            dev->EndStateBlock( &g_dwSavedStateBlock );
+        else
+            dev->EndStateBlock( &g_dwDrawOverlayStateBlock );
+    }
 
     return S_OK;
 }
 
 void DeleteStateBlocks(IDirect3DDevice8* dev)
 {
-	// Delete the state blocks
-	try
-	{
+    // Delete the state blocks
+    try
+    {
         //LogWithNumber(&k_mydll,"dev = %08x", (DWORD)dev);
         DWORD* vtab = (DWORD*)(*(DWORD*)dev);
         //LogWithNumber(&k_mydll,"vtab = %08x", (DWORD)vtab);
@@ -1630,14 +1620,14 @@ void DeleteStateBlocks(IDirect3DDevice8* dev)
                 Log(&k_mydll,"g_dwDrawOverlayStateBlock deleted.");
             }
         }
-	}
-	catch (...)
-	{
+    }
+    catch (...)
+    {
         // problem deleting state block
-	}
+    }
 
-	g_dwSavedStateBlock = 0L;
-	g_dwDrawOverlayStateBlock = 0L;
+    g_dwSavedStateBlock = 0L;
+    g_dwDrawOverlayStateBlock = 0L;
 }
 
 //-----------------------------------------------------------------------------
@@ -1646,12 +1636,12 @@ void DeleteStateBlocks(IDirect3DDevice8* dev)
 //-----------------------------------------------------------------------------
 HRESULT InvalidateDeviceObjects(IDirect3DDevice8* dev)
 {
-	TRACE(&k_mydll,"InvalidateDeviceObjects called.");
-	if (dev == NULL)
-	{
-		TRACE(&k_mydll,"InvalidateDeviceObjects: nothing to invalidate.");
-		return S_OK;
-	}
+    TRACE(&k_mydll,"InvalidateDeviceObjects called.");
+    if (dev == NULL)
+    {
+        TRACE(&k_mydll,"InvalidateDeviceObjects: nothing to invalidate.");
+        return S_OK;
+    }
 
     int i;
 
@@ -1698,9 +1688,9 @@ HRESULT InvalidateDeviceObjects(IDirect3DDevice8* dev)
     }
 
     // gloves indicator
-	SafeRelease( &g_pVB_gloves_left );
+    SafeRelease( &g_pVB_gloves_left );
 
-	Log(&k_mydll,"InvalidateDeviceObjects: SafeRelease(s) done.");
+    Log(&k_mydll,"InvalidateDeviceObjects: SafeRelease(s) done.");
 
     DeleteStateBlocks(dev);
     Log(&k_mydll,"InvalidateDeviceObjects: DeleteStateBlock(s) done.");
@@ -1715,8 +1705,8 @@ HRESULT InvalidateDeviceObjects(IDirect3DDevice8* dev)
 //-----------------------------------------------------------------------------
 HRESULT DeleteDeviceObjects(IDirect3DDevice8* dev)
 {
-	//if (g_font) g_font->DeleteDeviceObjects();
-	//g_fontInitialized = false;
+    //if (g_font) g_font->DeleteDeviceObjects();
+    //g_fontInitialized = false;
 
     return S_OK;
 }
@@ -1813,7 +1803,7 @@ void ResetKitKeys(bool all)
         g_awayShirtKeyPL = (awayStrip & STRIP_PL_SHIRT)?"pb":"pa";
         g_awayShortsKeyPL = (awayStrip & STRIP_PL_SHORTS)?"pb":"pa";
         g_awaySocksKeyPL = (awayStrip & STRIP_PL_SOCKS)?"pb":"pa";
-    } 
+    }
     if (typ == GK_TYPE || all) {
         g_homeShirtKeyGK = (homeStrip & STRIP_GK_SHIRT)?"gb":"ga";
         g_homeShortsKeyGK = (homeStrip & STRIP_GK_SHORTS)?"gb":"ga";
@@ -1854,10 +1844,10 @@ BOOL BackToStandardStripSelection(BYTE homeStrip, BYTE awayStrip)
 {
     //LogWithTwoNumbers(&k_mydll,"BackToStandard: home=%02x, g_home=%02x", homeStrip, g_homeStrip);
     //LogWithTwoNumbers(&k_mydll,"BackToStandard: away=%02x, g_away=%02x", awayStrip, g_awayStrip);
-    return 
+    return
         ((homeStrip & STRIP_PL_SHIRT)!=(g_homeStrip & STRIP_PL_SHIRT) &&
         (homeStrip & STRIP_PL_SHORTS)!=(g_homeStrip & STRIP_PL_SHORTS) &&
-        (homeStrip & STRIP_PL_SOCKS)!=(g_homeStrip & STRIP_PL_SOCKS)) 
+        (homeStrip & STRIP_PL_SOCKS)!=(g_homeStrip & STRIP_PL_SOCKS))
         ||
         ((awayStrip & STRIP_PL_SHIRT)!=(g_awayStrip & STRIP_PL_SHIRT) &&
         (awayStrip & STRIP_PL_SHORTS)!=(g_awayStrip & STRIP_PL_SHORTS) &&
@@ -1871,7 +1861,7 @@ BOOL StripChange(int which, BYTE strip)
 {
     switch (which) {
         case HOME:
-            return 
+            return
                 (strip & STRIP_PL_SHIRT)!=(g_homeStrip & STRIP_PL_SHIRT) &&
                 (strip & STRIP_PL_SHORTS)!=(g_homeStrip & STRIP_PL_SHORTS) &&
                 (strip & STRIP_PL_SOCKS)!=(g_homeStrip & STRIP_PL_SOCKS);
@@ -1979,7 +1969,7 @@ void GetTeamStrips(BYTE* strips)
 /**
  * Load a texture from a specific kit folder.
  */
-void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, int kitType, int kitPart) 
+void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal, int kitType, int kitPart)
 {
     MAKE_BUFFER(keyBuf);
     sprintf(keyBuf, "%d|%s|%s", teamId, kitFolder, filename);
@@ -1990,15 +1980,15 @@ void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirec
         MAKE_BUFFER(folder);
         //gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
-		string kitFolder1 = kitFolder;
-    	char* kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, kitPart);
+        string kitFolder1 = kitFolder;
+        char* kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, kitPart);
         sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFoldername);
         CreateGDBTextureFromFolder(folder, filename, ppTex, pPal);
         if (kitPart != KITPART_SHIRT && !(*ppTex)) {
-        	// try to load shirt texture instead
-        	kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, KITPART_SHIRT);
-        	sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFoldername);
-        	CreateGDBTextureFromFolder(folder, "shirt.png", ppTex, pPal);
+            // try to load shirt texture instead
+            kitFoldername = getKitFoldername(kitFolder1, teamId, kitType, KITPART_SHIRT);
+            sprintf(folder, "uni\\%s\\%s", (col)?col->foldername:"(null)", kitFoldername);
+            CreateGDBTextureFromFolder(folder, "shirt.png", ppTex, pPal);
         }
         if (*ppTex) {
             // store texture in the texture cache
@@ -2012,10 +2002,10 @@ void Load2DkitTexture(WORD teamId, const char* kitFolder, char* filename, IDirec
 
 void PrintHomeKitCollection()
 {
-	gdbFindKitsForTeam(gdb, GetTeamId(HOME));
+    gdbFindKitsForTeam(gdb, GetTeamId(HOME));
     KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(HOME));
     if (col) {
-        for (StringKitMap::iterator it = (*(col->players)).begin(); 
+        for (StringKitMap::iterator it = (*(col->players)).begin();
                 it != (*(col->players)).end(); it++) {
             string key = it->first;
             LogWithString(&k_mydll,"home kit collection key: {%s}", (char*)key.c_str());
@@ -2025,10 +2015,10 @@ void PrintHomeKitCollection()
 
 void PrintAwayKitCollection()
 {
-	gdbFindKitsForTeam(gdb, GetTeamId(AWAY));
+    gdbFindKitsForTeam(gdb, GetTeamId(AWAY));
     KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(AWAY));
     if (col) {
-        for (StringKitMap::iterator it = (*(col->players)).begin(); 
+        for (StringKitMap::iterator it = (*(col->players)).begin();
                 it != (*(col->players)).end(); it++) {
             string key = it->first;
             LogWithString(&k_mydll,"away kit collection key: {%s}", (char*)key.c_str());
@@ -2115,7 +2105,7 @@ void Load2Dkits()
     }
 
     // initialize g_homeStrip and g_awayStrip, if this is a new session
-    if (UNDEFINED(g_homeStrip, g_awayStrip)) { 
+    if (UNDEFINED(g_homeStrip, g_awayStrip)) {
         g_homeStrip = homeStrip;
         g_awayStrip = awayStrip;
         ResetKitKeys();
@@ -2363,7 +2353,7 @@ int GetTemplateType(int which)
     Kit* kit = NULL;
     WORD teamId = GetTeamId(which);
     if (teamId != 0xffff) {
-    	gdbFindKitsForTeam(gdb, teamId);
+        gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (!col) return FALSE;
         switch (which) {
@@ -2467,7 +2457,7 @@ void RenderAwayShirt(IDirect3DDevice8* dev, int tt, BYTE onlineFlag)
         // shirt-right
         dev->SetStreamSource( 0, away_shirt_right, sizeof(CUSTOMVERTEX2));
         dev->DrawPrimitive( D3DPT_TRIANGLESTRIP, 6*onlineFlag, 4);
-        
+
         // shirt outline
         dev->SetVertexShader( D3DFVF_CUSTOMVERTEX );
         dev->SetTexture(0, NULL);
@@ -2523,32 +2513,32 @@ void CheckInput()
 
 void Draw2Dkits(IDirect3DDevice8* dev)
 {
-	if (g_needsRestore) 
-	{
-		if (FAILED(RestoreDeviceObjects(dev)))
-		{
-			Log(&k_mydll,"Draw2Dkits: RestoreDeviceObjects() failed.");
+    if (g_needsRestore)
+    {
+        if (FAILED(RestoreDeviceObjects(dev)))
+        {
+            Log(&k_mydll,"Draw2Dkits: RestoreDeviceObjects() failed.");
             return;
-		}
-		Log(&k_mydll,"Draw2Dkits: RestoreDeviceObjects() done.");
+        }
+        Log(&k_mydll,"Draw2Dkits: RestoreDeviceObjects() done.");
         g_needsRestore = FALSE;
-	}
+    }
 
     // load textures from GDB (if needed)
     Load2Dkits();
 
     BYTE onlineFlag = 1 - *(BYTE*)dta[OFFLINE_FLAG];
 
-	// render
-	dev->BeginScene();
+    // render
+    dev->BeginScene();
 
-	// setup renderstate
-	dev->CaptureStateBlock( g_dwSavedStateBlock );
-	dev->ApplyStateBlock( g_dwDrawOverlayStateBlock );
+    // setup renderstate
+    dev->CaptureStateBlock( g_dwSavedStateBlock );
+    dev->ApplyStateBlock( g_dwDrawOverlayStateBlock );
 
     ////////// HOME 2DKIT /////////////////////////////
-    
-    dev->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE ); 
+
+    dev->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
 
     int tt = GetTemplateType(HOME);
     RenderHomeShirt(dev, tt, onlineFlag);
@@ -2594,7 +2584,7 @@ void Draw2Dkits(IDirect3DDevice8* dev)
     }
 
     ////////// AWAY 2DKIT /////////////////////////////
-    
+
     tt = GetTemplateType(AWAY);
     RenderAwayShirt(dev, tt, onlineFlag);
 
@@ -2641,9 +2631,9 @@ void Draw2Dkits(IDirect3DDevice8* dev)
     // gloves indicators
     if (typ == GK_TYPE) {
         if (!g_gloves_left_tex) {
-        	char tmp[512];
-        	sprintf(tmp,"%sigloves.png",GetPESInfo()->mydir);
-            if (FAILED(D3DXCreateTextureFromFileEx(dev, tmp, 
+            char tmp[512];
+            sprintf(tmp,"%sigloves.png",GetPESInfo()->mydir);
+            if (FAILED(D3DXCreateTextureFromFileEx(dev, tmp,
                         0, 0, 1, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED,
                         D3DX_FILTER_NONE, D3DX_FILTER_NONE,
                         0xffffffff, NULL, NULL, &g_gloves_left_tex))) {
@@ -2662,146 +2652,146 @@ void Draw2Dkits(IDirect3DDevice8* dev)
         }
     }
 
-	// restore the modified renderstates
-	dev->ApplyStateBlock( g_dwSavedStateBlock );
+    // restore the modified renderstates
+    dev->ApplyStateBlock( g_dwSavedStateBlock );
 
-	dev->EndScene();
+    dev->EndScene();
 }
 
 // sanity-check for team id
 BOOL GoodTeamId(WORD id)
 {
-	//TRACE2(&k_mydll,"GoodTeamId: checking id = %04x", id);
-	return (id>=0 && id<256);
+    //TRACE2(&k_mydll,"GoodTeamId: checking id = %04x", id);
+    return (id>=0 && id<256);
 }
 
 /*
 void DrawKitLabels(IDirect3DDevice8* dev)
 {
-	if (g_needsRestore)
-	{
-		if (FAILED(RestoreDeviceObjects(dev)))
-		{
-			Log(&k_mydll,"DrawKitLabels: RestoreDeviceObjects() failed.");
+    if (g_needsRestore)
+    {
+        if (FAILED(RestoreDeviceObjects(dev)))
+        {
+            Log(&k_mydll,"DrawKitLabels: RestoreDeviceObjects() failed.");
             return;
-		}
-		Log(&k_mydll,"DrawKitLabels: RestoreDeviceObjects() done.");
+        }
+        Log(&k_mydll,"DrawKitLabels: RestoreDeviceObjects() done.");
         g_needsRestore = FALSE;
-	}
+    }
 
-	//TRACE(&k_mydll,"DrawKitLabels: About to draw text.");
-	char buf[255];
-	SIZE size;
-	DWORD color;
+    //TRACE(&k_mydll,"DrawKitLabels: About to draw text.");
+    char buf[255];
+    SIZE size;
+    DWORD color;
 
-	WORD id = 0xffff;
-	WORD kitId = 0xffff;
-	BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
+    WORD id = 0xffff;
+    WORD kitId = 0xffff;
+    BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 
-	// HOME PLAYER
-	ZeroMemory(buf, 255);
-	lstrcpy(buf, "PL: ");
-	id = g_currTeams[0];
-	// only show the label, if extra kits are available, and the kit is not edited
-	if (GoodTeamId(id) && !IsEditedKit(1) && kDB->players[id].extra != NULL)
-	{
-		kitId = id * 5 + 2 + (strips[0] & 0x01);
-		if (g_kitExtras[kitId] == NULL)
-		{
-			lstrcat(buf, DEFAULT_LABEL[strips[0] & 0x01]);
-			color = 0xffa0a0a0; // light grey - for default
-		}
-		else 
-		{
-			lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
-			color = 0xff4488ff; // blue;
-		}
-		//g_font->GetTextExtent(buf, &size);
-		//g_font->DrawText( g_bbWidth/2 - 15 - size.cx,  POSY + IHEIGHT + 35, color, buf);
-	}
+    // HOME PLAYER
+    ZeroMemory(buf, 255);
+    lstrcpy(buf, "PL: ");
+    id = g_currTeams[0];
+    // only show the label, if extra kits are available, and the kit is not edited
+    if (GoodTeamId(id) && !IsEditedKit(1) && kDB->players[id].extra != NULL)
+    {
+        kitId = id * 5 + 2 + (strips[0] & 0x01);
+        if (g_kitExtras[kitId] == NULL)
+        {
+            lstrcat(buf, DEFAULT_LABEL[strips[0] & 0x01]);
+            color = 0xffa0a0a0; // light grey - for default
+        }
+        else
+        {
+            lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
+            color = 0xff4488ff; // blue;
+        }
+        //g_font->GetTextExtent(buf, &size);
+        //g_font->DrawText( g_bbWidth/2 - 15 - size.cx,  POSY + IHEIGHT + 35, color, buf);
+    }
 
-	// AWAY PLAYER
-	ZeroMemory(buf, 255);
-	lstrcpy(buf, "PL: ");
-	id = g_currTeams[1];
-	// only show the label, if extra kits are available, and the kit is not edited
-	if (GoodTeamId(id) && !IsEditedKit(3) && kDB->players[id].extra != NULL)
-	{
-		kitId = id * 5 + 2 + (strips[1] & 0x01);
-		if (g_kitExtras[kitId] == NULL)
-		{
-			lstrcat(buf, DEFAULT_LABEL[strips[1] & 0x01]);
-			color = 0xffa0a0a0; // light grey - for default
-		}
-		else 
-		{
-			lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
-			color = 0xff4488ff; // blue;
-		}
-		//g_font->GetTextExtent(buf, &size);
-		//g_font->DrawText( g_bbWidth/2 + 15,  POSY + IHEIGHT + 35, color, buf);
-	}
+    // AWAY PLAYER
+    ZeroMemory(buf, 255);
+    lstrcpy(buf, "PL: ");
+    id = g_currTeams[1];
+    // only show the label, if extra kits are available, and the kit is not edited
+    if (GoodTeamId(id) && !IsEditedKit(3) && kDB->players[id].extra != NULL)
+    {
+        kitId = id * 5 + 2 + (strips[1] & 0x01);
+        if (g_kitExtras[kitId] == NULL)
+        {
+            lstrcat(buf, DEFAULT_LABEL[strips[1] & 0x01]);
+            color = 0xffa0a0a0; // light grey - for default
+        }
+        else
+        {
+            lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
+            color = 0xff4488ff; // blue;
+        }
+        //g_font->GetTextExtent(buf, &size);
+        //g_font->DrawText( g_bbWidth/2 + 15,  POSY + IHEIGHT + 35, color, buf);
+    }
 
-	// HOME GOALKEEPER
-	ZeroMemory(buf, 255);
-	lstrcpy(buf, "GK: ");
-	id = g_currTeams[0];
-	kitId = id * 5;
-	// only show the label
-	if (GoodTeamId(id))
-	{
-		if (g_kitExtras[kitId] == NULL)
-		{
-			lstrcat(buf, DEFAULT_LABEL[2]);
-			color = 0xffa0a0a0; // light grey - for default
-		}
-		else 
-		{
-			lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
-			color = 0xff4488ff; // blue;
-		}
-		//g_font->GetTextExtent(buf, &size);
-		//g_font->DrawText( g_bbWidth/2 - 15 - size.cx,  POSY + IHEIGHT + 50, color, buf);
-	}
+    // HOME GOALKEEPER
+    ZeroMemory(buf, 255);
+    lstrcpy(buf, "GK: ");
+    id = g_currTeams[0];
+    kitId = id * 5;
+    // only show the label
+    if (GoodTeamId(id))
+    {
+        if (g_kitExtras[kitId] == NULL)
+        {
+            lstrcat(buf, DEFAULT_LABEL[2]);
+            color = 0xffa0a0a0; // light grey - for default
+        }
+        else
+        {
+            lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
+            color = 0xff4488ff; // blue;
+        }
+        //g_font->GetTextExtent(buf, &size);
+        //g_font->DrawText( g_bbWidth/2 - 15 - size.cx,  POSY + IHEIGHT + 50, color, buf);
+    }
 
-	// AWAY GOALKEEPER
-	ZeroMemory(buf, 255);
-	lstrcpy(buf, "GK: ");
-	id = g_currTeams[1];
-	kitId = id * 5;
-	// only show the label
-	if (GoodTeamId(id))
-	{
-		if (g_kitExtras[kitId] == NULL)
-		{
-			lstrcat(buf, DEFAULT_LABEL[2]);
-			color = 0xffa0a0a0; // light grey - for default
-		}
-		else 
-		{
-			lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
-			color = 0xff4488ff; // blue;
-		}
-		//g_font->GetTextExtent(buf, &size);
-		//g_font->DrawText( g_bbWidth/2 + 15,  POSY + IHEIGHT + 50, color, buf);
-	}
+    // AWAY GOALKEEPER
+    ZeroMemory(buf, 255);
+    lstrcpy(buf, "GK: ");
+    id = g_currTeams[1];
+    kitId = id * 5;
+    // only show the label
+    if (GoodTeamId(id))
+    {
+        if (g_kitExtras[kitId] == NULL)
+        {
+            lstrcat(buf, DEFAULT_LABEL[2]);
+            color = 0xffa0a0a0; // light grey - for default
+        }
+        else
+        {
+            lstrcat(buf, g_kitExtras[kitId]->kit->fileName);
+            color = 0xff4488ff; // blue;
+        }
+        //g_font->GetTextExtent(buf, &size);
+        //g_font->DrawText( g_bbWidth/2 + 15,  POSY + IHEIGHT + 50, color, buf);
+    }
 
-	//Log(&k_mydll,"DrawKitLabels: Text drawn.");
+    //Log(&k_mydll,"DrawKitLabels: Text drawn.");
 }
 */
 
 /* New Reset function */
 void JuceReset(IDirect3DDevice8* self, LPVOID params)
 {
-	Log(&k_mydll,"JuceReset: cleaning-up.");
+    Log(&k_mydll,"JuceReset: cleaning-up.");
 
-	InvalidateDeviceObjects(self);
-	DeleteDeviceObjects(self);
+    InvalidateDeviceObjects(self);
+    DeleteDeviceObjects(self);
 
-	g_bGotFormat = false;
+    g_bGotFormat = false;
     g_needsRestore = TRUE;
 
-	return;
+    return;
 }
 
 /**
@@ -2809,136 +2799,136 @@ void JuceReset(IDirect3DDevice8* self, LPVOID params)
  */
 void GetBackBufferInfo(IDirect3DDevice8* d3dDevice)
 {
-	TRACE(&k_mydll,"GetBackBufferInfo: called.");
+    TRACE(&k_mydll,"GetBackBufferInfo: called.");
 
-	// get the 0th backbuffer.
-	if (SUCCEEDED(d3dDevice->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &g_backBuffer)))
-	{
-		D3DSURFACE_DESC desc;
-		g_backBuffer->GetDesc(&desc);
-		g_bbFormat = desc.Format;
-		g_bbWidth = desc.Width;
-		g_bbHeight = desc.Height;
+    // get the 0th backbuffer.
+    if (SUCCEEDED(d3dDevice->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &g_backBuffer)))
+    {
+        D3DSURFACE_DESC desc;
+        g_backBuffer->GetDesc(&desc);
+        g_bbFormat = desc.Format;
+        g_bbWidth = desc.Width;
+        g_bbHeight = desc.Height;
 
-		// vertical offset from bottom for uniform labels
-		g_labelsYShift = (UINT)(g_bbHeight * 0.185);
+        // vertical offset from bottom for uniform labels
+        g_labelsYShift = (UINT)(g_bbHeight * 0.185);
 
-		// adjust indicator coords
-		float OLDPOSX = POSX;
-		float OLDPOSY = POSY;
-		POSX = g_bbWidth/2 - INDX - IWIDTH/2;
-		POSY = g_bbHeight/2 - INDY - IHEIGHT/2 - 20;
-		for (int k=0; k<9; k++)
-		{
-			g_Vert0[k].x += POSX - OLDPOSX;
-			g_Vert0[k].y += POSY - OLDPOSY;
-		}
+        // adjust indicator coords
+        float OLDPOSX = POSX;
+        float OLDPOSY = POSY;
+        POSX = g_bbWidth/2 - INDX - IWIDTH/2;
+        POSY = g_bbHeight/2 - INDY - IHEIGHT/2 - 20;
+        for (int k=0; k<9; k++)
+        {
+            g_Vert0[k].x += POSX - OLDPOSX;
+            g_Vert0[k].y += POSY - OLDPOSY;
+        }
 
-		// check dest.surface format
-		bpp = 0;
-		if (g_bbFormat == D3DFMT_R8G8B8) bpp = 3;
-		else if (g_bbFormat == D3DFMT_R5G6B5 || g_bbFormat == D3DFMT_X1R5G5B5) bpp = 2;
-		else if (g_bbFormat == D3DFMT_A8R8G8B8 || g_bbFormat == D3DFMT_X8R8G8B8) bpp = 4;
+        // check dest.surface format
+        bpp = 0;
+        if (g_bbFormat == D3DFMT_R8G8B8) bpp = 3;
+        else if (g_bbFormat == D3DFMT_R5G6B5 || g_bbFormat == D3DFMT_X1R5G5B5) bpp = 2;
+        else if (g_bbFormat == D3DFMT_A8R8G8B8 || g_bbFormat == D3DFMT_X8R8G8B8) bpp = 4;
 
-		// release backbuffer
-		g_backBuffer->Release();
+        // release backbuffer
+        g_backBuffer->Release();
 
-		Log(&k_mydll,"GetBackBufferInfo: got new back buffer format and info.");
-		g_bGotFormat = true;
-	}
+        Log(&k_mydll,"GetBackBufferInfo: got new back buffer format and info.");
+        g_bGotFormat = true;
+    }
 }
 
-/** 
+/**
  * Finds slot for given kitId.
  * Returns -1, if slot not found.
  */
 int GetKitSlot(int kitId)
 {
-	int slot = -1;
-	for (int i=0; i<4; i++) 
-	{
-		WORD id = *((WORD*)(dta[KIT_SLOTS] + i*0x38 + 0x0a));
-		if (kitId == id) { slot = i; break; }
-	}
-	return slot;
+    int slot = -1;
+    for (int i=0; i<4; i++)
+    {
+        WORD id = *((WORD*)(dta[KIT_SLOTS] + i*0x38 + 0x0a));
+        if (kitId == id) { slot = i; break; }
+    }
+    return slot;
 }
 
 /* New Present function */
 void JucePresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused)
 {
-	// determine backbuffer's format and dimensions, if not done yet.
-	if (!g_bGotFormat) {
-		GetBackBufferInfo(self);
-	}
+    // determine backbuffer's format and dimensions, if not done yet.
+    if (!g_bGotFormat) {
+        GetBackBufferInfo(self);
+    }
 
-	// install keyboard hook, if not done yet.
-	if (g_hKeyboardHook == NULL)
-	{
-		g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, hInst, GetCurrentThreadId());
-		LogWithNumber(&k_mydll,"Installed keyboard hook: g_hKeyboardHook = %d", (DWORD)g_hKeyboardHook);
-	}
+    // install keyboard hook, if not done yet.
+    if (g_hKeyboardHook == NULL)
+    {
+        g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, hInst, GetCurrentThreadId());
+        LogWithNumber(&k_mydll,"Installed keyboard hook: g_hKeyboardHook = %d", (DWORD)g_hKeyboardHook);
+    }
 
     ////// 2D-kits //////////////////////////
 
     if (g_display2Dkits) Draw2Dkits(self);
     g_lastDisplay2Dkits = g_display2Dkits;
 
-	/*
-	// draw the uniform labels
-	if (bIndicate) DrawKitLabels(self);
+    /*
+    // draw the uniform labels
+    if (bIndicate) DrawKitLabels(self);
 
-	*/
+    */
 
-	/*
-	if (g_triggerLoad3rdKit > 0)
-	{
-		int kitId = 0, slot = -1;
-		BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
+    /*
+    if (g_triggerLoad3rdKit > 0)
+    {
+        int kitId = 0, slot = -1;
+        BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 
-		switch (g_triggerLoad3rdKit)
-		{
-			case 1:
-				g_triggerLoad3rdKit = 0;
-				// clear kit slot to force uni-file reload
-				kitId = (strips[0] & 0x01) ? g_currTeams[0] * 5 + 3 : g_currTeams[0] * 5 + 2;
-				slot = GetKitSlot(kitId);
-				if (slot != -1)
-				{
-					ZeroMemory((BYTE*)dta[KIT_SLOTS] + slot * 0x38, 0x38);
-					// set uni-reload flag
-					*((DWORD*)dta[KIT_CHECK_TRIGGER]) = 1;
-				}
-				break;
+        switch (g_triggerLoad3rdKit)
+        {
+            case 1:
+                g_triggerLoad3rdKit = 0;
+                // clear kit slot to force uni-file reload
+                kitId = (strips[0] & 0x01) ? g_currTeams[0] * 5 + 3 : g_currTeams[0] * 5 + 2;
+                slot = GetKitSlot(kitId);
+                if (slot != -1)
+                {
+                    ZeroMemory((BYTE*)dta[KIT_SLOTS] + slot * 0x38, 0x38);
+                    // set uni-reload flag
+                    *((DWORD*)dta[KIT_CHECK_TRIGGER]) = 1;
+                }
+                break;
 
-			case 2:
-				g_triggerLoad3rdKit = 0;
-				// clear kit info to force uni-file reload
-				kitId = (strips[1] & 0x01) ? g_currTeams[1] * 5 + 3 : g_currTeams[1] * 5 + 2;
-				slot = GetKitSlot(kitId);
-				if (slot != -1)
-				{
-					ZeroMemory((BYTE*)dta[KIT_SLOTS] + slot * 0x38, 0x38);
-					// set uni-reload flag
-					*((DWORD*)dta[KIT_CHECK_TRIGGER]) = 1;
-				}
-				break;
-		}
-	}
-	*/
+            case 2:
+                g_triggerLoad3rdKit = 0;
+                // clear kit info to force uni-file reload
+                kitId = (strips[1] & 0x01) ? g_currTeams[1] * 5 + 3 : g_currTeams[1] * 5 + 2;
+                slot = GetKitSlot(kitId);
+                if (slot != -1)
+                {
+                    ZeroMemory((BYTE*)dta[KIT_SLOTS] + slot * 0x38, 0x38);
+                    // set uni-reload flag
+                    *((DWORD*)dta[KIT_CHECK_TRIGGER]) = 1;
+                }
+                break;
+        }
+    }
+    */
 
-	// reset texture count
-	g_frame_tex_count = 0;
-	g_frame_count++;
+    // reset texture count
+    g_frame_tex_count = 0;
+    g_frame_count++;
 
-	/*
-	if (g_dumpTexturesMode && g_frame_count >= 2) {
-		g_dumpTexturesMode = FALSE;
-		g_frame_count = 0;
-	}
-	*/
+    /*
+    if (g_dumpTexturesMode && g_frame_count >= 2) {
+        g_dumpTexturesMode = FALSE;
+        g_frame_count = 0;
+    }
+    */
 
-	//Log(&k_mydll,"=========================frame============================");
-	return;
+    //Log(&k_mydll,"=========================frame============================");
+    return;
 }
 
 /* CopyRects tracker. */
@@ -2946,89 +2936,89 @@ HRESULT STDMETHODCALLTYPE JuceCopyRects(IDirect3DDevice8* self,
 IDirect3DSurface8* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects,
 IDirect3DSurface8* pDestinationSurface, CONST POINT* pDestPointsArray)
 {
-	TRACEX(&k_mydll,"JuceCopyRects: rect(%dx%d), numRects = %d", pSourceRectsArray[0].right,
-			pSourceRectsArray[0].bottom, cRects);
-	return g_orgCopyRects(self, pSourceSurface, pSourceRectsArray, cRects,
-			pDestinationSurface, pDestPointsArray);
+    TRACEX(&k_mydll,"JuceCopyRects: rect(%dx%d), numRects = %d", pSourceRectsArray[0].right,
+            pSourceRectsArray[0].bottom, cRects);
+    return g_orgCopyRects(self, pSourceSurface, pSourceRectsArray, cRects,
+            pDestinationSurface, pDestPointsArray);
 }
 
 /* ApplyStateBlock tracker. */
 HRESULT STDMETHODCALLTYPE JuceApplyStateBlock(IDirect3DDevice8* self, DWORD token)
 {
-	TRACE2(&k_mydll,"JuceApplyStateBlock: token = %d", token);
-	return g_orgApplyStateBlock(self, token);
+    TRACE2(&k_mydll,"JuceApplyStateBlock: token = %d", token);
+    return g_orgApplyStateBlock(self, token);
 }
 
 /* BeginScene tracker. */
 HRESULT STDMETHODCALLTYPE JuceBeginScene(IDirect3DDevice8* self)
 {
-	TRACE(&k_mydll,"JuceBeginScene: CALLED.");
-	return g_orgBeginScene(self);
+    TRACE(&k_mydll,"JuceBeginScene: CALLED.");
+    return g_orgBeginScene(self);
 }
 
 /* EndScene tracker. */
 HRESULT STDMETHODCALLTYPE JuceEndScene(IDirect3DDevice8* self)
 {
-	TRACE(&k_mydll,"JuceEndScene: CALLED.");
-	return g_orgEndScene(self);
+    TRACE(&k_mydll,"JuceEndScene: CALLED.");
+    return g_orgEndScene(self);
 }
 
 /* Restore original Reset() and Present() */
 EXTERN_C _declspec(dllexport) void RestoreDeviceMethods()
 {
-	if (!GetActiveDevice()) return;
-	try
-	{
+    if (!GetActiveDevice()) return;
+    try
+    {
         DWORD* vtable = (DWORD*)(*((DWORD*)GetActiveDevice()));
         TRACE2(&k_mydll,"RestoreDeviceMethods: vtable = %08x", (DWORD)vtable);
 
-		UnhookFunction(hk_D3D_Reset,(DWORD)JuceReset);
-		TRACE(&k_mydll,"RestoreDeviceMethods: Reset restored.");
-		
-		UnhookFunction(hk_D3D_Present,(DWORD)JucePresent);
-		TRACE(&k_mydll,"RestoreDeviceMethods: Present restored.");
-		
-		if (g_orgCreateTexture != NULL) vtable[20] = (DWORD)g_orgCreateTexture;
-		TRACE(&k_mydll,"RestoreDeviceMethods: CreateTexture restored.");
-	}
-	catch (...) {} // ignore exceptions at this point
+        UnhookFunction(hk_D3D_Reset,(DWORD)JuceReset);
+        TRACE(&k_mydll,"RestoreDeviceMethods: Reset restored.");
 
-	Log(&k_mydll,"RestoreDeviceMethods: done.");
+        UnhookFunction(hk_D3D_Present,(DWORD)JucePresent);
+        TRACE(&k_mydll,"RestoreDeviceMethods: Present restored.");
+
+        if (g_orgCreateTexture != NULL) vtable[20] = (DWORD)g_orgCreateTexture;
+        TRACE(&k_mydll,"RestoreDeviceMethods: CreateTexture restored.");
+    }
+    catch (...) {} // ignore exceptions at this point
+
+    Log(&k_mydll,"RestoreDeviceMethods: done.");
 }
 
 void BeginDrawKitLabel()
 {
-	dksiSetMenuTitle("Kit selection");
-	return;
+    dksiSetMenuTitle("Kit selection");
+    return;
 };
 
 void EndDrawKitLabel()
 {
-	return;
+    return;
 };
 
 void DrawKitLabel()
 {
     // draw labels
-	SIZE size;
-	DWORD color = 0xffffffff; // white
+    SIZE size;
+    DWORD color = 0xffffffff; // white
     char display[30] = {0};
     if (typ == PL_TYPE) {
         strcpy(display, "Kits: players");
     } else {
         strcpy(display, "Kits: goalkeepers");
     }
-	
-	UINT g_bbWidth=GetPESInfo()->bbWidth;
-	UINT g_bbHeight=GetPESInfo()->bbHeight;
-	double stretchX=GetPESInfo()->stretchX;
-	double stretchY=GetPESInfo()->stretchY;
-	
-	KGetTextExtent(display,12,&size);
-	//draw shadow
+
+    UINT g_bbWidth=GetPESInfo()->bbWidth;
+    UINT g_bbHeight=GetPESInfo()->bbHeight;
+    double stretchX=GetPESInfo()->stretchX;
+    double stretchY=GetPESInfo()->stretchY;
+
+    KGetTextExtent(display,12,&size);
+    //draw shadow
     KDrawText((g_bbWidth-size.cx)/2+3*stretchX,g_bbHeight*0.77+3*stretchY,0xff000000,12,display,true);
-	//print label
-	KDrawText((g_bbWidth-size.cx)/2,g_bbHeight*0.77,color,12,display,true);
+    //print label
+    KDrawText((g_bbWidth-size.cx)/2,g_bbHeight*0.77,color,12,display,true);
 
     // print kit keys
     char buf[256] = {0};
@@ -3037,7 +3027,7 @@ void DrawKitLabel()
         string key2 = (key1.length()>0) ? key1 : (typ==PL_TYPE)?"pa":"ga";
         // check for description attribute
         gdbFindKitsForTeam(gdb, GetTeamId(HOME));
-        KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(HOME)); 
+        KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(HOME));
         if (col) {
             Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key2):MAP_FIND(col->goalkeepers,key2);
             if (kit && (kit->attDefined & KITDESCRIPTION)) {
@@ -3053,7 +3043,7 @@ void DrawKitLabel()
         string key4 = (key3.length()>0) ? key3 : (typ==PL_TYPE)?"pb":"gb";
         // check for description attribute
         gdbFindKitsForTeam(gdb, GetTeamId(AWAY));
-        KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(AWAY)); 
+        KitCollection* col = MAP_FIND(gdb->uni,GetTeamId(AWAY));
         if (col) {
             Kit* kit = (typ==PL_TYPE)?MAP_FIND(col->players,key4):MAP_FIND(col->goalkeepers,key4);
             if (kit && (kit->attDefined & KITDESCRIPTION)) {
@@ -3069,7 +3059,7 @@ void DrawKitLabel()
     // check input
     CheckInput();
 
-	return;
+    return;
 };
 
 /************
@@ -3077,7 +3067,7 @@ void DrawKitLabel()
  ************/
 void InitKserv()
 {
-	ZeroMemory(g_teamDir, sizeof(g_teamDir)*sizeof(BYTE));
+    ZeroMemory(g_teamDir, sizeof(g_teamDir)*sizeof(BYTE));
 
     // Determine the game version
     int v = GetPESInfo()->GameVersion;
@@ -3086,10 +3076,10 @@ void InitKserv()
         memcpy(code, codeArray[v], sizeof(code));
         memcpy(dta, dtaArray[v], sizeof(dta));
 
-		// mark the files we need to replace
-		for (int i=dta[FIRST_ID]; i <= dta[LAST_ID]; i++) {
-    		g_AFS_idMap[i] = true;
-		}
+        // mark the files we need to replace
+        for (int i=dta[FIRST_ID]; i <= dta[LAST_ID]; i++) {
+            g_AFS_idMap[i] = true;
+        }
 
         // Load GDB dtabase
         gdb = gdbLoad(GetPESInfo()->gdbDir);
@@ -3103,34 +3093,34 @@ void InitKserv()
         //LogWithNumber(&k_mydll,"99: %08x", (DWORD)MAP_FIND(gdb->uni,99));
 
         // hook BeginUniSelect
-		HookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
-		HookFunction(hk_D3D_CreateTexture,(DWORD)JuceCreateTexture);
-		HookFunction(hk_D3D_UnlockRect,(DWORD)kservUnlockRect);
+        HookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
+        HookFunction(hk_D3D_CreateTexture,(DWORD)JuceCreateTexture);
+        HookFunction(hk_D3D_UnlockRect,(DWORD)kservUnlockRect);
 
         //LogWithNumber(&k_mydll,"JuceCreateTexture: func=%08x", (DWORD)JuceCreateTexture);
 
         // hook EndUniSelect
-		HookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
+        HookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
 
         // hook UniDecode
-		RegisterUniDecodeCallback(kservUniDecode);
-		
-		// hook replacing functions
-		RegisterAfsReplaceCallback(kservAfsReplace, kservUnpack, NULL);
+        RegisterUniDecodeCallback(kservUniDecode);
+
+        // hook replacing functions
+        RegisterAfsReplaceCallback(kservAfsReplace, kservUnpack, NULL);
 
         /*
-		// hook GetNationalTeamInfo
-		HookFunction(hk_GetNationalTeamInfo,(DWORD)JuceGetNationalTeamInfo);
+        // hook GetNationalTeamInfo
+        HookFunction(hk_GetNationalTeamInfo,(DWORD)JuceGetNationalTeamInfo);
 
-		// hook GetClubTeamInfo
-		HookFunction(hk_GetClubTeamInfo,(DWORD)JuceGetClubTeamInfo);
-		HookFunction(hk_GetClubTeamInfoML1,(DWORD)JuceGetClubTeamInfoML1);
-		HookFunction(hk_GetClubTeamInfoML2,(DWORD)JuceGetClubTeamInfoML2);
-		
-		// hook GetNationalTeamInfoExitEdit
-		HookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
+        // hook GetClubTeamInfo
+        HookFunction(hk_GetClubTeamInfo,(DWORD)JuceGetClubTeamInfo);
+        HookFunction(hk_GetClubTeamInfoML1,(DWORD)JuceGetClubTeamInfoML1);
+        HookFunction(hk_GetClubTeamInfoML2,(DWORD)JuceGetClubTeamInfoML2);
+
+        // hook GetNationalTeamInfoExitEdit
+        HookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
         */
-		
+
         // hook edit mode entrance
         MasterHookFunction(code[C_GETTEAMINFO_CS], 2, JuceGetTeamInfo);
 
@@ -3165,105 +3155,105 @@ void InitKserv()
 /*******************/
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	DWORD wbytes, procId; 
+    DWORD wbytes, procId;
 
-	if (dwReason == DLL_PROCESS_ATTACH)
-	{
-		hInst = hInstance;
+    if (dwReason == DLL_PROCESS_ATTACH)
+    {
+        hInst = hInstance;
         InitializeCriticalSection(&g_cs);
 
         //check game version
-		switch (GetPESInfo()->GameVersion) {
+        switch (GetPESInfo()->GameVersion) {
             case gvPES6PC: //support for PES6 PC
             case gvPES6PC110: //support for PES6 PC 1.10
             case gvWE2007PC: //support for WE:PES 2007 PC
-				break;
+                break;
             default:
                 Log(&k_mydll,"Your game version is currently not supported!");
                 return false;
-		}
- 
+        }
+
         RegisterKModule(&k_mydll);
 
-		//texs.clear();
+        //texs.clear();
 
-		// read configuration
-		char cfgFile[BUFLEN];
-		ZeroMemory(cfgFile, BUFLEN);
-		lstrcpy(cfgFile, GetPESInfo()->mydir); 
-		lstrcat(cfgFile, CONFIG_FILE);
+        // read configuration
+        char cfgFile[BUFLEN];
+        ZeroMemory(cfgFile, BUFLEN);
+        lstrcpy(cfgFile, GetPESInfo()->mydir);
+        lstrcat(cfgFile, CONFIG_FILE);
 
-		ReadConfig(&g_config, cfgFile);
+        ReadConfig(&g_config, cfgFile);
 
-		LogWithNumber(&k_mydll,"k_mydll.debug = %d", k_mydll.debug);
-		
-		HookFunction(hk_D3D_Create,(DWORD)InitKserv);
-		HookFunction(hk_D3D_Reset,(DWORD)JuceReset);
+        LogWithNumber(&k_mydll,"k_mydll.debug = %d", k_mydll.debug);
 
-	    HookFunction(hk_DrawKitSelectInfo,(DWORD)DrawKitLabel);
-	    HookFunction(hk_OnShowMenu,(DWORD)BeginDrawKitLabel);
-	    HookFunction(hk_OnHideMenu,(DWORD)EndDrawKitLabel);
-	}
+        HookFunction(hk_D3D_Create,(DWORD)InitKserv);
+        HookFunction(hk_D3D_Reset,(DWORD)JuceReset);
 
-	else if (dwReason == DLL_PROCESS_DETACH)
-	{
-		Log(&k_mydll,"DLL detaching...");
+        HookFunction(hk_DrawKitSelectInfo,(DWORD)DrawKitLabel);
+        HookFunction(hk_OnShowMenu,(DWORD)BeginDrawKitLabel);
+        HookFunction(hk_OnHideMenu,(DWORD)EndDrawKitLabel);
+    }
+
+    else if (dwReason == DLL_PROCESS_DETACH)
+    {
+        Log(&k_mydll,"DLL detaching...");
 
         // unhook BeginUniSelect
-		UnhookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
+        UnhookFunction(hk_BeginUniSelect,(DWORD)JuceSet2Dkits);
 
         // unhook EndUniSelect
-		UnhookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
+        UnhookFunction(hk_EndUniSelect,(DWORD)JuceClear2Dkits);
 
         /*
-		// unhook GetNationalTeamInfo
-		UnhookFunction(hk_GetNationalTeamInfo,(DWORD)JuceGetNationalTeamInfo);
+        // unhook GetNationalTeamInfo
+        UnhookFunction(hk_GetNationalTeamInfo,(DWORD)JuceGetNationalTeamInfo);
 
-		// unhook GetClubTeamInfo
-		UnhookFunction(hk_GetClubTeamInfo,(DWORD)JuceGetClubTeamInfo);
-		UnhookFunction(hk_GetClubTeamInfoML1,(DWORD)JuceGetClubTeamInfoML1);
-		UnhookFunction(hk_GetClubTeamInfoML2,(DWORD)JuceGetClubTeamInfoML2);
-		
-		// unhook GetNationalTeamInfoExitEdit
-		UnhookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
+        // unhook GetClubTeamInfo
+        UnhookFunction(hk_GetClubTeamInfo,(DWORD)JuceGetClubTeamInfo);
+        UnhookFunction(hk_GetClubTeamInfoML1,(DWORD)JuceGetClubTeamInfoML1);
+        UnhookFunction(hk_GetClubTeamInfoML2,(DWORD)JuceGetClubTeamInfoML2);
+
+        // unhook GetNationalTeamInfoExitEdit
+        UnhookFunction(hk_GetNationalTeamInfoExitEdit,(DWORD)JuceGetNationalTeamInfoExitEdit);
         */
 
-		/* uninstall keyboard hook */
-		UninstallKeyboardHook();
+        /* uninstall keyboard hook */
+        UninstallKeyboardHook();
 
         UnhookFunction(hk_D3D_CreateTexture, (DWORD)JuceCreateTexture);
         UnhookFunction(hk_D3D_UnlockRect, (DWORD)kservUnlockRect);
 
-		/* restore original pointers */
-		RestoreDeviceMethods();
+        /* restore original pointers */
+        RestoreDeviceMethods();
 
-		Log(&k_mydll,"Device methods restored.");
+        Log(&k_mydll,"Device methods restored.");
 
-		InvalidateDeviceObjects(GetActiveDevice());
-		Log(&k_mydll,"InvalideDeviceObjects done.");
-		DeleteDeviceObjects(GetActiveDevice());
-		Log(&k_mydll,"DeleteDeviceObjects done.");
+        InvalidateDeviceObjects(GetActiveDevice());
+        Log(&k_mydll,"InvalideDeviceObjects done.");
+        DeleteDeviceObjects(GetActiveDevice());
+        Log(&k_mydll,"DeleteDeviceObjects done.");
 
-		// unload GDB
-		TRACE(&k_mydll,"Unloading GDB...");
-		gdbUnload(gdb);
-		Log(&k_mydll,"GDB unloaded.");
+        // unload GDB
+        TRACE(&k_mydll,"Unloading GDB...");
+        gdbUnload(gdb);
+        Log(&k_mydll,"GDB unloaded.");
 
-		//SAFE_DELETE( g_font );
-		//TRACE(&k_mydll,"g_font SAFE_DELETEd.");
+        //SAFE_DELETE( g_font );
+        //TRACE(&k_mydll,"g_font SAFE_DELETEd.");
 
         DeleteCriticalSection(&g_cs);
-	}
+    }
 
-	return TRUE;    /* ok */
+    return TRUE;    /* ok */
 }
 
 // helper function
 // returns TRUE if specified slot contains edited kit.
-BOOL IsEditedKit(int slot) 
+BOOL IsEditedKit(int slot)
 {
-	KitSlot* kitSlot = (KitSlot*)(dta[ANOTHER_KIT_SLOTS] + slot*sizeof(KitSlot));
-	return kitSlot->isEdited;
+    KitSlot* kitSlot = (KitSlot*)(dta[ANOTHER_KIT_SLOTS] + slot*sizeof(KitSlot));
+    return kitSlot->isEdited;
 }
 
 void AdjustTextureDimensions(UINT& texWidth, UINT& texHeight)
@@ -3280,7 +3270,7 @@ HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTe
     }
 
     return D3DXCreateTextureFromFile(dev, name, ppTex);
- 
+
     /*
     D3DXIMAGE_INFO imageInfo;
     D3DXGetImageInfoFromFile(name, &imageInfo);
@@ -3297,39 +3287,39 @@ HRESULT JuceCreateTextureFromFile(IDirect3DDevice8* dev, char* name, IDirect3DTe
     // make sure textures are not too large
     AdjustTextureDimensions(texWidth, texHeight);
     // check if the video card supports it
-    LogWithTwoNumbers(&k_mydll, 
+    LogWithTwoNumbers(&k_mydll,
             "JuceCreateTextureFromFile: checking texture dimenstions (%d,%d)",
             texWidth, texHeight);
     D3DXCheckTextureRequirements(
             dev, &texWidth, &texHeight,
-            &texLevels, 0, 
+            &texLevels, 0,
             &texFormat, D3DPOOL_MANAGED
     );
-    LogWithTwoNumbers(&k_mydll, 
+    LogWithTwoNumbers(&k_mydll,
             "JuceCreateTextureFromFile: check complete. Trying to use (%d,%d)",
             texWidth, texHeight);
 
     // make very unassuming call - to avoid problems
     // that users with older GeForce cards are having
     return D3DXCreateTextureFromFileEx(
-            dev, name, texWidth, texHeight, 1, 0, D3DFMT_UNKNOWN, 
+            dev, name, texWidth, texHeight, 1, 0, D3DFMT_UNKNOWN,
             D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, ppTex);
     */
 }
 
 void CreateGDBTextureFromFile(char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
 {
-	char name[BUFLEN];
-	ZeroMemory(name, BUFLEN);
-	sprintf(name, "%sGDB\\%s", GetPESInfo()->gdbDir, filename);
-	LogWithString(&k_mydll,"CreateGDBTextureFromFile: Loading texture: %s", filename);
-	if (SUCCEEDED(JuceCreateTextureFromFile(GetActiveDevice(), name, ppTex, pPal))) {
-		Log(&k_mydll,"CreateGDBTextureFromFile: JuceCreateTextureFromFile succeeded.");
-		//D3DXSaveTextureToFile("G:\\texs\\test.bmp", D3DXIFF_BMP, g_home_kit_tex, NULL);
-	} else {
-		Log(&k_mydll,"CreateGDBTextureFromFile: JuceCreateTextureFromFile failed.");
+    char name[BUFLEN];
+    ZeroMemory(name, BUFLEN);
+    sprintf(name, "%sGDB\\%s", GetPESInfo()->gdbDir, filename);
+    LogWithString(&k_mydll,"CreateGDBTextureFromFile: Loading texture: %s", filename);
+    if (SUCCEEDED(JuceCreateTextureFromFile(GetActiveDevice(), name, ppTex, pPal))) {
+        Log(&k_mydll,"CreateGDBTextureFromFile: JuceCreateTextureFromFile succeeded.");
+        //D3DXSaveTextureToFile("G:\\texs\\test.bmp", D3DXIFF_BMP, g_home_kit_tex, NULL);
+    } else {
+        Log(&k_mydll,"CreateGDBTextureFromFile: JuceCreateTextureFromFile failed.");
         *ppTex = NULL;
-	}
+    }
 }
 
 void CreateGDBTextureFromFolder(char* foldername, char* filename, IDirect3DTexture8** ppTex, PALETTEENTRY* pPal)
@@ -3343,7 +3333,7 @@ void CreateGDBTextureFromFolder(char* foldername, char* filename, IDirect3DTextu
     namesToTry.push_back("all.png");
     namesToTry.push_back(altFilename);
     namesToTry.push_back("all.bmp");
-    
+
     for (vector<string>::iterator vit=namesToTry.begin(); vit!=namesToTry.end(); vit++) {
         sprintf(name, "%sGDB\\%s\\%s", GetPESInfo()->gdbDir, foldername, vit->c_str());
         LogWithString(&k_mydll,"CreateGDBTextureFromFolder: Loading texture: %s", name);
@@ -3358,7 +3348,7 @@ void CreateGDBTextureFromFolder(char* foldername, char* filename, IDirect3DTextu
 
 string GetNextHomeShirtKey(WORD teamId, string currKey)
 {
-	gdbFindKitsForTeam(gdb, teamId);
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3407,7 +3397,7 @@ string GetNextHomeShirtKey(WORD teamId, string currKey)
 
 string GetNextHomeShortsKey(WORD teamId, string currKey)
 {
-	gdbFindKitsForTeam(gdb, teamId);
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3456,7 +3446,7 @@ string GetNextHomeShortsKey(WORD teamId, string currKey)
 
 string GetNextHomeSocksKey(WORD teamId, string currKey)
 {
-	gdbFindKitsForTeam(gdb, teamId);
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3505,7 +3495,7 @@ string GetNextHomeSocksKey(WORD teamId, string currKey)
 
 string GetNextAwayShirtKey(WORD teamId, string currKey)
 {
-	gdbFindKitsForTeam(gdb, teamId);
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3554,7 +3544,7 @@ string GetNextAwayShirtKey(WORD teamId, string currKey)
 
 string GetNextAwayShortsKey(WORD teamId, string currKey)
 {
-	gdbFindKitsForTeam(gdb, teamId);
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3603,7 +3593,7 @@ string GetNextAwayShortsKey(WORD teamId, string currKey)
 
 string GetNextAwaySocksKey(WORD teamId, string currKey)
 {
-	gdbFindKitsForTeam(gdb, teamId);
+    gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
         switch (typ) {
@@ -3650,25 +3640,25 @@ string GetNextAwaySocksKey(WORD teamId, string currKey)
     return "(null)";
 }
 
-/**************************************************************** 
+/****************************************************************
  * WH_KEYBOARD hook procedure                                   *
- ****************************************************************/ 
+ ****************************************************************/
 
 EXTERN_C _declspec(dllexport) LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 {
-	//TRACE2(&k_mydll,"KeyboardProc CALLED. code = %d", code);
+    //TRACE2(&k_mydll,"KeyboardProc CALLED. code = %d", code);
 
-    if (code < 0) // do not process message 
-        return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam); 
+    if (code < 0) // do not process message
+        return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam);
 
-	switch (code)
-	{
-		case HC_ACTION:
-			/* process the key events */
-			if (lParam & 0x80000000)
-			{
+    switch (code)
+    {
+        case HC_ACTION:
+            /* process the key events */
+            if (lParam & 0x80000000)
+            {
                 KEYCFG* keyCfg = GetInputCfg();
-				if (wParam == keyCfg->keyboard.keyAction2) {
+                if (wParam == keyCfg->keyboard.keyAction2) {
                     // switch kit selection mode: Players/Goalkeepers
                     typ = (typ + 1) % 2;
                     g_modeSwitch = TRUE;
@@ -3688,32 +3678,32 @@ EXTERN_C _declspec(dllexport) LRESULT CALLBACK KeyboardProc(int code, WPARAM wPa
                         g_awaySocksIteratorPL : g_awaySocksIteratorGK;
                 }
                 /*
-				if (wParam == g_config.vKeyHomeKit) {
-					//g_display2Dkits = (g_display2Dkits + 1) % 2;
-					//LogWithNumber(&k_mydll,"KeyboardProc: g_display2Dkits = %d", g_display2Dkits);
+                if (wParam == g_config.vKeyHomeKit) {
+                    //g_display2Dkits = (g_display2Dkits + 1) % 2;
+                    //LogWithNumber(&k_mydll,"KeyboardProc: g_display2Dkits = %d", g_display2Dkits);
 
-					// hook SetTexture method, if not yet done so
-					if (GetActiveDevice() && !g_orgSetTexture) {
-						DWORD* vtable = (DWORD*)(*((DWORD*)GetActiveDevice()));
+                    // hook SetTexture method, if not yet done so
+                    if (GetActiveDevice() && !g_orgSetTexture) {
+                        DWORD* vtable = (DWORD*)(*((DWORD*)GetActiveDevice()));
 
-						g_orgSetTexture = (PFNSETTEXTUREPROC)vtable[VTAB_SETTEXTURE];
-						DWORD protection = 0;
-						DWORD newProtection = PAGE_EXECUTE_READWRITE;
-						if (VirtualProtect(vtable+VTAB_SETTEXTURE, 4, newProtection, &protection))
-						{
-							vtable[VTAB_SETTEXTURE] = (DWORD)JuceSetTexture;
-							Log(&k_mydll,"SetTexture hooked.");
-						}
-					} else if (GetActiveDevice() && g_orgSetTexture) {
-						DWORD* vtable = (DWORD*)(*((DWORD*)GetActiveDevice()));
+                        g_orgSetTexture = (PFNSETTEXTUREPROC)vtable[VTAB_SETTEXTURE];
+                        DWORD protection = 0;
+                        DWORD newProtection = PAGE_EXECUTE_READWRITE;
+                        if (VirtualProtect(vtable+VTAB_SETTEXTURE, 4, newProtection, &protection))
+                        {
+                            vtable[VTAB_SETTEXTURE] = (DWORD)JuceSetTexture;
+                            Log(&k_mydll,"SetTexture hooked.");
+                        }
+                    } else if (GetActiveDevice() && g_orgSetTexture) {
+                        DWORD* vtable = (DWORD*)(*((DWORD*)GetActiveDevice()));
 
-						DWORD protection = 0;
-						DWORD newProtection = PAGE_EXECUTE_READWRITE;
-						if (VirtualProtect(vtable+VTAB_SETTEXTURE, 4, newProtection, &protection))
-						{
-							vtable[VTAB_SETTEXTURE] = (DWORD)g_orgSetTexture;
-							Log(&k_mydll,"SetTexture unhooked.");
-						}
+                        DWORD protection = 0;
+                        DWORD newProtection = PAGE_EXECUTE_READWRITE;
+                        if (VirtualProtect(vtable+VTAB_SETTEXTURE, 4, newProtection, &protection))
+                        {
+                            vtable[VTAB_SETTEXTURE] = (DWORD)g_orgSetTexture;
+                            Log(&k_mydll,"SetTexture unhooked.");
+                        }
                         g_orgSetTexture = NULL;
                     }
 
@@ -3752,29 +3742,29 @@ EXTERN_C _declspec(dllexport) LRESULT CALLBACK KeyboardProc(int code, WPARAM wPa
                         }
                     }
 
-					//bIndicate = g_display2Dkits;
-				}
-				else if (wParam == g_config.vKeyAwayKit)
-				{
-				}
-				else if (wParam == g_config.vKeyGKHomeKit)
-				{
-				}
-				else if (wParam == g_config.vKeyGKAwayKit)
-				{
-				}
-				*/
-				if (wParam == keyCfg->keyboard.keySwitchLeft) {
+                    //bIndicate = g_display2Dkits;
+                }
+                else if (wParam == g_config.vKeyAwayKit)
+                {
+                }
+                else if (wParam == g_config.vKeyGKHomeKit)
+                {
+                }
+                else if (wParam == g_config.vKeyGKAwayKit)
+                {
+                }
+                */
+                if (wParam == keyCfg->keyboard.keySwitchLeft) {
                     // cycle home kit
                     g_shirtChange[HOME] = true;
                     //Log(&k_mydll, "vKeyHomeKit PRESSED.");
                 }
-				else if (wParam == keyCfg->keyboard.keySwitchRight)
-				{
+                else if (wParam == keyCfg->keyboard.keySwitchRight)
+                {
                     // cycle home kit
                     g_shirtChange[AWAY] = true;
                     //Log(&k_mydll, "vKeyAwayKit PRESSED.");
-				}
+                }
                 /*
                 else if (wParam == g_config.vKeyGKHomeKit)
                 {
@@ -3788,63 +3778,63 @@ EXTERN_C _declspec(dllexport) LRESULT CALLBACK KeyboardProc(int code, WPARAM wPa
                     fclose(f);
                 }
                 */
-			}
-			break;
-	}
+            }
+            break;
+    }
 
-	// We must pass the all messages on to CallNextHookEx.
-	return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam);
+    // We must pass the all messages on to CallNextHookEx.
+    return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam);
 }
 
 /* Set debug flag */
 EXTERN_C LIBSPEC void SetDebug(DWORD flag)
 {
-	//LogWithNumber(&k_mydll,"Setting g_config.debug flag to %d", flag);
-	k_mydll.debug = flag;
+    //LogWithNumber(&k_mydll,"Setting g_config.debug flag to %d", flag);
+    k_mydll.debug = flag;
 }
 
 EXTERN_C LIBSPEC DWORD GetDebug(void)
 {
-	return k_mydll.debug;
+    return k_mydll.debug;
 }
 
 /* Set key */
 EXTERN_C LIBSPEC void SetKey(int whichKey, int code)
 {
-	switch (whichKey)
-	{
-		case VKEY_HOMEKIT: g_config.vKeyHomeKit = code; break;
-		case VKEY_AWAYKIT: g_config.vKeyAwayKit = code; break;
-		case VKEY_GKHOMEKIT: g_config.vKeyGKHomeKit = code; break;
-		case VKEY_GKAWAYKIT: g_config.vKeyGKAwayKit = code; break;
-	}
+    switch (whichKey)
+    {
+        case VKEY_HOMEKIT: g_config.vKeyHomeKit = code; break;
+        case VKEY_AWAYKIT: g_config.vKeyAwayKit = code; break;
+        case VKEY_GKHOMEKIT: g_config.vKeyGKHomeKit = code; break;
+        case VKEY_GKAWAYKIT: g_config.vKeyGKAwayKit = code; break;
+    }
 }
 
 EXTERN_C LIBSPEC int GetKey(int whichKey)
 {
-	switch (whichKey)
-	{
-		case VKEY_HOMEKIT: return g_config.vKeyHomeKit;
-		case VKEY_AWAYKIT: return g_config.vKeyAwayKit;
-		case VKEY_GKHOMEKIT: return g_config.vKeyGKHomeKit;
-		case VKEY_GKAWAYKIT: return g_config.vKeyGKAwayKit;
-	}
-	return -1;
+    switch (whichKey)
+    {
+        case VKEY_HOMEKIT: return g_config.vKeyHomeKit;
+        case VKEY_AWAYKIT: return g_config.vKeyAwayKit;
+        case VKEY_GKHOMEKIT: return g_config.vKeyGKHomeKit;
+        case VKEY_GKAWAYKIT: return g_config.vKeyGKAwayKit;
+    }
+    return -1;
 }
 
 /* Set gdb dir */
 EXTERN_C LIBSPEC void SetKdbDir(char* gdbDir)
 {
-	if (gdbDir == NULL) return;
-	ZeroMemory(GetPESInfo()->gdbDir, BUFLEN);
-	lstrcpy(GetPESInfo()->gdbDir, gdbDir);
+    if (gdbDir == NULL) return;
+    ZeroMemory(GetPESInfo()->gdbDir, BUFLEN);
+    lstrcpy(GetPESInfo()->gdbDir, gdbDir);
 }
 
 EXTERN_C LIBSPEC void GetKdbDir(char* gdbDir)
 {
-	if (gdbDir == NULL) return;
-	ZeroMemory(gdbDir, BUFLEN);
-	lstrcpy(gdbDir, GetPESInfo()->gdbDir);
+    if (gdbDir == NULL) return;
+    ZeroMemory(gdbDir, BUFLEN);
+    lstrcpy(gdbDir, GetPESInfo()->gdbDir);
 }
 
 /**
@@ -3852,19 +3842,19 @@ EXTERN_C LIBSPEC void GetKdbDir(char* gdbDir)
  */
 void DumpData(BYTE* addr, DWORD size)
 {
-	static int count = 0;
+    static int count = 0;
 
-	// prepare filename
-	char name[BUFLEN];
-	ZeroMemory(name, BUFLEN);
-	sprintf(name, "%s%s%02d.dat", GetPESInfo()->mydir, "dd", count++);
+    // prepare filename
+    char name[BUFLEN];
+    ZeroMemory(name, BUFLEN);
+    sprintf(name, "%s%s%02d.dat", GetPESInfo()->mydir, "dd", count++);
 
-	FILE* f = fopen(name, "wb");
-	if (f != NULL)
-	{
-		fwrite(addr, size, 1, f);
-		fclose(f);
-	}
+    FILE* f = fopen(name, "wb");
+    if (f != NULL)
+    {
+        fwrite(addr, size, 1, f);
+        fclose(f);
+    }
 }
 
 /**
@@ -3872,17 +3862,17 @@ void DumpData(BYTE* addr, DWORD size)
  */
 void DumpData(BYTE* addr, DWORD size, char* filename)
 {
-	// prepare filename
-	char name[BUFLEN];
-	ZeroMemory(name, BUFLEN);
-	sprintf(name, "%s%s", GetPESInfo()->mydir, filename);
+    // prepare filename
+    char name[BUFLEN];
+    ZeroMemory(name, BUFLEN);
+    sprintf(name, "%s%s", GetPESInfo()->mydir, filename);
 
-	FILE* f = fopen(name, "wb");
-	if (f != NULL)
-	{
-		fwrite(addr, size, 1, f);
-		fclose(f);
-	}
+    FILE* f = fopen(name, "wb");
+    if (f != NULL)
+    {
+        fwrite(addr, size, 1, f);
+        fclose(f);
+    }
 }
 
 /**
@@ -3892,30 +3882,30 @@ void DumpData(BYTE* addr, DWORD size, char* filename)
  */
 void DumpUniforms(TEXIMGPACKHEADER* kitPackHeader)
 {
-	static int count = 0;
-	DWORD* kitPackToc = (DWORD*)((BYTE*)kitPackHeader + kitPackHeader->tocOffset);
-	BYTE* buffer = (BYTE*)kitPackHeader + kitPackToc[0];
+    static int count = 0;
+    DWORD* kitPackToc = (DWORD*)((BYTE*)kitPackHeader + kitPackHeader->tocOffset);
+    BYTE* buffer = (BYTE*)kitPackHeader + kitPackToc[0];
 
-	// prepare 1st filename
-	char name[BUFLEN];
-	ZeroMemory(name, BUFLEN);
-	sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
+    // prepare 1st filename
+    char name[BUFLEN];
+    ZeroMemory(name, BUFLEN);
+    sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
 
-	SaveAs8bitBMP(name, buffer + 0x480, buffer + 0x80, 512, 256);
+    SaveAs8bitBMP(name, buffer + 0x480, buffer + 0x80, 512, 256);
 
-	/*
-	// prepare 2nd filename
-	ZeroMemory(name, BUFLEN);
-	sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
+    /*
+    // prepare 2nd filename
+    ZeroMemory(name, BUFLEN);
+    sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
 
-	SaveAs8bitBMP(name, buffer + 0x20480, buffer + 0x80, 256, 128);
+    SaveAs8bitBMP(name, buffer + 0x20480, buffer + 0x80, 256, 128);
 
-	// prepare 3rd filename
-	ZeroMemory(name, BUFLEN);
-	sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
+    // prepare 3rd filename
+    ZeroMemory(name, BUFLEN);
+    sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
 
-	SaveAs8bitBMP(name, buffer + 0x28480, buffer + 0x80, 128, 64);
-	*/
+    SaveAs8bitBMP(name, buffer + 0x28480, buffer + 0x80, 128, 64);
+    */
 }
 
 /**
@@ -3924,52 +3914,52 @@ void DumpUniforms(TEXIMGPACKHEADER* kitPackHeader)
  */
 void DumpImagePack(TEXIMGPACKHEADER* imagePackHeader)
 {
-	static int count = 0;
-	int i;
-	for (i=0; i<imagePackHeader->numFiles; i++) {
-		TEXIMGHEADER* imageHeader = (TEXIMGHEADER*)((BYTE*)imagePackHeader + imagePackHeader->toc[i]);
+    static int count = 0;
+    int i;
+    for (i=0; i<imagePackHeader->numFiles; i++) {
+        TEXIMGHEADER* imageHeader = (TEXIMGHEADER*)((BYTE*)imagePackHeader + imagePackHeader->toc[i]);
 
-		// prepare 1st filename
-		char name[BUFLEN];
-		ZeroMemory(name, BUFLEN);
-		sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
+        // prepare 1st filename
+        char name[BUFLEN];
+        ZeroMemory(name, BUFLEN);
+        sprintf(name, "%s%s%02d.bmp", GetPESInfo()->mydir, "du", count++);
 
-		SaveAsBitmap(name, imageHeader);
-	}
+        SaveAsBitmap(name, imageHeader);
+    }
 }
 
 // Read a file into a memory block.
 static int read_file_to_mem(char *fn,unsigned char **ppfiledta, int *pfilesize)
 {
-	HANDLE hfile;
-	DWORD fsize;
-	//unsigned char *fbuf;
-	BYTE* fbuf;
-	DWORD bytesread;
+    HANDLE hfile;
+    DWORD fsize;
+    //unsigned char *fbuf;
+    BYTE* fbuf;
+    DWORD bytesread;
 
-	hfile=CreateFile(fn,GENERIC_READ,FILE_SHARE_READ,NULL,
-		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if(hfile==INVALID_HANDLE_VALUE) return 1;
+    hfile=CreateFile(fn,GENERIC_READ,FILE_SHARE_READ,NULL,
+        OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+    if(hfile==INVALID_HANDLE_VALUE) return 1;
 
-	fsize=GetFileSize(hfile,NULL);
-	if(fsize>0) {
-		//fbuf=(unsigned char*)GlobalAlloc(GPTR,fsize);
-		//fbuf=(unsigned char*)calloc(fsize,1);
+    fsize=GetFileSize(hfile,NULL);
+    if(fsize>0) {
+        //fbuf=(unsigned char*)GlobalAlloc(GPTR,fsize);
+        //fbuf=(unsigned char*)calloc(fsize,1);
         fbuf = (BYTE*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, fsize);
-		if(fbuf) {
-			if(ReadFile(hfile,(void*)fbuf,fsize,&bytesread,NULL)) {
-				if(bytesread==fsize) { 
-					(*ppfiledta)  = fbuf;
-					(*pfilesize) = (int)fsize;
-					CloseHandle(hfile);
-					return 0;   // success
-				}
-			}
-			free((void*)fbuf);
-		}
-	}
-	CloseHandle(hfile);
-	return 1;  // error
+        if(fbuf) {
+            if(ReadFile(hfile,(void*)fbuf,fsize,&bytesread,NULL)) {
+                if(bytesread==fsize) {
+                    (*ppfiledta)  = fbuf;
+                    (*pfilesize) = (int)fsize;
+                    CloseHandle(hfile);
+                    return 0;   // success
+                }
+            }
+            free((void*)fbuf);
+        }
+    }
+    CloseHandle(hfile);
+    return 1;  // error
 }
 
 /**
@@ -3993,7 +3983,7 @@ void ApplyAlphaChunk(RGBQUAD* palette, BYTE* memblk, DWORD size)
             got_alpha = true;
         }
         // move on to next chunk
-        offset += sizeof(chunk->dwSize) + sizeof(chunk->dwName) + 
+        offset += sizeof(chunk->dwSize) + sizeof(chunk->dwName) +
             SWAPBYTES(chunk->dwSize) + sizeof(DWORD); // last one is CRC
     }
 
@@ -4008,14 +3998,14 @@ void ApplyAlphaChunk(RGBQUAD* palette, BYTE* memblk, DWORD size)
 // Load texture from PNG file. Returns the size of loaded texture
 DWORD LoadPNGTexture(BITMAPINFO** tex, char* filename)
 {
-	TRACE4(&k_mydll,"LoadPNGTexture: loading %s", filename);
+    TRACE4(&k_mydll,"LoadPNGTexture: loading %s", filename);
     DWORD size = 0;
 
     PNGDIB *pngdib;
     LPBITMAPINFOHEADER* ppDIB = (LPBITMAPINFOHEADER*)tex;
 
     pngdib = pngdib_p2d_init();
-	//TRACE(&k_mydll,"LoadPNGTexture: structure initialized");
+    //TRACE(&k_mydll,"LoadPNGTexture: structure initialized");
 
     BYTE* memblk;
     int memblksize;
@@ -4026,19 +4016,19 @@ DWORD LoadPNGTexture(BITMAPINFO** tex, char* filename)
     //TRACE(&k_mydll,"LoadPNGTexture: file read into memory");
 
     pngdib_p2d_set_png_memblk(pngdib,memblk,memblksize);
-	pngdib_p2d_set_use_file_bg(pngdib,1);
-	pngdib_p2d_run(pngdib);
+    pngdib_p2d_set_use_file_bg(pngdib,1);
+    pngdib_p2d_run(pngdib);
 
-	//TRACE(&k_mydll,"LoadPNGTexture: run done");
+    //TRACE(&k_mydll,"LoadPNGTexture: run done");
     pngdib_p2d_get_dib(pngdib, ppDIB, (int*)&size);
-	//TRACE(&k_mydll,"LoadPNGTexture: get_dib done");
+    //TRACE(&k_mydll,"LoadPNGTexture: get_dib done");
 
     pngdib_done(pngdib);
-	TRACE(&k_mydll,"LoadPNGTexture: done done");
+    TRACE(&k_mydll,"LoadPNGTexture: done done");
 
-	TRACE2(&k_mydll,"LoadPNGTexture: *ppDIB = %08x", (DWORD)*ppDIB);
+    TRACE2(&k_mydll,"LoadPNGTexture: *ppDIB = %08x", (DWORD)*ppDIB);
     if (*ppDIB == NULL) {
-		TRACE(&k_mydll,"LoadPNGTexture: ERROR - unable to load PNG image.");
+        TRACE(&k_mydll,"LoadPNGTexture: ERROR - unable to load PNG image.");
         return 0;
     }
 
@@ -4048,33 +4038,33 @@ DWORD LoadPNGTexture(BITMAPINFO** tex, char* filename)
 
     HeapFree(GetProcessHeap(), 0, memblk);
 
-	TRACE(&k_mydll,"LoadPNGTexture: done");
-	return size;
+    TRACE(&k_mydll,"LoadPNGTexture: done");
+    return size;
 }
 
 // Load texture. Returns the size of loaded texture
 DWORD LoadTexture(BITMAPINFO** tex, char* filename)
 {
-	TRACE4(&k_mydll,"LoadTexture: loading %s", filename);
+    TRACE4(&k_mydll,"LoadTexture: loading %s", filename);
 
-	FILE* f = fopen(filename, "rb");
-	if (f == NULL)
-	{
-		TRACE(&k_mydll,"LoadTexture: ERROR - unable to open file.");
-		return 0;
-	}
-	BITMAPFILEHEADER bfh;
-	fread(&bfh, sizeof(BITMAPFILEHEADER), 1, f);
-	DWORD size = bfh.bfSize - sizeof(BITMAPFILEHEADER);
+    FILE* f = fopen(filename, "rb");
+    if (f == NULL)
+    {
+        TRACE(&k_mydll,"LoadTexture: ERROR - unable to open file.");
+        return 0;
+    }
+    BITMAPFILEHEADER bfh;
+    fread(&bfh, sizeof(BITMAPFILEHEADER), 1, f);
+    DWORD size = bfh.bfSize - sizeof(BITMAPFILEHEADER);
 
-	TRACE2(&k_mydll,"LoadTexture: filesize = %08x", bfh.bfSize);
+    TRACE2(&k_mydll,"LoadTexture: filesize = %08x", bfh.bfSize);
 
-	*tex = (BITMAPINFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	fread(*tex, size, 1, f);
-	fclose(f);
+    *tex = (BITMAPINFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    fread(*tex, size, 1, f);
+    fclose(f);
 
-	TRACE(&k_mydll,"LoadTexture: done");
-	return size;
+    TRACE(&k_mydll,"LoadTexture: done");
+    return size;
 }
 
 // Substiture kit textures with dta from DIB
@@ -4082,106 +4072,106 @@ void ApplyDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"Applying DIB texture");
 
-	TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[0]);
-	BYTE* buf = (BYTE*)tex + tex->dataOffset;
-	BYTE* pal = (BYTE*)tex + tex->paletteOffset;
+    TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[0]);
+    BYTE* buf = (BYTE*)tex + tex->dataOffset;
+    BYTE* pal = (BYTE*)tex + tex->paletteOffset;
 
-	BYTE* srcTex = (BYTE*)bitmap;
-	BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
-	DWORD palOff = bih->biSize;
+    BYTE* srcTex = (BYTE*)bitmap;
+    BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
+    DWORD palOff = bih->biSize;
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
-	DWORD bitsOff = palOff + palSize;
+    DWORD bitsOff = palOff + palSize;
 
     BYTE* largeKit = (BYTE*)orgKit + orgKit->toc[0];
 
-	// copy palette from tex0
-	TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
-	TRACE2(&k_mydll,"palOff  = %08x", palOff);
+    // copy palette from tex0
+    TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
+    TRACE2(&k_mydll,"palOff  = %08x", palOff);
 
-	for (int bank=0; bank<8; bank++)
-	{
-		memcpy(largeKit + 0x80 + bank*32*4,        srcTex + palOff + bank*32*4,        8*4);
-		memcpy(largeKit + 0x80 + bank*32*4 + 16*4, srcTex + palOff + bank*32*4 + 8*4,  8*4);
-		memcpy(largeKit + 0x80 + bank*32*4 + 8*4,  srcTex + palOff + bank*32*4 + 16*4, 8*4);
-		memcpy(largeKit + 0x80 + bank*32*4 + 24*4, srcTex + palOff + bank*32*4 + 24*4, 8*4);
-	}
-	// swap R and B
-	for (int i=0; i<0x100; i++) 
-	{
-		BYTE blue = largeKit[0x80 + i*4];
-		BYTE red = largeKit[0x80 + i*4 + 2];
-		largeKit[0x80 + i*4] = red;
-		largeKit[0x80 + i*4 + 2] = blue;
-	}
-	TRACE(&k_mydll,"Palette copied.");
+    for (int bank=0; bank<8; bank++)
+    {
+        memcpy(largeKit + 0x80 + bank*32*4,        srcTex + palOff + bank*32*4,        8*4);
+        memcpy(largeKit + 0x80 + bank*32*4 + 16*4, srcTex + palOff + bank*32*4 + 8*4,  8*4);
+        memcpy(largeKit + 0x80 + bank*32*4 + 8*4,  srcTex + palOff + bank*32*4 + 16*4, 8*4);
+        memcpy(largeKit + 0x80 + bank*32*4 + 24*4, srcTex + palOff + bank*32*4 + 24*4, 8*4);
+    }
+    // swap R and B
+    for (int i=0; i<0x100; i++)
+    {
+        BYTE blue = largeKit[0x80 + i*4];
+        BYTE red = largeKit[0x80 + i*4 + 2];
+        largeKit[0x80 + i*4] = red;
+        largeKit[0x80 + i*4 + 2] = blue;
+    }
+    TRACE(&k_mydll,"Palette copied.");
 
-	int k, m, j, w;
-	int height, width;
-	int imageWidth;
+    int k, m, j, w;
+    int height, width;
+    int imageWidth;
 
-	// copy tex0
-	width = imageWidth = 512; height = 256;
-	for (k=0, m=bih->biHeight-1; k<height, m>=bih->biHeight - height; k++, m--)
-	{
-		memcpy(largeKit + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
-	}
-	TRACE(&k_mydll,"Texture 512x256 replaced.");
+    // copy tex0
+    width = imageWidth = 512; height = 256;
+    for (k=0, m=bih->biHeight-1; k<height, m>=bih->biHeight - height; k++, m--)
+    {
+        memcpy(largeKit + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
+    }
+    TRACE(&k_mydll,"Texture 512x256 replaced.");
 
-	if (bih->biHeight == 384) // MipMap kit 
-	{
-		BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
+    if (bih->biHeight == 384) // MipMap kit
+    {
+        BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
 
-		// copy palette from largeKit
-		memcpy(mediumAndSmallKits + 0x80, largeKit + 0x80, 0x400);
+        // copy palette from largeKit
+        memcpy(mediumAndSmallKits + 0x80, largeKit + 0x80, 0x400);
 
-		// copy tex1
-		width = 256; height = 128;
-		for (k=0, m=127; k<height, m>=0; k++, m--)
-		{
-			memcpy(mediumAndSmallKits + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
-		}
-		TRACE(&k_mydll,"Texture 256x128 replaced.");
+        // copy tex1
+        width = 256; height = 128;
+        for (k=0, m=127; k<height, m>=0; k++, m--)
+        {
+            memcpy(mediumAndSmallKits + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
+        }
+        TRACE(&k_mydll,"Texture 256x128 replaced.");
 
-		// copy tex2
-		width = 128; height = 64;
-		for (k=0, m=127; k<height, m>=64; k++, m--)
-		{
-			memcpy(mediumAndSmallKits + 0x8480 + k*width, srcTex + bitsOff + 256 + m*imageWidth, width);
-		}
-		TRACE(&k_mydll,"Texture 128x64 replaced.");
-	}
-	else // Single-texture kit
-	{
-		BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
+        // copy tex2
+        width = 128; height = 64;
+        for (k=0, m=127; k<height, m>=64; k++, m--)
+        {
+            memcpy(mediumAndSmallKits + 0x8480 + k*width, srcTex + bitsOff + 256 + m*imageWidth, width);
+        }
+        TRACE(&k_mydll,"Texture 128x64 replaced.");
+    }
+    else // Single-texture kit
+    {
+        BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
 
-		// copy palette from largeKit
-		memcpy(mediumAndSmallKits + 0x80, largeKit + 0x80, 0x400);
+        // copy palette from largeKit
+        memcpy(mediumAndSmallKits + 0x80, largeKit + 0x80, 0x400);
 
-		// resample the texture at half-size in each dimension
-		int W = width/2, H = height/2;
-		for (k=0, m=height-2; k<H, m>=0; k++, m-=2)
-		{
-			for (w=0, j=0; w<W, j<width-1; w++, j+=2)
-			{
-				mediumAndSmallKits[0x480 + k*W + w] = srcTex[bitsOff + m*width + j];
-			}
-		}
-		TRACE(&k_mydll,"Texture 512x256 resampled to 256x128.");
-		TRACE(&k_mydll,"Texture 256x128 replaced.");
+        // resample the texture at half-size in each dimension
+        int W = width/2, H = height/2;
+        for (k=0, m=height-2; k<H, m>=0; k++, m-=2)
+        {
+            for (w=0, j=0; w<W, j<width-1; w++, j+=2)
+            {
+                mediumAndSmallKits[0x480 + k*W + w] = srcTex[bitsOff + m*width + j];
+            }
+        }
+        TRACE(&k_mydll,"Texture 512x256 resampled to 256x128.");
+        TRACE(&k_mydll,"Texture 256x128 replaced.");
 
-		// resample the texture at 1/4-size in each dimension
-		W = width/4, H = height/4;
-		for (k=0, m=height-4; k<H, m>=0; k++, m-=4)
-		{
-			for (w=0, j=0; w<W, j<width-3; w++, j+=4)
-			{
-				mediumAndSmallKits[0x8480 + k*W + w] = srcTex[bitsOff + m*width + j];
-			}
-		}
-		TRACE(&k_mydll,"Texture 256x128 resampled to 128x64.");
-		TRACE(&k_mydll,"Texture 128x64 replaced.");
-	}
+        // resample the texture at 1/4-size in each dimension
+        W = width/4, H = height/4;
+        for (k=0, m=height-4; k<H, m>=0; k++, m-=4)
+        {
+            for (w=0, j=0; w<W, j<width-3; w++, j+=4)
+            {
+                mediumAndSmallKits[0x8480 + k*W + w] = srcTex[bitsOff + m*width + j];
+            }
+        }
+        TRACE(&k_mydll,"Texture 256x128 resampled to 128x64.");
+        TRACE(&k_mydll,"Texture 128x64 replaced.");
+    }
 }
 
 // OR kit textures with dta from DIB
@@ -4189,88 +4179,88 @@ void OrDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"ORing DIB texture");
 
-	TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[0]);
-	BYTE* buf = (BYTE*)tex + tex->dataOffset;
-	BYTE* pal = (BYTE*)tex + tex->paletteOffset;
+    TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[0]);
+    BYTE* buf = (BYTE*)tex + tex->dataOffset;
+    BYTE* pal = (BYTE*)tex + tex->paletteOffset;
 
-	BYTE* srcTex = (BYTE*)bitmap;
-	BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
-	DWORD palOff = bih->biSize;
+    BYTE* srcTex = (BYTE*)bitmap;
+    BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
+    DWORD palOff = bih->biSize;
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
-	DWORD bitsOff = palOff + palSize;
+    DWORD bitsOff = palOff + palSize;
 
     BYTE* largeKit = (BYTE*)orgKit + orgKit->toc[0];
 
-	int k, m, j, w;
-	int height, width;
-	int imageWidth;
+    int k, m, j, w;
+    int height, width;
+    int imageWidth;
 
-	// OR tex0
-	width = imageWidth = 512; height = 256;
-	for (k=0, m=bih->biHeight-1; k<height, m>=bih->biHeight - height; k++, m--)
-	{
-		//memcpy(largeKit + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
+    // OR tex0
+    width = imageWidth = 512; height = 256;
+    for (k=0, m=bih->biHeight-1; k<height, m>=bih->biHeight - height; k++, m--)
+    {
+        //memcpy(largeKit + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
         for (w=0; w<width; w++) {
             largeKit[0x480 + k*width + w] |= srcTex[bitsOff + m*imageWidth + w];
         }
-	}
-	TRACE(&k_mydll,"Texture 512x256 OR-ed.");
+    }
+    TRACE(&k_mydll,"Texture 512x256 OR-ed.");
 
-	if (bih->biHeight == 384) // MipMap kit 
-	{
-		BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
+    if (bih->biHeight == 384) // MipMap kit
+    {
+        BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
 
-		// copy tex1
-		width = 256; height = 128;
-		for (k=0, m=127; k<height, m>=0; k++, m--)
-		{
-			//memcpy(mediumAndSmallKits + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
+        // copy tex1
+        width = 256; height = 128;
+        for (k=0, m=127; k<height, m>=0; k++, m--)
+        {
+            //memcpy(mediumAndSmallKits + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
             for (w=0; w<width; w++) {
                 mediumAndSmallKits[0x480 + k*width + w] |= srcTex[bitsOff + m*imageWidth + w];
             }
-		}
-		TRACE(&k_mydll,"Texture 256x128 OR-ed.");
+        }
+        TRACE(&k_mydll,"Texture 256x128 OR-ed.");
 
-		// copy tex2
-		width = 128; height = 64;
-		for (k=0, m=127; k<height, m>=64; k++, m--)
-		{
-			//memcpy(mediumAndSmallKits + 0x8480 + k*width, srcTex + bitsOff + 256 + m*imageWidth, width);
+        // copy tex2
+        width = 128; height = 64;
+        for (k=0, m=127; k<height, m>=64; k++, m--)
+        {
+            //memcpy(mediumAndSmallKits + 0x8480 + k*width, srcTex + bitsOff + 256 + m*imageWidth, width);
             for (w=0; w<width; w++) {
                 mediumAndSmallKits[0x8480 + k*width + w] |= srcTex[bitsOff + 256 + m*imageWidth + w];
             }
-		}
-		TRACE(&k_mydll,"Texture 128x64 OR-ed.");
-	}
-	else // Single-texture kit
-	{
-		BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
+        }
+        TRACE(&k_mydll,"Texture 128x64 OR-ed.");
+    }
+    else // Single-texture kit
+    {
+        BYTE* mediumAndSmallKits = (BYTE*)orgKit + orgKit->toc[1];
 
-		// resample the texture at half-size in each dimension
-		int W = width/2, H = height/2;
-		for (k=0, m=height-2; k<H, m>=0; k++, m-=2)
-		{
-			for (w=0, j=0; w<W, j<width-1; w++, j+=2)
-			{
-				mediumAndSmallKits[0x480 + k*W + w] |= srcTex[bitsOff + m*width + j];
-			}
-		}
-		TRACE(&k_mydll,"Texture 512x256 resampled to 256x128.");
-		TRACE(&k_mydll,"Texture 256x128 OR-ed.");
+        // resample the texture at half-size in each dimension
+        int W = width/2, H = height/2;
+        for (k=0, m=height-2; k<H, m>=0; k++, m-=2)
+        {
+            for (w=0, j=0; w<W, j<width-1; w++, j+=2)
+            {
+                mediumAndSmallKits[0x480 + k*W + w] |= srcTex[bitsOff + m*width + j];
+            }
+        }
+        TRACE(&k_mydll,"Texture 512x256 resampled to 256x128.");
+        TRACE(&k_mydll,"Texture 256x128 OR-ed.");
 
-		// resample the texture at 1/4-size in each dimension
-		W = width/4, H = height/4;
-		for (k=0, m=height-4; k<H, m>=0; k++, m-=4)
-		{
-			for (w=0, j=0; w<W, j<width-3; w++, j+=4)
-			{
-				mediumAndSmallKits[0x8480 + k*W + w] |= srcTex[bitsOff + m*width + j];
-			}
-		}
-		TRACE(&k_mydll,"Texture 256x128 resampled to 128x64.");
-		TRACE(&k_mydll,"Texture 128x64 OR-ed.");
-	}
+        // resample the texture at 1/4-size in each dimension
+        W = width/4, H = height/4;
+        for (k=0, m=height-4; k<H, m>=0; k++, m-=4)
+        {
+            for (w=0, j=0; w<W, j<width-3; w++, j+=4)
+            {
+                mediumAndSmallKits[0x8480 + k*W + w] |= srcTex[bitsOff + m*width + j];
+            }
+        }
+        TRACE(&k_mydll,"Texture 256x128 resampled to 128x64.");
+        TRACE(&k_mydll,"Texture 128x64 OR-ed.");
+    }
 }
 
 // Substiture kit textures with dta from DIB
@@ -4278,42 +4268,42 @@ void ApplyDIBTextureMipMap(TEXIMGPACKHEADER* orgKit, int ordinal, BITMAPINFO* bi
 {
     TRACE(&k_mydll,"Applying DIB texture (mipmap)");
 
-	TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[0]);
-	BYTE* buf = (BYTE*)tex + tex->dataOffset;
-	BYTE* pal = (BYTE*)tex + tex->paletteOffset;
+    TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[0]);
+    BYTE* buf = (BYTE*)tex + tex->dataOffset;
+    BYTE* pal = (BYTE*)tex + tex->paletteOffset;
 
-	BYTE* srcTex = (BYTE*)bitmap;
-	BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
-	DWORD palOff = bih->biSize;
+    BYTE* srcTex = (BYTE*)bitmap;
+    BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
+    DWORD palOff = bih->biSize;
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
-	DWORD bitsOff = palOff + palSize;
+    DWORD bitsOff = palOff + palSize;
 
     BYTE* destData = (BYTE*)orgKit + orgKit->toc[1];
 
-	TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
-	TRACE2(&k_mydll,"palOff  = %08x", palOff);
+    TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
+    TRACE2(&k_mydll,"palOff  = %08x", palOff);
 
-	for (int bank=0; bank<8; bank++)
-	{
-		memcpy(destData + 0x80 + bank*32*4,        srcTex + palOff + bank*32*4,        8*4);
-		memcpy(destData + 0x80 + bank*32*4 + 16*4, srcTex + palOff + bank*32*4 + 8*4,  8*4);
-		memcpy(destData + 0x80 + bank*32*4 + 8*4,  srcTex + palOff + bank*32*4 + 16*4, 8*4);
-		memcpy(destData + 0x80 + bank*32*4 + 24*4, srcTex + palOff + bank*32*4 + 24*4, 8*4);
-	}
-	// swap R and B
-	for (int i=0; i<0x100; i++) 
-	{
-		BYTE blue = destData[0x80 + i*4];
-		BYTE red = destData[0x80 + i*4 + 2];
-		destData[0x80 + i*4] = red;
-		destData[0x80 + i*4 + 2] = blue;
-	}
-	TRACE(&k_mydll,"Palette copied.");
+    for (int bank=0; bank<8; bank++)
+    {
+        memcpy(destData + 0x80 + bank*32*4,        srcTex + palOff + bank*32*4,        8*4);
+        memcpy(destData + 0x80 + bank*32*4 + 16*4, srcTex + palOff + bank*32*4 + 8*4,  8*4);
+        memcpy(destData + 0x80 + bank*32*4 + 8*4,  srcTex + palOff + bank*32*4 + 16*4, 8*4);
+        memcpy(destData + 0x80 + bank*32*4 + 24*4, srcTex + palOff + bank*32*4 + 24*4, 8*4);
+    }
+    // swap R and B
+    for (int i=0; i<0x100; i++)
+    {
+        BYTE blue = destData[0x80 + i*4];
+        BYTE red = destData[0x80 + i*4 + 2];
+        destData[0x80 + i*4] = red;
+        destData[0x80 + i*4 + 2] = blue;
+    }
+    TRACE(&k_mydll,"Palette copied.");
 
-	int k, m, j, w;
+    int k, m, j, w;
     int width = 128*(2-ordinal);
-	int height = 64*(2-ordinal);
+    int height = 64*(2-ordinal);
 
     DWORD pixelsOff = 0x480 + 0x8000*ordinal;
 
@@ -4329,15 +4319,15 @@ void Apply4BitDIBPalette(TEXIMGHEADER* tex, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"Applying palette from DIB");
 
-	BYTE* buf = (BYTE*)tex + tex->dataOffset;
-	BYTE* pal = (BYTE*)tex + tex->paletteOffset;
+    BYTE* buf = (BYTE*)tex + tex->dataOffset;
+    BYTE* pal = (BYTE*)tex + tex->paletteOffset;
 
-	BYTE* srcTex = (BYTE*)bitmap;
-	BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
-	DWORD palOff = bih->biSize;
+    BYTE* srcTex = (BYTE*)bitmap;
+    BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
+    DWORD palOff = bih->biSize;
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
-	DWORD bitsOff = palOff + palSize;
+    DWORD bitsOff = palOff + palSize;
 
     // copy palette from image
     TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
@@ -4345,7 +4335,7 @@ void Apply4BitDIBPalette(TEXIMGHEADER* tex, BITMAPINFO* bitmap)
     memcpy(pal, srcTex + palOff, 16*4); // take only 1st 16 colors
 
     // swap R and B
-    for (int i=0; i<16; i++) 
+    for (int i=0; i<16; i++)
     {
         BYTE blue = pal[i*4];
         BYTE red = pal[i*4 + 2];
@@ -4360,33 +4350,33 @@ void Apply4BitDIBTexture(TEXIMGPACKHEADER* pack, BITMAPINFO* bitmap, BOOL usePal
 {
     TRACE(&k_mydll,"Applying DIB image to 4-bit texture");
 
-	TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[0]);
-	BYTE* buf = (BYTE*)tex + tex->dataOffset;
-	BYTE* pal = (BYTE*)tex + tex->paletteOffset;
+    TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)pack + pack->toc[0]);
+    BYTE* buf = (BYTE*)tex + tex->dataOffset;
+    BYTE* pal = (BYTE*)tex + tex->paletteOffset;
 
-	BYTE* srcTex = (BYTE*)bitmap;
-	BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
-	DWORD palOff = bih->biSize;
+    BYTE* srcTex = (BYTE*)bitmap;
+    BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
+    DWORD palOff = bih->biSize;
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
-	DWORD bitsOff = palOff + palSize;
+    DWORD bitsOff = palOff + palSize;
 
-	if (usePalette) {
-		// copy palette from image
-		TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
-		TRACE2(&k_mydll,"palOff  = %08x", palOff);
-		memcpy(pal, srcTex + palOff, 16*4); // take only 1st 16 colors
+    if (usePalette) {
+        // copy palette from image
+        TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
+        TRACE2(&k_mydll,"palOff  = %08x", palOff);
+        memcpy(pal, srcTex + palOff, 16*4); // take only 1st 16 colors
 
-		// swap R and B
-		for (int i=0; i<16; i++) 
-		{
-			BYTE blue = pal[i*4];
-			BYTE red = pal[i*4 + 2];
-			pal[i*4] = red;
-			pal[i*4 + 2] = blue;
-		}
-		TRACE(&k_mydll,"Palette copied.");
-	}
+        // swap R and B
+        for (int i=0; i<16; i++)
+        {
+            BYTE blue = pal[i*4];
+            BYTE red = pal[i*4 + 2];
+            pal[i*4] = red;
+            pal[i*4 + 2] = blue;
+        }
+        TRACE(&k_mydll,"Palette copied.");
+    }
 
     if (bih->biBitCount == 4) {
         // copy dta as is
@@ -4409,109 +4399,109 @@ void Apply4BitDIBTexture(TEXIMGPACKHEADER* pack, BITMAPINFO* bitmap, BOOL usePal
             for (j=0; j<bih->biWidth; j+=2) {
                 // combine two bytes of dta into one
                 // (shuffling it as well)
-                buf[k*(tex->width/2)+j/2] = 
+                buf[k*(tex->width/2)+j/2] =
                     (srcTex[bitsOff + m*(bih->biWidth) + j] & 0x0f) |
                     (srcTex[bitsOff + m*(bih->biWidth) + j + 1] << 4 & 0xf0);
             }
         }
     }
 
-	TRACE(&k_mydll,"4-bit DIB Texture replaced.");
+    TRACE(&k_mydll,"4-bit DIB Texture replaced.");
 }
 
-void FreeTexture(BITMAPINFO* bitmap) 
+void FreeTexture(BITMAPINFO* bitmap)
 {
-	if (bitmap != NULL) {
-		HeapFree(GetProcessHeap(), 0, bitmap);
-	}
+    if (bitmap != NULL) {
+        HeapFree(GetProcessHeap(), 0, bitmap);
+    }
 }
 
-void FreePNGTexture(BITMAPINFO* bitmap) 
+void FreePNGTexture(BITMAPINFO* bitmap)
 {
-	if (bitmap != NULL) {
+    if (bitmap != NULL) {
         pngdib_p2d_free_dib(NULL, (BITMAPINFOHEADER*)bitmap);
-	}
+    }
 }
 
 void ApplyGlovesDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 {
     TRACE(&k_mydll,"Applying PNG glove texture");
 
-	TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[2]);
-	BYTE* buf = (BYTE*)tex + tex->dataOffset;
-	BYTE* pal = (BYTE*)tex + tex->paletteOffset;
+    TEXIMGHEADER* tex = (TEXIMGHEADER*)((BYTE*)orgKit + orgKit->toc[2]);
+    BYTE* buf = (BYTE*)tex + tex->dataOffset;
+    BYTE* pal = (BYTE*)tex + tex->paletteOffset;
 
-	BYTE* srcTex = (BYTE*)bitmap;
-	BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
-	DWORD palOff = bih->biSize;
+    BYTE* srcTex = (BYTE*)bitmap;
+    BITMAPINFOHEADER* bih = &bitmap->bmiHeader;
+    DWORD palOff = bih->biSize;
     DWORD numColors = 1 << bih->biBitCount;
     DWORD palSize = numColors*4;
-	DWORD bitsOff = palOff + palSize;
-	
-	if (numColors != 256 || bih->biWidth != 64 || bih->biHeight != 128) {
-		Log(&k_mydll, "Unsupported format for the gloves.");
-		return;
-	}
+    DWORD bitsOff = palOff + palSize;
+
+    if (numColors != 256 || bih->biWidth != 64 || bih->biHeight != 128) {
+        Log(&k_mydll, "Unsupported format for the gloves.");
+        return;
+    }
 
     BYTE* largeGloves = (BYTE*)orgKit + orgKit->toc[2];
 
-	TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
-	TRACE2(&k_mydll,"palOff  = %08x", palOff);
+    TRACE2(&k_mydll,"bitsOff = %08x", bitsOff);
+    TRACE2(&k_mydll,"palOff  = %08x", palOff);
 
-	for (int bank=0; bank<8; bank++)
-	{
-		memcpy(largeGloves + 0x80 + bank*32*4,        srcTex + palOff + bank*32*4,        8*4);
-		memcpy(largeGloves + 0x80 + bank*32*4 + 16*4, srcTex + palOff + bank*32*4 + 8*4,  8*4);
-		memcpy(largeGloves + 0x80 + bank*32*4 + 8*4,  srcTex + palOff + bank*32*4 + 16*4, 8*4);
-		memcpy(largeGloves + 0x80 + bank*32*4 + 24*4, srcTex + palOff + bank*32*4 + 24*4, 8*4);
-	}
-	// swap R and B
-	for (int i=0; i<0x100; i++) 
-	{
-		BYTE blue = largeGloves[0x80 + i*4];
-		BYTE red = largeGloves[0x80 + i*4 + 2];
-		largeGloves[0x80 + i*4] = red;
-		largeGloves[0x80 + i*4 + 2] = blue;
-		largeGloves[0x80 + i*4 + 3] = 0x80; // always 100% opacity
-	}
-	TRACE(&k_mydll,"Palette copied.");
+    for (int bank=0; bank<8; bank++)
+    {
+        memcpy(largeGloves + 0x80 + bank*32*4,        srcTex + palOff + bank*32*4,        8*4);
+        memcpy(largeGloves + 0x80 + bank*32*4 + 16*4, srcTex + palOff + bank*32*4 + 8*4,  8*4);
+        memcpy(largeGloves + 0x80 + bank*32*4 + 8*4,  srcTex + palOff + bank*32*4 + 16*4, 8*4);
+        memcpy(largeGloves + 0x80 + bank*32*4 + 24*4, srcTex + palOff + bank*32*4 + 24*4, 8*4);
+    }
+    // swap R and B
+    for (int i=0; i<0x100; i++)
+    {
+        BYTE blue = largeGloves[0x80 + i*4];
+        BYTE red = largeGloves[0x80 + i*4 + 2];
+        largeGloves[0x80 + i*4] = red;
+        largeGloves[0x80 + i*4 + 2] = blue;
+        largeGloves[0x80 + i*4 + 3] = 0x80; // always 100% opacity
+    }
+    TRACE(&k_mydll,"Palette copied.");
 
-	int k, m, j, w;
-	int height, width;
-	int imageWidth;
+    int k, m, j, w;
+    int height, width;
+    int imageWidth;
 
-	// copy tex0
-	width = imageWidth = 64; height = 128;
-	for (k=0, m=bih->biHeight-1; k<height, m>=bih->biHeight - height; k++, m--)
-	{
-		memcpy(largeGloves + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
-	}
-	TRACE(&k_mydll,"Texture 64x128 replaced.");
+    // copy tex0
+    width = imageWidth = 64; height = 128;
+    for (k=0, m=bih->biHeight-1; k<height, m>=bih->biHeight - height; k++, m--)
+    {
+        memcpy(largeGloves + 0x480 + k*width, srcTex + bitsOff + m*imageWidth, width);
+    }
+    TRACE(&k_mydll,"Texture 64x128 replaced.");
 
-	if (bih->biHeight == 192) // MipMap kit 
-	{
-		// copy tex1
-		width = 32; height = 64;
-		for (k=0, m=63; k<height, m>=0; k++, m--)
-		{
-			memcpy(largeGloves + 0x2480 + k*width, srcTex + bitsOff + m*imageWidth, width);
-		}
-		TRACE(&k_mydll,"Texture 32x64 replaced.");
-	}
-	else // Single-texture kit
-	{
-		// resample the texture at half-size in each dimension
-		int W = width/2, H = height/2;
-		for (k=0, m=height-2; k<H, m>=0; k++, m-=2)
-		{
-			for (w=0, j=0; w<W, j<width-1; w++, j+=2)
-			{
-				largeGloves[0x2480 + k*W + w] = srcTex[bitsOff + m*width + j];
-			}
-		}
-		TRACE(&k_mydll,"Texture 64x128 resampled to 32x64.");
-		TRACE(&k_mydll,"Texture 32x64 replaced.");
-	}
+    if (bih->biHeight == 192) // MipMap kit
+    {
+        // copy tex1
+        width = 32; height = 64;
+        for (k=0, m=63; k<height, m>=0; k++, m--)
+        {
+            memcpy(largeGloves + 0x2480 + k*width, srcTex + bitsOff + m*imageWidth, width);
+        }
+        TRACE(&k_mydll,"Texture 32x64 replaced.");
+    }
+    else // Single-texture kit
+    {
+        // resample the texture at half-size in each dimension
+        int W = width/2, H = height/2;
+        for (k=0, m=height-2; k<H, m>=0; k++, m-=2)
+        {
+            for (w=0, j=0; w<W, j<width-1; w++, j+=2)
+            {
+                largeGloves[0x2480 + k*W + w] = srcTex[bitsOff + m*width + j];
+            }
+        }
+        TRACE(&k_mydll,"Texture 64x128 resampled to 32x64.");
+        TRACE(&k_mydll,"Texture 32x64 replaced.");
+    }
 }
 
 /**
@@ -4520,11 +4510,11 @@ void ApplyGlovesDIBTexture(TEXIMGPACKHEADER* orgKit, BITMAPINFO* bitmap)
 HRESULT STDMETHODCALLTYPE JuceGetSurfaceLevel(IDirect3DTexture8* self, UINT level,
 IDirect3DSurface8** ppSurfaceLevel)
 {
-	TRACE(&k_mydll,"JuceGetSurfaceLevel: CALLED.");
-	TRACE2(&k_mydll,"JuceGetSurfaceLevel: texture(self) = %08x", (DWORD)self);
-	TRACE2(&k_mydll,"JuceGetSurfaceLevel: level = %d", level);
+    TRACE(&k_mydll,"JuceGetSurfaceLevel: CALLED.");
+    TRACE2(&k_mydll,"JuceGetSurfaceLevel: texture(self) = %08x", (DWORD)self);
+    TRACE2(&k_mydll,"JuceGetSurfaceLevel: level = %d", level);
 
-	return g_orgGetSurfaceLevel(self, level, ppSurfaceLevel);
+    return g_orgGetSurfaceLevel(self, level, ppSurfaceLevel);
 }
 
 /**
@@ -4532,13 +4522,13 @@ IDirect3DSurface8** ppSurfaceLevel)
  */
 void DumpSurface(int count, IDirect3DSurface8* surf)
 {
-	char filename[BUFLEN];
-	ZeroMemory(filename, BUFLEN);
-	sprintf(filename, "%ssurf-%03d.bmp", GetPESInfo()->mydir, count);
-	D3DXSaveSurfaceToFile(filename, D3DXIFF_BMP, surf, NULL, NULL);
+    char filename[BUFLEN];
+    ZeroMemory(filename, BUFLEN);
+    sprintf(filename, "%ssurf-%03d.bmp", GetPESInfo()->mydir, count);
+    D3DXSaveSurfaceToFile(filename, D3DXIFF_BMP, surf, NULL, NULL);
 }
 
-void DumpTexture(IDirect3DTexture8* const ptexture) 
+void DumpTexture(IDirect3DTexture8* const ptexture)
 {
     static int count = 0;
     char buf[BUFLEN];
@@ -4595,7 +4585,7 @@ DWORD VtableSet(void* self, int index, DWORD value)
     return currValue;
 }
 
-void kservUnlockRect(IDirect3DTexture8* self,UINT Level) 
+void kservUnlockRect(IDirect3DTexture8* self,UINT Level)
 {
     vector<TextureBinding>::iterator texit = _textureBindings.end();
     if (_textureBindings.size()>0) {
@@ -4624,153 +4614,153 @@ void kservUnlockRect(IDirect3DTexture8* self,UINT Level)
 // copy all the pixels where the color c is in the mask file from src to dest
 void applyKitMask(D3DLOCKED_RECT* dest, D3DLOCKED_RECT* src, char* maskfilename, D3DSURFACE_DESC* desc, DWORD c)
 {
-	UINT width = desc->Width;
-	UINT height = desc->Height;
-	
-	BITMAPINFO* maskTex = NULL;
-	LoadPNGTexture(&maskTex, maskfilename);
-	if (!maskTex) return;
-	
-	BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)maskTex;
-	UINT maskW = bih->biWidth;
-	UINT maskH = bih->biHeight;
-	BYTE* mask = (BYTE*)maskTex + bih->biSize + 0x400;
-	DWORD index = -1;
-	for (int i=0; i<256; i++) {
-		if ((((DWORD*)((BYTE*)maskTex + bih->biSize))[i] & 0xffffff) == c) {
-			index = i;
-			break;
-		}
-	}
+    UINT width = desc->Width;
+    UINT height = desc->Height;
 
-	BYTE* pDestRow = (BYTE*)dest->pBits;
-	BYTE* pSrcRow = (BYTE*)src->pBits;
-	for (int y=0; y<height; y++) {
-		DWORD* pDestPixel = (DWORD*)pDestRow;
-		DWORD* pSrcPixel = (DWORD*)pSrcRow;
-		for (int x=0; x<width; x++) {
-			if (mask[(height-y-1)*maskH/height*maskW + x*maskW/width] == index) {
-				*pDestPixel = *pSrcPixel;
-			}
-			pDestPixel++;
-			pSrcPixel++;
-		}
-		pDestRow += dest->Pitch;
-		pSrcRow += src->Pitch;
-	}
-	
-	pngdib_p2d_free_dib(NULL,(BITMAPINFOHEADER*)maskTex);
-	return;
+    BITMAPINFO* maskTex = NULL;
+    LoadPNGTexture(&maskTex, maskfilename);
+    if (!maskTex) return;
+
+    BITMAPINFOHEADER* bih = (BITMAPINFOHEADER*)maskTex;
+    UINT maskW = bih->biWidth;
+    UINT maskH = bih->biHeight;
+    BYTE* mask = (BYTE*)maskTex + bih->biSize + 0x400;
+    DWORD index = -1;
+    for (int i=0; i<256; i++) {
+        if ((((DWORD*)((BYTE*)maskTex + bih->biSize))[i] & 0xffffff) == c) {
+            index = i;
+            break;
+        }
+    }
+
+    BYTE* pDestRow = (BYTE*)dest->pBits;
+    BYTE* pSrcRow = (BYTE*)src->pBits;
+    for (int y=0; y<height; y++) {
+        DWORD* pDestPixel = (DWORD*)pDestRow;
+        DWORD* pSrcPixel = (DWORD*)pSrcRow;
+        for (int x=0; x<width; x++) {
+            if (mask[(height-y-1)*maskH/height*maskW + x*maskW/width] == index) {
+                *pDestPixel = *pSrcPixel;
+            }
+            pDestPixel++;
+            pSrcPixel++;
+        }
+        pDestRow += dest->Pitch;
+        pSrcRow += src->Pitch;
+    }
+
+    pngdib_p2d_free_dib(NULL,(BITMAPINFOHEADER*)maskTex);
+    return;
 }
 
 
 // color 1 is alpha-blended over color 2
 DWORD blendColors(DWORD color1, DWORD color2)
 {
-	BYTE alpha1 =  (color1 & 0xff000000) >> 24;
+    BYTE alpha1 =  (color1 & 0xff000000) >> 24;
 
-	if (alpha1 == 0) return color2;		// transparent overlay
-	if (alpha1 == 255) return ((color1 & 0xffffff) | (color2 & 0xff000000));	// opaque overlay
-		
-	BYTE redValue = ((color1 & 0xff0000) * alpha1 + (color2 & 0xff0000) * (255 - alpha1)) / 0xff0000;
-	BYTE greenValue = ((color1 & 0xff00) * alpha1 + (color2 & 0xff00) * (255 - alpha1)) / 0xff00;
-	BYTE blueValue = ((color1 & 0xff) * alpha1 + (color2 & 0xff) * (255 - alpha1)) / 0xff;
+    if (alpha1 == 0) return color2;     // transparent overlay
+    if (alpha1 == 255) return ((color1 & 0xffffff) | (color2 & 0xff000000));    // opaque overlay
 
-	DWORD alpha2 =  color2 & 0xff000000;	// keep the original alpha
-		
-	return (alpha2 | (redValue << 16) | (greenValue << 8) | blueValue);
+    BYTE redValue = ((color1 & 0xff0000) * alpha1 + (color2 & 0xff0000) * (255 - alpha1)) / 0xff0000;
+    BYTE greenValue = ((color1 & 0xff00) * alpha1 + (color2 & 0xff00) * (255 - alpha1)) / 0xff00;
+    BYTE blueValue = ((color1 & 0xff) * alpha1 + (color2 & 0xff) * (255 - alpha1)) / 0xff;
+
+    DWORD alpha2 =  color2 & 0xff000000;    // keep the original alpha
+
+    return (alpha2 | (redValue << 16) | (greenValue << 8) | blueValue);
 }
 
 
 void applyOverlay(D3DLOCKED_RECT* dest, char* overlayfilename, D3DSURFACE_DESC* desc)
 {
-	UINT width = desc->Width;
-	UINT height = desc->Height;
+    UINT width = desc->Width;
+    UINT height = desc->Height;
 
-	IDirect3DTexture8* pOvTexture = NULL;
-	D3DLOCKED_RECT rectOv;
-	
-	// create overlay texture
-	if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
-            GetActiveDevice(), overlayfilename, 
+    IDirect3DTexture8* pOvTexture = NULL;
+    D3DLOCKED_RECT rectOv;
+
+    // create overlay texture
+    if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+            GetActiveDevice(), overlayfilename,
             width, height,
             1, desc->Usage, desc->Format, desc->Pool,
             D3DX_DEFAULT, D3DX_DEFAULT,
             0, NULL, NULL, &pOvTexture))) {
-		return;
-	}
-	
-	if (!SUCCEEDED(pOvTexture->LockRect(0, &rectOv, NULL, 0))) {
-		pOvTexture->Release();
-		return;
-	}
+        return;
+    }
 
-	BYTE* pDestRow = (BYTE*)dest->pBits;
-	BYTE* pSrcRow = (BYTE*)rectOv.pBits;
-	for (int y = 0; y < height; y++) {
-		DWORD* pDestPixel = (DWORD*)pDestRow;
-		DWORD* pSrcPixel = (DWORD*)pSrcRow;
-		for (int x = 0; x < width; x++) {
-			*pDestPixel = blendColors(*pSrcPixel, *pDestPixel);
-			pDestPixel++;
-			pSrcPixel++;
-		}
-		pDestRow += dest->Pitch;
-		pSrcRow += rectOv.Pitch;
-	}
-		
-	pOvTexture->UnlockRect(0);
-	pOvTexture->Release();
-		
-	return;
+    if (!SUCCEEDED(pOvTexture->LockRect(0, &rectOv, NULL, 0))) {
+        pOvTexture->Release();
+        return;
+    }
+
+    BYTE* pDestRow = (BYTE*)dest->pBits;
+    BYTE* pSrcRow = (BYTE*)rectOv.pBits;
+    for (int y = 0; y < height; y++) {
+        DWORD* pDestPixel = (DWORD*)pDestRow;
+        DWORD* pSrcPixel = (DWORD*)pSrcRow;
+        for (int x = 0; x < width; x++) {
+            *pDestPixel = blendColors(*pSrcPixel, *pDestPixel);
+            pDestPixel++;
+            pSrcPixel++;
+        }
+        pDestRow += dest->Pitch;
+        pSrcRow += rectOv.Pitch;
+    }
+
+    pOvTexture->UnlockRect(0);
+    pOvTexture->Release();
+
+    return;
 }
 
 
 void mixKits(IDirect3DTexture8* pShirtTexture, IDirect3DTexture8* pShortsTexture,
-	IDirect3DTexture8* pSocksTexture, char* overlayfilename, char* maskfilename, int level)
+    IDirect3DTexture8* pSocksTexture, char* overlayfilename, char* maskfilename, int level)
 {
-	if (!pShirtTexture) return;
-	if (!pShortsTexture && !pSocksTexture && !overlayfilename) return;
-	
-	D3DLOCKED_RECT rectShirt;
-	D3DLOCKED_RECT rectShorts;
-	D3DLOCKED_RECT rectSocks;
-	D3DSURFACE_DESC desc;
-	
-	if (!SUCCEEDED(pShirtTexture->LockRect(level, &rectShirt, NULL, 0))) return;
-	pShirtTexture->GetLevelDesc(level, &desc);
+    if (!pShirtTexture) return;
+    if (!pShortsTexture && !pSocksTexture && !overlayfilename) return;
 
-	if (pShortsTexture && SUCCEEDED(pShortsTexture->LockRect(level, &rectShorts, NULL, 0))) {
-		Log(&k_mydll, "Replacing shorts now...");
-		//blue
-		applyKitMask(&rectShirt, &rectShorts, maskfilename, &desc, 0x0000ff);
-		pShortsTexture->UnlockRect(level);
-	}
-	
-	if (pSocksTexture && SUCCEEDED(pSocksTexture->LockRect(level, &rectSocks, NULL, 0))) {
-		Log(&k_mydll, "Replacing socks now...");
-		//yellow
-		applyKitMask(&rectShirt, &rectSocks, maskfilename, &desc, 0xffff00);
-		pSocksTexture->UnlockRect(level);
-	}
-	
-	if (overlayfilename != NULL) {
-		Log(&k_mydll, "Applying overlay...");
-		applyOverlay(&rectShirt, overlayfilename, &desc);
-	}
-	
-	pShirtTexture->UnlockRect(level);
-	return;
+    D3DLOCKED_RECT rectShirt;
+    D3DLOCKED_RECT rectShorts;
+    D3DLOCKED_RECT rectSocks;
+    D3DSURFACE_DESC desc;
+
+    if (!SUCCEEDED(pShirtTexture->LockRect(level, &rectShirt, NULL, 0))) return;
+    pShirtTexture->GetLevelDesc(level, &desc);
+
+    if (pShortsTexture && SUCCEEDED(pShortsTexture->LockRect(level, &rectShorts, NULL, 0))) {
+        Log(&k_mydll, "Replacing shorts now...");
+        //blue
+        applyKitMask(&rectShirt, &rectShorts, maskfilename, &desc, 0x0000ff);
+        pShortsTexture->UnlockRect(level);
+    }
+
+    if (pSocksTexture && SUCCEEDED(pSocksTexture->LockRect(level, &rectSocks, NULL, 0))) {
+        Log(&k_mydll, "Replacing socks now...");
+        //yellow
+        applyKitMask(&rectShirt, &rectSocks, maskfilename, &desc, 0xffff00);
+        pSocksTexture->UnlockRect(level);
+    }
+
+    if (overlayfilename != NULL) {
+        Log(&k_mydll, "Applying overlay...");
+        applyOverlay(&rectShirt, overlayfilename, &desc);
+    }
+
+    pShirtTexture->UnlockRect(level);
+    return;
 }
 
 /**
  * Tracker for IDirect3DDevice8::CreateTexture method.
  */
 HRESULT STDMETHODCALLTYPE JuceCreateTexture(IDirect3DDevice8* self, UINT width, UINT height,
-UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture, 
+UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture,
 DWORD src, bool* IsProcessed)
 {
-	HRESULT res = D3D_OK;
+    HRESULT res = D3D_OK;
     if (*IsProcessed) return res; // already handled by some other module
 
     if (g_edit_mode) return res; // safety check
@@ -4794,14 +4784,14 @@ DWORD src, bool* IsProcessed)
             // shorts
             DWORD id = g_currentAfsId - fileType + fileTypeBase * 2;
             DWORD texType2 = FindImageFileForId(id | 0x80000000, "", filename2, &needsMask);
-			// socks
-			id = g_currentAfsId - fileType + fileTypeBase * 2 + 1;
+            // socks
+            id = g_currentAfsId - fileType + fileTypeBase * 2 + 1;
             DWORD texType3 = FindImageFileForId(id | 0x80000000, "", filename3, &needsMask);
             // mask
             FindMaskFileForId(g_currentAfsId, maskfilename);
             // overlay
             DWORD overlayTexType = FindOverlayFileForId(g_currentAfsId, overlayfilename);
-            
+
             if (texType1 != TEXTYPE_NONE) {
                 // replacement texture file exists
                 // step 1: get some information about it
@@ -4814,52 +4804,52 @@ DWORD src, bool* IsProcessed)
                 UINT texLevels = levels;
                 D3DFORMAT texFormat = format;
                 if (g_config.enable_HD_kits) {
-                    LogWithTwoNumbers(&k_mydll, 
+                    LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: checking texture dimensions: (%d,%d)",
                             texWidth, texHeight);
                     if (SUCCEEDED(D3DXCheckTextureRequirements(
                                     self, &texWidth, &texHeight,
-                                    &texLevels, usage, 
+                                    &texLevels, usage,
                                     &texFormat, pool))) {
                         Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
                     }
-                    
+
                     // eventually enlarge the replacing texure for shorts or socks
-					if (texType2 != TEXTYPE_NONE) {
-                		D3DXGetImageInfoFromFile(filename2, &imageInfo2);
-                		texWidth = max(imageInfo2.Width/2, texWidth);
-                		texHeight = max(imageInfo2.Height/2, texHeight);
-                		
-                		LogWithTwoNumbers(&k_mydll, 
+                    if (texType2 != TEXTYPE_NONE) {
+                        D3DXGetImageInfoFromFile(filename2, &imageInfo2);
+                        texWidth = max(imageInfo2.Width/2, texWidth);
+                        texHeight = max(imageInfo2.Height/2, texHeight);
+
+                        LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: checking texture dimensions: (%d,%d)",
                             texWidth, texHeight);
-	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
-	                                    self, &texWidth, &texHeight,
-	                                    &texLevels, usage, 
-	                                    &texFormat, pool))) {
-	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
-	                    }
-					}
-					if (texType3 != TEXTYPE_NONE) {
-                		D3DXGetImageInfoFromFile(filename3, &imageInfo3);
-                		texWidth = max(imageInfo3.Width/2, texWidth);
-                		texHeight = max(imageInfo3.Height/2, texHeight);
-                		
-                		LogWithTwoNumbers(&k_mydll, 
+                        if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                        self, &texWidth, &texHeight,
+                                        &texLevels, usage,
+                                        &texFormat, pool))) {
+                            Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                        }
+                    }
+                    if (texType3 != TEXTYPE_NONE) {
+                        D3DXGetImageInfoFromFile(filename3, &imageInfo3);
+                        texWidth = max(imageInfo3.Width/2, texWidth);
+                        texHeight = max(imageInfo3.Height/2, texHeight);
+
+                        LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: checking texture dimensions: (%d,%d)",
                             texWidth, texHeight);
-	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
-	                                    self, &texWidth, &texHeight,
-	                                    &texLevels, usage, 
-	                                    &texFormat, pool))) {
-	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
-	                    }
-					}
- 
+                        if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                        self, &texWidth, &texHeight,
+                                        &texLevels, usage,
+                                        &texFormat, pool))) {
+                            Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                        }
+                    }
+
                     // ensure minimum size: 256x128
                     texWidth = (texWidth<256)?256:texWidth;
                     texHeight = (texHeight<128)?128:texHeight;
-                    LogWithTwoNumbers(&k_mydll, 
+                    LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: check complete. Using (%d,%d)",
                             texWidth, texHeight);
                 } else {
@@ -4874,50 +4864,50 @@ DWORD src, bool* IsProcessed)
                 IDirect3DTexture8* pRepTexture = NULL;
                 IDirect3DTexture8* pShortsTexture = NULL;
                 IDirect3DTexture8* pSocksTexture = NULL;
-                
+
                 DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename1, 
+                                self, filename1,
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
-                                	
-					// shorts
-					if (texType2 != TEXTYPE_NONE && stricmp(filename1, filename2)!=0) {
-						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename2, 
+
+                    // shorts
+                    if (texType2 != TEXTYPE_NONE && stricmp(filename1, filename2)!=0) {
+                        if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename2,
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pShortsTexture))) {
-							pShortsTexture = NULL;
-						}
-					}
-					// socks
-					if (texType3 != TEXTYPE_NONE && stricmp(filename1, filename3)!=0) {
-						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename3, 
+                            pShortsTexture = NULL;
+                        }
+                    }
+                    // socks
+                    if (texType3 != TEXTYPE_NONE && stricmp(filename1, filename3)!=0) {
+                        if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename3,
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pSocksTexture))) {
-							pSocksTexture = NULL;
-						}
-					}
-					
-					// now mix the kits
-					for (int i=0; i<2; i++) {
-						if (overlayTexType == TEXTYPE_NONE) {
-							mixKits(pRepTexture, pShortsTexture, pSocksTexture, NULL, maskfilename, i);
-						} else {
-							mixKits(pRepTexture, pShortsTexture, pSocksTexture, overlayfilename, maskfilename, i);
-						}
-					}
-					
-					// free shorts and socks textures
-					if (pShortsTexture) pShortsTexture->Release();
-					if (pSocksTexture) pSocksTexture->Release();
+                            pSocksTexture = NULL;
+                        }
+                    }
+
+                    // now mix the kits
+                    for (int i=0; i<2; i++) {
+                        if (overlayTexType == TEXTYPE_NONE) {
+                            mixKits(pRepTexture, pShortsTexture, pSocksTexture, NULL, maskfilename, i);
+                        } else {
+                            mixKits(pRepTexture, pShortsTexture, pSocksTexture, overlayfilename, maskfilename, i);
+                        }
+                    }
+
+                    // free shorts and socks textures
+                    if (pShortsTexture) pShortsTexture->Release();
+                    if (pSocksTexture) pSocksTexture->Release();
 
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     res = OrgCreateTexture(self, texWidth, texHeight,
@@ -4965,14 +4955,14 @@ DWORD src, bool* IsProcessed)
             // shorts
             DWORD id = mit->second - fileType + fileTypeBase * 2;
             DWORD texType2 = FindImageFileForId(id | 0x80000000, "", filename2, &needsMask);
-			// socks
-			id = mit->second - fileType + fileTypeBase * 2 + 1;
+            // socks
+            id = mit->second - fileType + fileTypeBase * 2 + 1;
             DWORD texType3 = FindImageFileForId(id | 0x80000000, "", filename3, &needsMask);
             // mask
             FindMaskFileForId(mit->second, maskfilename);
             // overlay
             DWORD overlayTexType = FindOverlayFileForId(mit->second, overlayfilename);
-            
+
             if (texType1 != TEXTYPE_NONE) {
                 // replacement texture file exists
                 // step 1: get some information about it
@@ -4985,52 +4975,52 @@ DWORD src, bool* IsProcessed)
                 UINT texLevels = levels;
                 D3DFORMAT texFormat = format;
                 if (g_config.enable_HD_kits) {
-                    LogWithTwoNumbers(&k_mydll, 
+                    LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: checking texture dimensions: (%d,%d)",
                             texWidth, texHeight);
                     if (SUCCEEDED(D3DXCheckTextureRequirements(
                                     self, &texWidth, &texHeight,
-                                    &texLevels, usage, 
+                                    &texLevels, usage,
                                     &texFormat, pool))) {
                         Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
                     }
-                    
+
                     // eventually enlarge the replacing texure for shorts or socks
-					if (texType2 != TEXTYPE_NONE) {
-                		D3DXGetImageInfoFromFile(filename2, &imageInfo2);
-                		texWidth = max(imageInfo2.Width, texWidth);
-                		texHeight = max(imageInfo2.Height, texHeight);
-                		
-                		LogWithTwoNumbers(&k_mydll, 
+                    if (texType2 != TEXTYPE_NONE) {
+                        D3DXGetImageInfoFromFile(filename2, &imageInfo2);
+                        texWidth = max(imageInfo2.Width, texWidth);
+                        texHeight = max(imageInfo2.Height, texHeight);
+
+                        LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: checking texture dimensions: (%d,%d)",
                             texWidth, texHeight);
-	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
-	                                    self, &texWidth, &texHeight,
-	                                    &texLevels, usage, 
-	                                    &texFormat, pool))) {
-	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
-	                    }
-					}
-					if (texType3 != TEXTYPE_NONE) {
-                		D3DXGetImageInfoFromFile(filename3, &imageInfo3);
-                		texWidth = max(imageInfo3.Width, texWidth);
-                		texHeight = max(imageInfo3.Height, texHeight);
-                		
-                		LogWithTwoNumbers(&k_mydll, 
+                        if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                        self, &texWidth, &texHeight,
+                                        &texLevels, usage,
+                                        &texFormat, pool))) {
+                            Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                        }
+                    }
+                    if (texType3 != TEXTYPE_NONE) {
+                        D3DXGetImageInfoFromFile(filename3, &imageInfo3);
+                        texWidth = max(imageInfo3.Width, texWidth);
+                        texHeight = max(imageInfo3.Height, texHeight);
+
+                        LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: checking texture dimensions: (%d,%d)",
                             texWidth, texHeight);
-	                    if (SUCCEEDED(D3DXCheckTextureRequirements(
-	                                    self, &texWidth, &texHeight,
-	                                    &texLevels, usage, 
-	                                    &texFormat, pool))) {
-	                        Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
-	                    }
-					}
- 
+                        if (SUCCEEDED(D3DXCheckTextureRequirements(
+                                        self, &texWidth, &texHeight,
+                                        &texLevels, usage,
+                                        &texFormat, pool))) {
+                            Log(&k_mydll, "JuceCreateTexture: texture parameters checked");
+                        }
+                    }
+
                     // ensure minimum size: 512x256
                     texWidth = (texWidth<512)?512:texWidth;
                     texHeight = (texHeight<256)?256:texHeight;
-                    LogWithTwoNumbers(&k_mydll, 
+                    LogWithTwoNumbers(&k_mydll,
                             "JuceCreateTexture: check complete. Using (%d,%d)",
                             texWidth, texHeight);
                 } else {
@@ -5045,48 +5035,48 @@ DWORD src, bool* IsProcessed)
                 IDirect3DTexture8* pRepTexture = NULL;
                 IDirect3DTexture8* pShortsTexture = NULL;
                 IDirect3DTexture8* pSocksTexture = NULL;
-                
+
                 DWORD prevValue = VtableSet(self, VTAB_CREATETEXTURE, (DWORD)OrgCreateTexture);
                 if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename1, 
+                                self, filename1,
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pRepTexture))) {
-                                	
-					// shorts
-					if (texType2 != TEXTYPE_NONE && stricmp(filename1, filename2)!=0) {
-						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename2, 
+
+                    // shorts
+                    if (texType2 != TEXTYPE_NONE && stricmp(filename1, filename2)!=0) {
+                        if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename2,
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pShortsTexture))) {
-							pShortsTexture = NULL;
-						}
-					}
-					// socks
-					if (texType3 != TEXTYPE_NONE && stricmp(filename1, filename3)!=0) {
-						if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                self, filename3, 
+                            pShortsTexture = NULL;
+                        }
+                    }
+                    // socks
+                    if (texType3 != TEXTYPE_NONE && stricmp(filename1, filename3)!=0) {
+                        if (!SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                self, filename3,
                                 texWidth, texHeight,
                                 levels, usage, texFormat, pool,
                                 D3DX_DEFAULT, D3DX_DEFAULT,
                                 0, NULL, NULL, &pSocksTexture))) {
-							pSocksTexture = NULL;
-						}
-					}
-					
-					// now mix the kits
-					if (overlayTexType == TEXTYPE_NONE) {
-						mixKits(pRepTexture, pShortsTexture, pSocksTexture, NULL, maskfilename, 0);
-					} else {
-						mixKits(pRepTexture, pShortsTexture, pSocksTexture, overlayfilename, maskfilename, 0);
-					}
-					
-					// free shorts and socks textures
-					if (pShortsTexture) pShortsTexture->Release();
-					if (pSocksTexture) pSocksTexture->Release();
+                            pSocksTexture = NULL;
+                        }
+                    }
+
+                    // now mix the kits
+                    if (overlayTexType == TEXTYPE_NONE) {
+                        mixKits(pRepTexture, pShortsTexture, pSocksTexture, NULL, maskfilename, 0);
+                    } else {
+                        mixKits(pRepTexture, pShortsTexture, pSocksTexture, overlayfilename, maskfilename, 0);
+                    }
+
+                    // free shorts and socks textures
+                    if (pShortsTexture) pShortsTexture->Release();
+                    if (pSocksTexture) pSocksTexture->Release();
 
                     VtableSet(self, VTAB_CREATETEXTURE, prevValue);
                     res = OrgCreateTexture(self, texWidth, texHeight,
@@ -5110,7 +5100,7 @@ DWORD src, bool* IsProcessed)
         }
     }
 
-	return res;
+    return res;
 }
 
 /***
@@ -5119,9 +5109,9 @@ DWORD src, bool* IsProcessed)
 HRESULT STDMETHODCALLTYPE JuceSetTextureStageState(IDirect3DDevice8* self, DWORD Stage,
 D3DTEXTURESTAGESTATETYPE Type, DWORD Value)
 {
-	TRACE(&k_mydll,"JuceSetTextureStageState: CALLED.");
-	HRESULT res = g_orgSetTextureStageState(self, Stage, Type, Value);
-	return res;
+    TRACE(&k_mydll,"JuceSetTextureStageState: CALLED.");
+    HRESULT res = g_orgSetTextureStageState(self, Stage, Type, Value);
+    return res;
 }
 
 /***
@@ -5130,9 +5120,9 @@ D3DTEXTURESTAGESTATETYPE Type, DWORD Value)
 HRESULT STDMETHODCALLTYPE JuceUpdateTexture(IDirect3DDevice8* self,
 IDirect3DBaseTexture8* pSrc, IDirect3DBaseTexture8* pDest)
 {
-	TRACE(&k_mydll,"JuceUpdateTexture: CALLED.");
-	HRESULT res = g_orgUpdateTexture(self, pSrc, pDest);
-	return res;
+    TRACE(&k_mydll,"JuceUpdateTexture: CALLED.");
+    HRESULT res = g_orgUpdateTexture(self, pSrc, pDest);
+    return res;
 }
 
 /**
@@ -5141,23 +5131,23 @@ IDirect3DBaseTexture8* pSrc, IDirect3DBaseTexture8* pDest)
 HRESULT STDMETHODCALLTYPE JuceSetTexture(IDirect3DDevice8* self, DWORD stage,
 IDirect3DBaseTexture8* pTexture)
 {
-	HRESULT res = S_OK;
-	TRACE2X(&k_mydll,"JuceSetTexture: stage = %d, pTexture = %08x", stage, (DWORD)pTexture);
+    HRESULT res = S_OK;
+    TRACE2X(&k_mydll,"JuceSetTexture: stage = %d, pTexture = %08x", stage, (DWORD)pTexture);
 
-	res = g_orgSetTexture(self, stage, pTexture);
+    res = g_orgSetTexture(self, stage, pTexture);
 
     /*
-	//if (g_dumpTexturesMode) {
+    //if (g_dumpTexturesMode) {
     {
-		// dump texture to BMP
-		char name[BUFLEN];
-		ZeroMemory(name, BUFLEN);
-		sprintf(name, "C:\\texdump\\%s%05d.bmp", "tex-", g_frame_tex_count++);
-		D3DXSaveTextureToFile(name, D3DXIFF_BMP, pTexture, NULL);
-	}
+        // dump texture to BMP
+        char name[BUFLEN];
+        ZeroMemory(name, BUFLEN);
+        sprintf(name, "C:\\texdump\\%s%05d.bmp", "tex-", g_frame_tex_count++);
+        D3DXSaveTextureToFile(name, D3DXIFF_BMP, pTexture, NULL);
+    }
     */
 
-	return res;
+    return res;
 }
 
 /**
@@ -5174,9 +5164,9 @@ BOOL FileExists(char* filename)
                        OPEN_EXISTING,         // existing file only
                        FILE_ATTRIBUTE_NORMAL, // normal file
                        NULL);                 // no attr. template
-     
-    if (hFile == INVALID_HANDLE_VALUE) 
-    { 
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
         return FALSE;
     }
     CloseHandle(hFile);
@@ -5186,7 +5176,7 @@ BOOL FileExists(char* filename)
 string GetKitFolderKey(DWORD id)
 {
     //LogWithNumber(&k_mydll,"GetKitFolderKey: fileType = %d", fileType);
-    
+
     WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - dta[FIRST_ID]) / FILES_PER_TEAM);
     int fileType = ((id & 0x7fffffff) - dta[FIRST_ID]) % FILES_PER_TEAM;
     if (id & 0x80000000) fileType += FILES_PER_TEAM;
@@ -5255,7 +5245,7 @@ string GetKitFolderKeyByTeamId(WORD teamId, int fileType)
         isHome = (home == teamId);
     }
 
-//LogWithTwoNumbers(&k_mydll, "GetFolderKey(%d); fileType = %d", id, fileType); 
+//LogWithTwoNumbers(&k_mydll, "GetFolderKey(%d); fileType = %d", id, fileType);
     switch (fileType) {
         case GA_KIT:
 
@@ -5342,16 +5332,16 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
         return FALSE;
     }
 
-	WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - dta[FIRST_ID]) / FILES_PER_TEAM);
-	int fileType = ((id & 0x7fffffff) - dta[FIRST_ID]) % FILES_PER_TEAM;
-	if (id & 0x80000000) {
-		fileType += FILES_PER_TEAM;
+    WORD teamId = GetTeamIdByOrdinalAFS(((id & 0x7fffffff) - dta[FIRST_ID]) / FILES_PER_TEAM);
+    int fileType = ((id & 0x7fffffff) - dta[FIRST_ID]) % FILES_PER_TEAM;
+    if (id & 0x80000000) {
+        fileType += FILES_PER_TEAM;
     }
 
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (!col) {
-        // no kit collection for this team 
+        // no kit collection for this team
         return FALSE;
     }
     Kit* kit = NULL;
@@ -5361,8 +5351,8 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
 
     string kitKey = GetKitFolderKey(id);
 //LogWithString(&k_mydll, "kitKey = {%s}", (char*)kitKey.c_str());
-	int kitType = GK_TYPE;
-	int kitPart = KITPART_SHIRT;
+    int kitType = GK_TYPE;
+    int kitPart = KITPART_SHIRT;
 
     switch (fileType) {
         case GA_KIT:
@@ -5379,7 +5369,7 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
         case GA_NUMBERS:
             kit = MAP_FIND(col->goalkeepers,kitKey);
             sprintf(fileClue1,"\\%s",(kit)?kit->numbersFile:"");
-			kitPart = KITPART_NUMBERS;
+            kitPart = KITPART_NUMBERS;
             break;
         case GA_FONT:
             strcpy(fileClue1,"\\font");
@@ -5461,7 +5451,7 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
     char filename1[BUFLEN];
     ZeroMemory(filename1, BUFLEN);
     sprintf(filename1, "%sGDB\\uni\\%s\\%s%s%s%s", GetPESInfo()->gdbDir, col->foldername,
-    					kitFoldername, fileClue1, suffix, ext);
+                        kitFoldername, fileClue1, suffix, ext);
 
     if (FileExists(filename1)) {
         lstrcpy(filename, filename1);
@@ -5497,7 +5487,7 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
         char filename2[BUFLEN];
         ZeroMemory(filename2, BUFLEN);
         sprintf(filename2, "%sGDB\\uni\\%s\\%s%s%s%s", GetPESInfo()->gdbDir, col->foldername,
-        						kitFoldername, fileClue2, suffix, ext);
+                                kitFoldername, fileClue2, suffix, ext);
 
         if (FileExists(filename2)) {
             lstrcpy(filename, filename2);
@@ -5505,7 +5495,7 @@ BOOL FindImageFileForIdEx(DWORD id, char* suffix, char* filename, char* ext, BOO
             return TRUE;
         }
     }
-    
+
     filename[0] = '\0';
     return FALSE;
 }
@@ -5542,7 +5532,7 @@ DWORD FindShortsPalImageFileForId(DWORD id, string& kitFolderKey, char* filename
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
-    	string idKitFolderKey = GetKitFolderKey(id);
+        string idKitFolderKey = GetKitFolderKey(id);
         Kit* kit = (fileType < PA_SHIRT) ?
             MAP_FIND(col->goalkeepers, idKitFolderKey) :
             MAP_FIND(col->players, idKitFolderKey);
@@ -5579,7 +5569,7 @@ DWORD FindMaskFileForId(DWORD id, char* filename)
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
-    	string idKitFolderKey = GetKitFolderKey(id);
+        string idKitFolderKey = GetKitFolderKey(id);
         Kit* kit = (fileType < PA_SHIRT) ?
             MAP_FIND(col->goalkeepers, idKitFolderKey) :
             MAP_FIND(col->players, idKitFolderKey);
@@ -5588,30 +5578,30 @@ DWORD FindMaskFileForId(DWORD id, char* filename)
         }
         if (!(kit->attDefined & MASK_FILE)) goto useStandard;
         int n = lstrlen(kit->maskFile);
-		char* ext = (n>3)?(kit->maskFile)+n-4:"";
+        char* ext = (n>3)?(kit->maskFile)+n-4:"";
         // only png
-        if (lstrcmpi(ext, ".png") != 0) goto useStandard;	
-        
+        if (lstrcmpi(ext, ".png") != 0) goto useStandard;
+
         char filename1[BUFLEN];
         ZeroMemory(filename1, BUFLEN);
         sprintf(filename1, "%s%s\\%s", GetPESInfo()->gdbDir, kit->foldername, kit->maskFile);
-        
+
         // see as relative path first
         if (FileExists(filename1)) {
-        	lstrcpy(filename, filename1);
-        	return TEXTYPE_PNG;
+            lstrcpy(filename, filename1);
+            return TEXTYPE_PNG;
         }
-        
+
         // then, look in mask directory
         sprintf(filename1, "%sGDB\\uni\\masks\\%s", GetPESInfo()->gdbDir, kit->maskFile);
-		if (FileExists(filename1)) {
-        	lstrcpy(filename, filename1);
-        	return TEXTYPE_PNG;
+        if (FileExists(filename1)) {
+            lstrcpy(filename, filename1);
+            return TEXTYPE_PNG;
         }
     }
-    
+
     useStandard:
-    // use standard mask 
+    // use standard mask
     sprintf(filename, "%sGDB\\uni\\masks\\mask.png", GetPESInfo()->gdbDir);
     return TEXTYPE_PNG;
 }
@@ -5624,18 +5614,18 @@ DWORD FindOverlayFileForId(DWORD id, char* filename)
     gdbFindKitsForTeam(gdb, teamId);
     KitCollection* col = MAP_FIND(gdb->uni,teamId);
     if (col) {
-    	string idKitFolderKey = GetKitFolderKey(id);
+        string idKitFolderKey = GetKitFolderKey(id);
         Kit* kit = (fileType < PA_SHIRT) ?
             MAP_FIND(col->goalkeepers, idKitFolderKey) :
             MAP_FIND(col->players, idKitFolderKey);
         if (!kit) {
-			return TEXTYPE_NONE;
+            return TEXTYPE_NONE;
         }
         if (!(kit->attDefined & OVERLAY_FILE)) return TEXTYPE_NONE;
         char filename1[BUFLEN];
         ZeroMemory(filename1, BUFLEN);
         sprintf(filename1, "%s%s\\%s", GetPESInfo()->gdbDir, kit->foldername, kit->overlayFile);
-        
+
         // see as relative path first
         if (FileExists(filename1)) {
             lstrcpy(filename, filename1);
@@ -5647,10 +5637,10 @@ DWORD FindOverlayFileForId(DWORD id, char* filename)
                 return TEXTYPE_BMP;
             }
         }
-        
+
         // then, look in overlay directory
         sprintf(filename1, "%sGDB\\uni\\overlay\\%s", GetPESInfo()->gdbDir, kit->overlayFile);
-		if (FileExists(filename1)) {
+        if (FileExists(filename1)) {
             lstrcpy(filename, filename1);
             int n = lstrlen(filename);
             char* ext = (n>3)?filename+n-4:"";
@@ -5668,129 +5658,129 @@ DWORD FindOverlayFileForId(DWORD id, char* filename)
 
 BOOL IsNumOrFontTexture(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_NUMBERS:
-		case GA_FONT:
-		case GB_NUMBERS:
-		case GB_FONT:
-		case PA_NUMBERS:
-		case PA_FONT:
-		case PB_NUMBERS:
-		case PB_FONT:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_NUMBERS:
+        case GA_FONT:
+        case GB_NUMBERS:
+        case GB_FONT:
+        case PA_NUMBERS:
+        case PA_FONT:
+        case PB_NUMBERS:
+        case PB_FONT:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL IsNumbersTexture(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_NUMBERS:
-		case GB_NUMBERS:
-		case PA_NUMBERS:
-		case PB_NUMBERS:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_NUMBERS:
+        case GB_NUMBERS:
+        case PA_NUMBERS:
+        case PB_NUMBERS:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL IsGK(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_KIT:
-		case GB_KIT:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_KIT:
+        case GB_KIT:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL IsGKTexture(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_KIT:
-		case GA_UNKNOWN1:
-		case GA_UNKNOWN2:
-		case GA_NUMBERS:
-		case GA_FONT:
-		case GB_KIT:
-		case GB_UNKNOWN1:
-		case GB_UNKNOWN2:
-		case GB_NUMBERS:
-		case GB_FONT:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_KIT:
+        case GA_UNKNOWN1:
+        case GA_UNKNOWN2:
+        case GA_NUMBERS:
+        case GA_FONT:
+        case GB_KIT:
+        case GB_UNKNOWN1:
+        case GB_UNKNOWN2:
+        case GB_NUMBERS:
+        case GB_FONT:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL IsShirt(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_KIT:
-		case GB_KIT:
-		case PA_SHIRT:
-		case PB_SHIRT:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_KIT:
+        case GB_KIT:
+        case PA_SHIRT:
+        case PB_SHIRT:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL IsShortsOrSocks(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_UNKNOWN1:
-		case GA_UNKNOWN2:
-		case GB_UNKNOWN1:
-		case GB_UNKNOWN2:
-		case PA_SHORTS:
-		case PA_SOCKS:
-		case PB_SHORTS:
-		case PB_SOCKS:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_UNKNOWN1:
+        case GA_UNKNOWN2:
+        case GB_UNKNOWN1:
+        case GB_UNKNOWN2:
+        case PA_SHORTS:
+        case PA_SOCKS:
+        case PB_SHORTS:
+        case PB_SOCKS:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL IsKitTexture(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case GA_KIT:
-		case GB_KIT:
-		case PA_SHIRT:
-		case PA_SHORTS:
-		case PA_SOCKS:
-		case PB_SHIRT:
-		case PB_SHORTS:
-		case PB_SOCKS:
-			return TRUE;
-	}
-	return FALSE;
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case GA_KIT:
+        case GB_KIT:
+        case PA_SHIRT:
+        case PA_SHORTS:
+        case PA_SOCKS:
+        case PB_SHIRT:
+        case PB_SHORTS:
+        case PB_SOCKS:
+            return TRUE;
+    }
+    return FALSE;
 }
 
 DWORD GetSplitKitOffset(DWORD id)
 {
-	DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
-	switch (ordinal) {
-		case PA_SHIRT:
-		case PB_SHIRT:
+    DWORD ordinal = (id - dta[FIRST_ID]) % FILES_PER_TEAM;
+    switch (ordinal) {
+        case PA_SHIRT:
+        case PB_SHIRT:
             return 0;
-		case PA_SHORTS:
-		case PB_SHORTS:
-			return 1;
-		case PA_SOCKS:
-		case PB_SOCKS:
-			return 2;
-	}
-	return 0xffffffff;
+        case PA_SHORTS:
+        case PB_SHORTS:
+            return 1;
+        case PA_SOCKS:
+        case PB_SOCKS:
+            return 2;
+    }
+    return 0xffffffff;
 }
 
-BOOL TeamDirExists(DWORD id) 
+BOOL TeamDirExists(DWORD id)
 {
     KitCollection* col = MAP_FIND(gdb->uni,id);
     return (col)?TRUE:FALSE;
@@ -5799,59 +5789,59 @@ BOOL TeamDirExists(DWORD id)
 void SetKitInfo(Kit* kit, KITINFO* kitInfo, BOOL editable)
 {
     //LogWithNumber(&k_mydll, "SetKitInfo: kitType is at %08x", (DWORD)&(kitInfo->kitType));
-	// set kit type
+    // set kit type
     kitInfo->kitType = 1;
 
-	// set collar
-	if (kit && (kit->attDefined & COLLAR)) {
-		kitInfo->collar = kit->collar;
-	}
-	// set model
-	if (kit && (kit->attDefined & MODEL)) {
-		kitInfo->model = kit->model;
-	}
-	// set name location
-	if (kit && (kit->attDefined & NAME_LOCATION)) {
-		kitInfo->nameLocation = kit->nameLocation;
-	}
-	// set logo location
-	if (kit && (kit->attDefined & LOGO_LOCATION)) {
-		kitInfo->logoLocation = kit->logoLocation;
-	}
-   	// set name shape
-	if (kit && (kit->attDefined & NAME_SHAPE)) {
-		kitInfo->nameShape = kit->nameShape;
-	}
+    // set collar
+    if (kit && (kit->attDefined & COLLAR)) {
+        kitInfo->collar = kit->collar;
+    }
+    // set model
+    if (kit && (kit->attDefined & MODEL)) {
+        kitInfo->model = kit->model;
+    }
+    // set name location
+    if (kit && (kit->attDefined & NAME_LOCATION)) {
+        kitInfo->nameLocation = kit->nameLocation;
+    }
+    // set logo location
+    if (kit && (kit->attDefined & LOGO_LOCATION)) {
+        kitInfo->logoLocation = kit->logoLocation;
+    }
+    // set name shape
+    if (kit && (kit->attDefined & NAME_SHAPE)) {
+        kitInfo->nameShape = kit->nameShape;
+    }
     // set shirt number position
-	if (kit && (kit->attDefined & SHIRT_NUMBER_LOCATION)) {
-		kitInfo->shirtNumberLocation = kit->shirtNumberLocation;
-	}
-	
-	// set radar color
-	if (kit && (kit->attDefined & RADAR_COLOR)) {
-		kitInfo->shirtColors[0] = 0x8000
-			+((kit->radarColor.r>>3) & 31)
-			+0x20*((kit->radarColor.g>>3) & 31)
-			+0x400*((kit->radarColor.b>>3) & 31);
-	}
-	
-	// set shorts main color (for under-shorts)
-	if (kit && (kit->attDefined & SHORTS_MAIN_COLOR)) {
-		kitInfo->shortsColors[0] = 0x8000
-			+((kit->shortsMainColor.r>>3) & 31)
-			+0x20*((kit->shortsMainColor.g>>3) & 31)
-			+0x400*((kit->shortsMainColor.b>>3) & 31);
-	}
-	
+    if (kit && (kit->attDefined & SHIRT_NUMBER_LOCATION)) {
+        kitInfo->shirtNumberLocation = kit->shirtNumberLocation;
+    }
+
+    // set radar color
+    if (kit && (kit->attDefined & RADAR_COLOR)) {
+        kitInfo->shirtColors[0] = 0x8000
+            +((kit->radarColor.r>>3) & 31)
+            +0x20*((kit->radarColor.g>>3) & 31)
+            +0x400*((kit->radarColor.b>>3) & 31);
+    }
+
+    // set shorts main color (for under-shorts)
+    if (kit && (kit->attDefined & SHORTS_MAIN_COLOR)) {
+        kitInfo->shortsColors[0] = 0x8000
+            +((kit->shortsMainColor.r>>3) & 31)
+            +0x20*((kit->shortsMainColor.g>>3) & 31)
+            +0x400*((kit->shortsMainColor.b>>3) & 31);
+    }
+
     /*
-	// set name type
-	if (kit && (kit->attDefined & NAME_TYPE)) {
-		kitInfo->nameType = kit->nameType;
-	}
-	// set number type
-	if (kit && (kit->attDefined & NUMBER_TYPE)) {
-		kitInfo->numberType = kit->numberType;
-	}
+    // set name type
+    if (kit && (kit->attDefined & NAME_TYPE)) {
+        kitInfo->nameType = kit->nameType;
+    }
+    // set number type
+    if (kit && (kit->attDefined & NUMBER_TYPE)) {
+        kitInfo->numberType = kit->numberType;
+    }
 
     if (kit && strstr(kit->foldername,"France")) {
         FILE* f = fopen("kitserver\\kitinfo.bin","wb");
@@ -5863,86 +5853,86 @@ void SetKitInfo(Kit* kit, KITINFO* kitInfo, BOOL editable)
 
 DWORD RGBAColor2DWORD(RGBAColor color)
 {
-	DWORD res = color.r;
-	res += (color.g <<  8);
-	res += (color.b << 16);
-	res += (color.a << 24);
-	return res;
+    DWORD res = color.r;
+    res += (color.g <<  8);
+    res += (color.b << 16);
+    res += (color.a << 24);
+    return res;
 };
 
 DWORD kservSetRadarColor()
 {
-	DWORD res=MasterCallNext();
+    DWORD res=MasterCallNext();
 
-	for (int i=0; i<2; i++) {
-		if (savedRadarColor[i]) {
-			DWORD dwColor=RGBAColor2DWORD(*savedRadarColor[i]);
-			((DWORD*)dta[RADARCOLORS])[i]=dwColor;
-			//LogWithTwoNumbers(&k_mydll, "Set radar color %d to %.8x", i, dwColor);
-		};
-	};
+    for (int i=0; i<2; i++) {
+        if (savedRadarColor[i]) {
+            DWORD dwColor=RGBAColor2DWORD(*savedRadarColor[i]);
+            ((DWORD*)dta[RADARCOLORS])[i]=dwColor;
+            //LogWithTwoNumbers(&k_mydll, "Set radar color %d to %.8x", i, dwColor);
+        };
+    };
 
-	return res;
+    return res;
 };
 
 void SetShortsInfo(Kit* kit, KITINFO* kitInfo, BOOL editable)
 {
     // set shorts number position
-	if (kit && (kit->attDefined & SHORTS_NUMBER_LOCATION)) {
-		kitInfo->shortsNumberLocation = kit->shortsNumberLocation;
-	}
+    if (kit && (kit->attDefined & SHORTS_NUMBER_LOCATION)) {
+        kitInfo->shortsNumberLocation = kit->shortsNumberLocation;
+    }
 }
 
 void ResetKitPackInfo(KITPACKINFO* kitPackInfo, KITPACKINFO* saved)
 {
     /*
-	kitPackInfo->gkHome.kitType = saved->gkHome.kitType;
-	kitPackInfo->gkHome.collar = saved->gkHome.collar;
-	kitPackInfo->gkHome.model = saved->gkHome.model;
-	kitPackInfo->gkHome.shirtNumberLocation = saved->gkHome.shirtNumberLocation;
-	kitPackInfo->gkHome.shortsNumberLocation = saved->gkHome.shortsNumberLocation;
-	kitPackInfo->gkHome.nameLocation = saved->gkHome.nameLocation;
-	kitPackInfo->gkHome.logoLocation = saved->gkHome.logoLocation;
-	kitPackInfo->gkHome.nameShape = saved->gkHome.nameShape;
-	kitPackInfo->gkHome.shirtColors[0] = saved->gkHome.shirtColors[0];
-	//kitPackInfo->gkHome.nameType = saved->gkHome.nameType;
-	//kitPackInfo->gkHome.numberType = saved->gkHome.numberType;
+    kitPackInfo->gkHome.kitType = saved->gkHome.kitType;
+    kitPackInfo->gkHome.collar = saved->gkHome.collar;
+    kitPackInfo->gkHome.model = saved->gkHome.model;
+    kitPackInfo->gkHome.shirtNumberLocation = saved->gkHome.shirtNumberLocation;
+    kitPackInfo->gkHome.shortsNumberLocation = saved->gkHome.shortsNumberLocation;
+    kitPackInfo->gkHome.nameLocation = saved->gkHome.nameLocation;
+    kitPackInfo->gkHome.logoLocation = saved->gkHome.logoLocation;
+    kitPackInfo->gkHome.nameShape = saved->gkHome.nameShape;
+    kitPackInfo->gkHome.shirtColors[0] = saved->gkHome.shirtColors[0];
+    //kitPackInfo->gkHome.nameType = saved->gkHome.nameType;
+    //kitPackInfo->gkHome.numberType = saved->gkHome.numberType;
 
-	kitPackInfo->gkAway.kitType = saved->gkAway.kitType;
-	kitPackInfo->gkAway.collar = saved->gkAway.collar;
-	kitPackInfo->gkAway.model = saved->gkAway.model;
-	kitPackInfo->gkAway.shirtNumberLocation = saved->gkAway.shirtNumberLocation;
-	kitPackInfo->gkAway.shortsNumberLocation = saved->gkAway.shortsNumberLocation;
-	kitPackInfo->gkAway.nameLocation = saved->gkAway.nameLocation;
-	kitPackInfo->gkAway.logoLocation = saved->gkAway.logoLocation;
-	kitPackInfo->gkAway.nameShape = saved->gkAway.nameShape;
-	kitPackInfo->gkAway.shirtColors[0] = saved->gkAway.shirtColors[0];
-	//kitPackInfo->gkAway.nameType = saved->gkAway.nameType;
-	//kitPackInfo->gkAway.numberType = saved->gkAway.numberType;
+    kitPackInfo->gkAway.kitType = saved->gkAway.kitType;
+    kitPackInfo->gkAway.collar = saved->gkAway.collar;
+    kitPackInfo->gkAway.model = saved->gkAway.model;
+    kitPackInfo->gkAway.shirtNumberLocation = saved->gkAway.shirtNumberLocation;
+    kitPackInfo->gkAway.shortsNumberLocation = saved->gkAway.shortsNumberLocation;
+    kitPackInfo->gkAway.nameLocation = saved->gkAway.nameLocation;
+    kitPackInfo->gkAway.logoLocation = saved->gkAway.logoLocation;
+    kitPackInfo->gkAway.nameShape = saved->gkAway.nameShape;
+    kitPackInfo->gkAway.shirtColors[0] = saved->gkAway.shirtColors[0];
+    //kitPackInfo->gkAway.nameType = saved->gkAway.nameType;
+    //kitPackInfo->gkAway.numberType = saved->gkAway.numberType;
 
-	kitPackInfo->plHome.kitType = saved->plHome.kitType;
-	kitPackInfo->plHome.collar = saved->plHome.collar;
-	kitPackInfo->plHome.model = saved->plHome.model;
-	kitPackInfo->plHome.shirtNumberLocation = saved->plHome.shirtNumberLocation;
-	kitPackInfo->plHome.shortsNumberLocation = saved->plHome.shortsNumberLocation;
-	kitPackInfo->plHome.nameLocation = saved->plHome.nameLocation;
-	kitPackInfo->plHome.logoLocation = saved->plHome.logoLocation;
-	kitPackInfo->plHome.nameShape = saved->plHome.nameShape;
-	kitPackInfo->plHome.shirtColors[0] = saved->plHome.shirtColors[0];
-	//kitPackInfo->plHome.nameType = saved->plHome.nameType;
-	//kitPackInfo->plHome.numberType = saved->plHome.numberType;
+    kitPackInfo->plHome.kitType = saved->plHome.kitType;
+    kitPackInfo->plHome.collar = saved->plHome.collar;
+    kitPackInfo->plHome.model = saved->plHome.model;
+    kitPackInfo->plHome.shirtNumberLocation = saved->plHome.shirtNumberLocation;
+    kitPackInfo->plHome.shortsNumberLocation = saved->plHome.shortsNumberLocation;
+    kitPackInfo->plHome.nameLocation = saved->plHome.nameLocation;
+    kitPackInfo->plHome.logoLocation = saved->plHome.logoLocation;
+    kitPackInfo->plHome.nameShape = saved->plHome.nameShape;
+    kitPackInfo->plHome.shirtColors[0] = saved->plHome.shirtColors[0];
+    //kitPackInfo->plHome.nameType = saved->plHome.nameType;
+    //kitPackInfo->plHome.numberType = saved->plHome.numberType;
 
-	kitPackInfo->plAway.kitType = saved->plAway.kitType;
-	kitPackInfo->plAway.collar = saved->plAway.collar;
-	kitPackInfo->plAway.model = saved->plAway.model;
-	kitPackInfo->plAway.shirtNumberLocation = saved->plAway.shirtNumberLocation;
-	kitPackInfo->plAway.shortsNumberLocation = saved->plAway.shortsNumberLocation;
-	kitPackInfo->plAway.nameLocation = saved->plAway.nameLocation;
-	kitPackInfo->plAway.logoLocation = saved->plAway.logoLocation;
-	kitPackInfo->plAway.nameShape = saved->plAway.nameShape;
-	kitPackInfo->plAway.shirtColors[0] = saved->plAway.shirtColors[0];
-	//kitPackInfo->plAway.nameType = saved->plAway.nameType;
-	//kitPackInfo->plAway.numberType = saved->plAway.numberType;
+    kitPackInfo->plAway.kitType = saved->plAway.kitType;
+    kitPackInfo->plAway.collar = saved->plAway.collar;
+    kitPackInfo->plAway.model = saved->plAway.model;
+    kitPackInfo->plAway.shirtNumberLocation = saved->plAway.shirtNumberLocation;
+    kitPackInfo->plAway.shortsNumberLocation = saved->plAway.shortsNumberLocation;
+    kitPackInfo->plAway.nameLocation = saved->plAway.nameLocation;
+    kitPackInfo->plAway.logoLocation = saved->plAway.logoLocation;
+    kitPackInfo->plAway.nameShape = saved->plAway.nameShape;
+    kitPackInfo->plAway.shirtColors[0] = saved->plAway.shirtColors[0];
+    //kitPackInfo->plAway.nameType = saved->plAway.nameType;
+    //kitPackInfo->plAway.numberType = saved->plAway.numberType;
     */
     memcpy(kitPackInfo, saved, sizeof(KITPACKINFO));
 }
@@ -5964,36 +5954,36 @@ void ResetTeamInfo(KITPACKINFO* kitPackInfo, TEAMKITINFO* saved)
  *//*
 void JuceGetClubTeamInfo(DWORD id,DWORD result)
 {
-	TRACE2(&k_mydll,"JuceGetClubTeamInfo: CALLED for id = %003d.", id);
+    TRACE2(&k_mydll,"JuceGetClubTeamInfo: CALLED for id = %003d.", id);
 
-	if (id == 0xf2) {
-		// master league team (home)
-		BYTE* mlData = *((BYTE**)dta[ML_HOME_AREA]);
-		id = *((DWORD*)(mlData + 0x6c)) & 0xffff; // 3rd byte is a flag of "edited" kit
-	} else if (id == 0xf3) {
-		// master league team (away)
-		BYTE* mlData = *((BYTE**)dta[ML_AWAY_AREA]);
-		id = *((DWORD*)(mlData + 0x6c)) & 0xffff; // 3rd byte is a flag of "edited" kit
-	}
+    if (id == 0xf2) {
+        // master league team (home)
+        BYTE* mlData = *((BYTE**)dta[ML_HOME_AREA]);
+        id = *((DWORD*)(mlData + 0x6c)) & 0xffff; // 3rd byte is a flag of "edited" kit
+    } else if (id == 0xf3) {
+        // master league team (away)
+        BYTE* mlData = *((BYTE**)dta[ML_AWAY_AREA]);
+        id = *((DWORD*)(mlData + 0x6c)) & 0xffff; // 3rd byte is a flag of "edited" kit
+    }
 
-	if (id >= 64 && id < 255 && TeamDirExists(id)) {
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[result] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, (KITPACKINFO*)result, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = id;
-				g_teamKitInfo[result] = teamKitInfo;
-				//DumpData((BYTE*)&teamKitInfo->kits, sizeof(KITPACKINFO));
-			} else {
-				Log(&k_mydll,"JuceGetClubTeamInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
+    if (id >= 64 && id < 255 && TeamDirExists(id)) {
+        // check if we need to store it in the hash-map
+        if (g_teamKitInfo[result] == NULL) {
+            // not yet saved: save it
+            TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
+                    0, sizeof(TEAMKITINFO));
+            if (teamKitInfo) {
+                memcpy(&teamKitInfo->kits, (KITPACKINFO*)result, sizeof(KITPACKINFO));
+                teamKitInfo->teamId = id;
+                g_teamKitInfo[result] = teamKitInfo;
+                //DumpData((BYTE*)&teamKitInfo->kits, sizeof(KITPACKINFO));
+            } else {
+                Log(&k_mydll,"JuceGetClubTeamInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
+            }
             LogWithNumber(&k_mydll,"JuceGetClubTeamInfo: stored id = %003d.", id);
-		}
+        }
 
-		KITPACKINFO* kitPackInfo = (KITPACKINFO*)result;
+        KITPACKINFO* kitPackInfo = (KITPACKINFO*)result;
 
         KitCollection* col = MAP_FIND(gdb->uni,id);
         if (col) {
@@ -6005,7 +5995,7 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
             Kit* pb = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PB_SHIRT));
             Kit* paShorts = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PA_SHORTS));
             Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKey(dta[FIRST_ID]+id*FILES_PER_TEAM+PB_SHORTS));
-            
+
             //BOOL editable = kDB->editable[id];
             BOOL editable = TRUE;
 
@@ -6019,13 +6009,13 @@ void JuceGetClubTeamInfo(DWORD id,DWORD result)
             SetShortsInfo(paShorts, &kitPackInfo->plHome, editable);
             SetShortsInfo(pbShorts, &kitPackInfo->plAway, editable);
         }
-	}
-	return;
+    }
+    return;
 }
 */
 void restoreLicensedOrdinals()
 {
-	Log(&k_mydll,"restoreLicensedOrdinals: putting back 4 and 6");
+    Log(&k_mydll,"restoreLicensedOrdinals: putting back 4 and 6");
     WORD* licensed_ids = (WORD*)dta[LICENSED_LIST];
     licensed_ids[0] = g_licensed_ordinals[0];
     licensed_ids[1] = g_licensed_ordinals[1];
@@ -6033,36 +6023,36 @@ void restoreLicensedOrdinals()
 
 void clearTeamKitInfo()
 {
-	savedRadarColor[0]=NULL;
+    savedRadarColor[0]=NULL;
     savedRadarColor[1]=NULL;
-	
-	if (g_teamKitInfo.size() == 0) {
-		return;
-	}
 
-	Log(&k_mydll,"clearTeamKitInfo: restoring kitinfo edits");
+    if (g_teamKitInfo.size() == 0) {
+        return;
+    }
 
-	HANDLE pHeap = GetProcessHeap();
-	for(g_teamKitInfoIterator = g_teamKitInfo.begin(); 
-			g_teamKitInfoIterator != g_teamKitInfo.end();
-			g_teamKitInfoIterator++)
-	{
-		KITPACKINFO* kitPackInfo = (KITPACKINFO*)g_teamKitInfoIterator->first;
-		TEAMKITINFO* savedTeamInfo = g_teamKitInfoIterator->second;
+    Log(&k_mydll,"clearTeamKitInfo: restoring kitinfo edits");
 
-		LogWithTwoNumbers(&k_mydll,"clearTeamKitInfo: restoring info for %03d at %08x", 
-				savedTeamInfo->teamId, (DWORD)kitPackInfo);
+    HANDLE pHeap = GetProcessHeap();
+    for(g_teamKitInfoIterator = g_teamKitInfo.begin();
+            g_teamKitInfoIterator != g_teamKitInfo.end();
+            g_teamKitInfoIterator++)
+    {
+        KITPACKINFO* kitPackInfo = (KITPACKINFO*)g_teamKitInfoIterator->first;
+        TEAMKITINFO* savedTeamInfo = g_teamKitInfoIterator->second;
 
-		// reset licensed flags
+        LogWithTwoNumbers(&k_mydll,"clearTeamKitInfo: restoring info for %03d at %08x",
+                savedTeamInfo->teamId, (DWORD)kitPackInfo);
+
+        // reset licensed flags
         //ResetKitPackInfo(kitPackInfo, &savedTeamInfo->kits);
         ResetTeamInfo(kitPackInfo, savedTeamInfo);
 
-		// free the memory for saved pack
-		HeapFree(pHeap, 0, savedTeamInfo);
-	}
+        // free the memory for saved pack
+        HeapFree(pHeap, 0, savedTeamInfo);
+    }
 
-	// clear the hash-map
-	g_teamKitInfo.clear();
+    // clear the hash-map
+    g_teamKitInfo.clear();
 
     // disable kit loading
     g_kit_loading_enabled = false;
@@ -6076,7 +6066,7 @@ void JuceSet2Dkits()
     // initialize home iterators
     WORD teamId = GetTeamId(HOME);
     if (teamId != 0xffff) {
-    	gdbFindKitsForTeam(gdb, teamId);
+        gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (col) {
             g_homeShirtIteratorPL = (*(col->players)).begin();
@@ -6086,18 +6076,18 @@ void JuceSet2Dkits()
             g_homeSocksIteratorPL = (*(col->players)).begin();
             g_homeSocksIteratorGK = (*(col->goalkeepers)).begin();
 
-            g_homeShirtIterator = (typ == PL_TYPE) ? 
+            g_homeShirtIterator = (typ == PL_TYPE) ?
                 g_homeShirtIteratorPL : g_homeShirtIteratorGK;
-            g_homeShortsIterator = (typ == PL_TYPE) ? 
+            g_homeShortsIterator = (typ == PL_TYPE) ?
                 g_homeShirtIteratorPL : g_homeShirtIteratorGK;
-            g_homeSocksIterator = (typ == PL_TYPE) ? 
+            g_homeSocksIterator = (typ == PL_TYPE) ?
                 g_homeShirtIteratorPL : g_homeShirtIteratorGK;
         }
     }
     // initialize away iterators
     teamId = GetTeamId(AWAY);
     if (teamId != 0xffff) {
-    	gdbFindKitsForTeam(gdb, teamId);
+        gdbFindKitsForTeam(gdb, teamId);
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (col) {
             g_awayShirtIteratorPL = (*(col->players)).begin();
@@ -6107,11 +6097,11 @@ void JuceSet2Dkits()
             g_awaySocksIteratorPL = (*(col->players)).begin();
             g_awaySocksIteratorGK = (*(col->goalkeepers)).begin();
 
-            g_awayShirtIterator = (typ == PL_TYPE) ? 
+            g_awayShirtIterator = (typ == PL_TYPE) ?
                 g_awayShirtIteratorPL : g_awayShirtIteratorGK;
-            g_awayShortsIterator = (typ == PL_TYPE) ? 
+            g_awayShortsIterator = (typ == PL_TYPE) ?
                 g_awayShirtIteratorPL : g_awayShirtIteratorGK;
-            g_awaySocksIterator = (typ == PL_TYPE) ? 
+            g_awaySocksIterator = (typ == PL_TYPE) ?
                 g_awayShirtIteratorPL : g_awayShirtIteratorGK;
         }
     }
@@ -6119,7 +6109,7 @@ void JuceSet2Dkits()
     // hook Present method
     HookFunction(hk_D3D_Present,(DWORD)JucePresent);
     Log(&k_mydll,"Present hooked.");
-	
+
     // reset the keys to defaults
     ResetKitKeys(true);
 
@@ -6142,7 +6132,7 @@ bool IsLicensed(WORD teamId)
 
 DWORD JuceReadTeamInfoOnReplaySave(DWORD id, DWORD p1)
 {
-	Log(&k_mydll,"JuceReadTeamInfoOnReplaySave: restoring kitinfo edits");
+    Log(&k_mydll,"JuceReadTeamInfoOnReplaySave: restoring kitinfo edits");
 
     clearTeamKitInfo();
 
@@ -6153,7 +6143,7 @@ DWORD JuceReadTeamInfoOnReplaySave(DWORD id, DWORD p1)
 
 DWORD JuceReadTeamInfoOnReplaySave2(DWORD id)
 {
-	Log(&k_mydll,"JuceReadTeamInfoOnReplaySave2: restoring kitinfo edits");
+    Log(&k_mydll,"JuceReadTeamInfoOnReplaySave2: restoring kitinfo edits");
 
     clearTeamKitInfo();
 
@@ -6164,7 +6154,7 @@ DWORD JuceReadTeamInfoOnReplaySave2(DWORD id)
 
 DWORD JuceReadTeamInfoOnMLSave()
 {
-	Log(&k_mydll,"JuceReadTeamInfoOnMLSave: restoring kitinfo edits");
+    Log(&k_mydll,"JuceReadTeamInfoOnMLSave: restoring kitinfo edits");
 
     clearTeamKitInfo();
 
@@ -6175,7 +6165,7 @@ DWORD JuceReadTeamInfoOnMLSave()
 
 DWORD kservSetFlag()
 {
-	Log(&k_mydll,"kservSetFlag: restoring kitinfo edits");
+    Log(&k_mydll,"kservSetFlag: restoring kitinfo edits");
 
     restoreLicensedOrdinals();
     clearTeamKitInfo();
@@ -6191,7 +6181,7 @@ DWORD kservSetFlag()
 
 DWORD kservResetFlag()
 {
-	Log(&k_mydll,"kservResetFlag: restoring kitinfo edits");
+    Log(&k_mydll,"kservResetFlag: restoring kitinfo edits");
 
     restoreLicensedOrdinals();
     clearTeamKitInfo();
@@ -6208,7 +6198,7 @@ DWORD kservResetFlag()
 
 DWORD kservResetFlag2()
 {
-	Log(&k_mydll,"kservResetFlag2: restoring kitinfo edits");
+    Log(&k_mydll,"kservResetFlag2: restoring kitinfo edits");
 
     restoreLicensedOrdinals();
     clearTeamKitInfo();
@@ -6232,7 +6222,7 @@ void ClearTextureMaps()
 
 DWORD kservProcessKit(DWORD dest, DWORD src)
 {
-	Log(&k_mydll,"kservProcessKit: processing kit");
+    Log(&k_mydll,"kservProcessKit: processing kit");
     LogWithNumber(&k_mydll, "kservProcessKit: destination buffer: %08x", dest);
     LogWithNumber(&k_mydll, "kservProcessKit: source buffer: %08x", src);
 
@@ -6254,7 +6244,7 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
             LogWithTwoNumbers(&k_mydll, "kservProcessKit: made mapping: %08x -> %d", dest, sit->second);
 
         } else {
-            // nothing found. Make sure that we remove this dest key from _source_to_id, 
+            // nothing found. Make sure that we remove this dest key from _source_to_id,
             // if it exists in there
             /*
             unordered_map<DWORD,DWORD>::iterator dit = _source_to_id.find(dest);
@@ -6263,7 +6253,7 @@ DWORD kservProcessKit(DWORD dest, DWORD src)
             }
             */
         }
-    } 
+    }
     return result;
 }
 
@@ -6276,7 +6266,7 @@ void setTeamKitInfo()
 
     WORD home = GetTeamId(HOME);
     WORD away = GetTeamId(AWAY);
-    
+
     savedRadarColor[0]=NULL;
     savedRadarColor[1]=NULL;
 
@@ -6284,22 +6274,22 @@ void setTeamKitInfo()
     {
         KITPACKINFO* ki = GetKitPackInfo(HOME);
 
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[(DWORD)ki] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = home;
-				g_teamKitInfo[(DWORD)ki] = teamKitInfo;
+        // check if we need to store it in the hash-map
+        if (g_teamKitInfo[(DWORD)ki] == NULL) {
+            // not yet saved: save it
+            TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
+                    0, sizeof(TEAMKITINFO));
+            if (teamKitInfo) {
+                memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
+                teamKitInfo->teamId = home;
+                g_teamKitInfo[(DWORD)ki] = teamKitInfo;
                 size_t len = (home < 0x40) ? 0x68 : 0x128;
                 memcpy(&teamKitInfo->editInfo, ki+1, len);
-			} else {
-				Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
+            } else {
+                Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
+            }
             LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", home);
-		}
+        }
 
         gdbFindKitsForTeam(gdb, home);
         KitCollection* col = MAP_FIND(gdb->uni,home);
@@ -6325,12 +6315,12 @@ void setTeamKitInfo()
             SetKitInfo(pb, &ki->plAway, editable);
             SetShortsInfo(paShorts, &ki->plHome, editable);
             SetShortsInfo(pbShorts, &ki->plAway, editable);
-            
+
             Kit* selPlKit=(GetTeamStrips(HOME) & STRIP_PL_SHIRT == 0)?pa:pb;
             if (home == away) selPlKit=pa;
             if (selPlKit && (selPlKit->attDefined & RADAR_COLOR)) {
-				savedRadarColor[0]=&selPlKit->radarColor;
-			};
+                savedRadarColor[0]=&selPlKit->radarColor;
+            };
 
             // clear out the padding
             size_t len = (home < 0x40) ? 0x68 : 0x128;
@@ -6347,22 +6337,22 @@ void setTeamKitInfo()
     {
         KITPACKINFO* ki = GetKitPackInfo(AWAY);
 
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[(DWORD)ki] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = away;
-				g_teamKitInfo[(DWORD)ki] = teamKitInfo;
+        // check if we need to store it in the hash-map
+        if (g_teamKitInfo[(DWORD)ki] == NULL) {
+            // not yet saved: save it
+            TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
+                    0, sizeof(TEAMKITINFO));
+            if (teamKitInfo) {
+                memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
+                teamKitInfo->teamId = away;
+                g_teamKitInfo[(DWORD)ki] = teamKitInfo;
                 size_t len = (away < 0x40) ? 0x68 : 0x128;
                 memcpy(&teamKitInfo->editInfo, ki+1, len);
-			} else {
-				Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
+            } else {
+                Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
+            }
             LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", away);
-		}
+        }
 
         gdbFindKitsForTeam(gdb, away);
         KitCollection* col = MAP_FIND(gdb->uni,away);
@@ -6375,7 +6365,7 @@ void setTeamKitInfo()
             Kit* pb = MAP_FIND(col->players,GetKitFolderKeyByTeamId(away, PB_SHIRT));
             Kit* paShorts = MAP_FIND(col->players,GetKitFolderKeyByTeamId(away, PA_SHIRT));
             Kit* pbShorts = MAP_FIND(col->players,GetKitFolderKeyByTeamId(away, PB_SHIRT));
-            
+
             //BOOL editable = kDB->editable[id];
             BOOL editable = TRUE;
 
@@ -6388,12 +6378,12 @@ void setTeamKitInfo()
             SetKitInfo(pb, &ki->plAway, editable);
             SetShortsInfo(paShorts, &ki->plHome, editable);
             SetShortsInfo(pbShorts, &ki->plAway, editable);
-            
-			Kit* selPlKit=(GetTeamStrips(AWAY) & STRIP_PL_SHIRT == 0)?pa:pb;
-			if (home == away) selPlKit=pb;
+
+            Kit* selPlKit=(GetTeamStrips(AWAY) & STRIP_PL_SHIRT == 0)?pa:pb;
+            if (home == away) selPlKit=pb;
             if (selPlKit && (selPlKit->attDefined & RADAR_COLOR)) {
-				savedRadarColor[1]=&selPlKit->radarColor;
-			};
+                savedRadarColor[1]=&selPlKit->radarColor;
+            };
 
             // clear out the padding
             size_t len = (away < 0x40) ? 0x68 : 0x128;
@@ -6413,7 +6403,7 @@ void setTeamKitInfo()
 
 DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal)
 {
-	//LogWithTwoNumbers(&k_mydll,"kservWriteKitInfo: teamId=%04x, kitOrdinal=%d", teamId & 0xffff, kitOrdinal);
+    //LogWithTwoNumbers(&k_mydll,"kservWriteKitInfo: teamId=%04x, kitOrdinal=%d", teamId & 0xffff, kitOrdinal);
 
     // call original
     DWORD result = MasterCallNext(teamId, kitOrdinal);
@@ -6429,22 +6419,22 @@ DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal)
     {
         KITPACKINFO* ki = (KITPACKINFO*)result - 1;
 
-		// check if we need to store it in the hash-map
-		if (g_teamKitInfo[(DWORD)ki] == NULL) {
-			// not yet saved: save it
-			TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
-					0, sizeof(TEAMKITINFO));
-			if (teamKitInfo) {
-				memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
-				teamKitInfo->teamId = teamId;
-				g_teamKitInfo[(DWORD)ki] = teamKitInfo;
+        // check if we need to store it in the hash-map
+        if (g_teamKitInfo[(DWORD)ki] == NULL) {
+            // not yet saved: save it
+            TEAMKITINFO* teamKitInfo = (TEAMKITINFO*)HeapAlloc(GetProcessHeap(),
+                    0, sizeof(TEAMKITINFO));
+            if (teamKitInfo) {
+                memcpy(&teamKitInfo->kits, ki, sizeof(KITPACKINFO));
+                teamKitInfo->teamId = teamId;
+                g_teamKitInfo[(DWORD)ki] = teamKitInfo;
                 size_t len = (teamId < 0x40) ? 0x68 : 0x128;
                 memcpy(&teamKitInfo->editInfo, ki+1, len);
-			} else {
-				Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
-			}
+            } else {
+                Log(&k_mydll,"setTeamKitInfo: SEVERE PROBLEM: unable to allocate memory for kitPackInfo");
+            }
             LogWithNumber(&k_mydll,"setTeamKitInfo: stored id = %003d.", teamId);
-		}
+        }
 
         KitCollection* col = MAP_FIND(gdb->uni,teamId);
         if (col) {
@@ -6497,7 +6487,7 @@ DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal)
 
 DWORD JuceOnReplayLoad()
 {
-	Log(&k_mydll,"JuceOnReplayLoad: CALLED.");
+    Log(&k_mydll,"JuceOnReplayLoad: CALLED.");
 
     restoreLicensedOrdinals();
     clearTeamKitInfo();
@@ -6514,7 +6504,7 @@ DWORD JuceOnReplayLoad()
 
 DWORD JuceGetTeamInfo(DWORD id, DWORD p1)
 {
-	//Log(&k_mydll,"JuceGetTeamInfo: restoring kitinfo edits");
+    //Log(&k_mydll,"JuceGetTeamInfo: restoring kitinfo edits");
 
     restoreLicensedOrdinals();
     clearTeamKitInfo();
@@ -6545,11 +6535,11 @@ void JuceClear2Dkits()
     ClearTextureMaps();
 
     // unhook Present method
-	UnhookFunction(hk_D3D_Present,(DWORD)JucePresent);
+    UnhookFunction(hk_D3D_Present,(DWORD)JucePresent);
     Log(&k_mydll,"Present unhooked.");
 
     // Special logic for a case when team is playing against itself
-    WORD id = GetTeamId(HOME); 
+    WORD id = GetTeamId(HOME);
     if (id == GetTeamId(AWAY) && id != 0xffff & TeamDirExists(id)) {
         BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
 
@@ -6585,23 +6575,23 @@ void JuceClear2Dkits()
 
 void kservAfsReplace(GETFILEINFO* gfi)
 {
-	if (gfi->isProcessed) return;
-	
-	DWORD afsId = 0, fileId = 0;
-	fileId = splitFileId(gfi->fileId, &afsId);
-	
-	if (afsId == 1 && MAP_CONTAINS(g_AFS_idMap, fileId)) {
-		// we want to get control over the unpacked file
-		gfi->needsUnpack = true;
-		gfi->isProcessed = true;
-	}
-	return;
+    if (gfi->isProcessed) return;
+
+    DWORD afsId = 0, fileId = 0;
+    fileId = splitFileId(gfi->fileId, &afsId);
+
+    if (afsId == 1 && MAP_CONTAINS(g_AFS_idMap, fileId)) {
+        // we want to get control over the unpacked file
+        gfi->needsUnpack = true;
+        gfi->isProcessed = true;
+    }
+    return;
 }
-	
+
 // this function gets called on each call to UniDecode
 void kservUniDecode(DWORD decBuf)
 {
-	Log(&k_mydll,"JuceUniDecode: CALLED.");
+    Log(&k_mydll,"JuceUniDecode: CALLED.");
 
     g_currentAfsId = 0;
     g_unidecode_flag = true;
@@ -6615,29 +6605,29 @@ void kservUniDecode(DWORD decBuf)
     }
     _last_homeId = homeId;
     _last_awayId = awayId;
-    
-	return;
+
+    return;
 }
 
 // this function is only called for files we marked above
 void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
 {
-	if (gfi->isProcessed) return;
-		
-	if (!g_kit_loading_enabled) return;
-	
-	DWORD afsId = 0, fileId = 0;
-	fileId = splitFileId(gfi->fileId, &afsId);
-	
-	// the former UniDecode
-	if (IsKitTexture(fileId)) {
-		// the former UniDecode -> kits
-		
-		if (g_edit_mode) return;
-			
-		LogWithNumber(&k_mydll,"JuceUniDecode: decBuf = %08x", decBuf);
+    if (gfi->isProcessed) return;
 
-		// remember current id
+    if (!g_kit_loading_enabled) return;
+
+    DWORD afsId = 0, fileId = 0;
+    fileId = splitFileId(gfi->fileId, &afsId);
+
+    // the former UniDecode
+    if (IsKitTexture(fileId)) {
+        // the former UniDecode -> kits
+
+        if (g_edit_mode) return;
+
+        LogWithNumber(&k_mydll,"JuceUniDecode: decBuf = %08x", decBuf);
+
+        // remember current id
         g_currentAfsId = fileId;
 
         LogWithNumber(&k_mydll,"JuceUniDecode: Loading id = %d", fileId);
@@ -6645,7 +6635,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
             return;
         }
 
-		g_kitID = fileId;
+        g_kitID = fileId;
 
         // STEP1: check if either BMP or PNG file exists
         char filename[BUFLEN];
@@ -6685,32 +6675,32 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
         }
 
         TRACE(&k_mydll,"JuceUniDecode done");
-	}
-	
-	else if (part == 0) {
-		// UniDecode, but not a kit texture
-		Log(&k_mydll,"JuceUniDecode: SEVERE WARNING!: this is NOT a kit texture.");
+    }
+
+    else if (part == 0) {
+        // UniDecode, but not a kit texture
+        Log(&k_mydll,"JuceUniDecode: SEVERE WARNING!: this is NOT a kit texture.");
         clearTeamKitInfo();
         return;
-	}
-	
-	else if (IsNumOrFontTexture(fileId)) {
-		// the former Unpack -> numbers and fonts
-		TRACE(&k_mydll,"JuceUnpack: CALLED.");
+    }
 
-	    bool replaced = FALSE;
-	
-	    //BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
-	    //LogWithTwoNumbers(&k_mydll,"strip = %02x %02x", strips[0], strips[1]);
-		
+    else if (IsNumOrFontTexture(fileId)) {
+        // the former Unpack -> numbers and fonts
+        TRACE(&k_mydll,"JuceUnpack: CALLED.");
+
+        bool replaced = FALSE;
+
+        //BYTE* strips = (BYTE*)dta[TEAM_STRIPS];
+        //LogWithTwoNumbers(&k_mydll,"strip = %02x %02x", strips[0], strips[1]);
+
         LogWithNumber(&k_mydll,"JuceUnpack: Loading id = %d", fileId);
 
-		// find corresponding file
-		BITMAPINFO* tex = NULL;
-		DWORD texSize = 0;
+        // find corresponding file
+        BITMAPINFO* tex = NULL;
+        DWORD texSize = 0;
 
-		char filename[BUFLEN];
-		ZeroMemory(filename, BUFLEN);
+        char filename[BUFLEN];
+        ZeroMemory(filename, BUFLEN);
         DWORD texType = IsNumbersTexture(fileId) ?
             FindImageFileForId(fileId, "", filename) :
             FindImageFileForId(fileId, "", filename, NULL);
@@ -6819,423 +6809,423 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
             }
         }
 
-		//ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)(addr1 - 0x20);
-		//DumpData((BYTE*)decBuf, header->dwDecSize);
-		//DumpImagePack((TEXIMGPACKHEADER*)decBuf);
-	
-	    TRACE(&k_mydll,"JuceUnpack: done.");
-	}
-	
-	return;	
+        //ENCBUFFERHEADER* header = (ENCBUFFERHEADER*)(addr1 - 0x20);
+        //DumpData((BYTE*)decBuf, header->dwDecSize);
+        //DumpImagePack((TEXIMGPACKHEADER*)decBuf);
+
+        TRACE(&k_mydll,"JuceUnpack: done.");
+    }
+
+    return;
 }
 
 /* Writes an indexed BMP file (with palette) */
 HRESULT SaveAsBitmap(char* filename, TEXIMGHEADER* header)
 {
-	BYTE* buf = (BYTE*)header + header->dataOffset;
-	if (header->dataOffset == header->dwSize) {
-		buf = NULL; // palette-only file
-	}
-	BYTE* pal = (BYTE*)header + header->paletteOffset;
-	LONG width = header->width;
-	LONG height = header->height;
+    BYTE* buf = (BYTE*)header + header->dataOffset;
+    if (header->dataOffset == header->dwSize) {
+        buf = NULL; // palette-only file
+    }
+    BYTE* pal = (BYTE*)header + header->paletteOffset;
+    LONG width = header->width;
+    LONG height = header->height;
 
-	if (header->bps == 4) {
-		return SaveAs4bitBMP(filename, buf, pal, width, height);
-	} else if (header->bps == 8) {
-		return SaveAs8bitBMP(filename, buf, pal, width, height);
-	}
+    if (header->bps == 4) {
+        return SaveAs4bitBMP(filename, buf, pal, width, height);
+    } else if (header->bps == 8) {
+        return SaveAs8bitBMP(filename, buf, pal, width, height);
+    }
 
-	Log(&k_mydll,"SaveAsBitmap: unsupported bits-per-pixel format.");
-	return E_FAIL;
+    Log(&k_mydll,"SaveAsBitmap: unsupported bits-per-pixel format.");
+    return E_FAIL;
 }
 
 /* Writes an indexed 4-bit BMP file (with palette) */
 HRESULT SaveAs4bitBMP(char* filename, BYTE* buf, BYTE* pal, LONG width, LONG height)
 {
-	BITMAPFILEHEADER fhdr;
-	BITMAPINFOHEADER infoheader;
-	SIZE_T size = (buf)? width * height : 8; // size of dta in bytes
+    BITMAPFILEHEADER fhdr;
+    BITMAPINFOHEADER infoheader;
+    SIZE_T size = (buf)? width * height : 8; // size of dta in bytes
 
-	// fill in the headers
-	fhdr.bfType = 0x4D42; // "BM"
-	fhdr.bfSize = sizeof(fhdr) + sizeof(infoheader) + 0x40 + size;
-	fhdr.bfReserved1 = 0;
-	fhdr.bfReserved2 = 0;
-	fhdr.bfOffBits = sizeof(fhdr) + sizeof(infoheader) + 0x40;
+    // fill in the headers
+    fhdr.bfType = 0x4D42; // "BM"
+    fhdr.bfSize = sizeof(fhdr) + sizeof(infoheader) + 0x40 + size;
+    fhdr.bfReserved1 = 0;
+    fhdr.bfReserved2 = 0;
+    fhdr.bfOffBits = sizeof(fhdr) + sizeof(infoheader) + 0x40;
 
-	infoheader.biSize = sizeof(infoheader);
-	infoheader.biWidth = (buf)? width : 16;
-	infoheader.biHeight = (buf) ? height : 1;
-	infoheader.biPlanes = 1;
-	infoheader.biBitCount = 4;
-	infoheader.biCompression = BI_RGB;
-	infoheader.biSizeImage = 0;
-	infoheader.biXPelsPerMeter = 0;
-	infoheader.biYPelsPerMeter = 0;
-	infoheader.biClrUsed = 16;
-	infoheader.biClrImportant = 16;
+    infoheader.biSize = sizeof(infoheader);
+    infoheader.biWidth = (buf)? width : 16;
+    infoheader.biHeight = (buf) ? height : 1;
+    infoheader.biPlanes = 1;
+    infoheader.biBitCount = 4;
+    infoheader.biCompression = BI_RGB;
+    infoheader.biSizeImage = 0;
+    infoheader.biXPelsPerMeter = 0;
+    infoheader.biYPelsPerMeter = 0;
+    infoheader.biClrUsed = 16;
+    infoheader.biClrImportant = 16;
 
-	// prepare filename
-	char name[BUFLEN];
-	if (filename == NULL)
-	{
-		SYSTEMTIME time;
-		GetLocalTime(&time);
-		ZeroMemory(name, BUFLEN);
-		sprintf(name, "%s%s-%d%02d%02d-%02d%02d%02d%03d.bmp", GetPESInfo()->mydir, "kserv", 
-				time.wYear, time.wMonth, time.wDay,
-				time.wHour, time.wMinute, time.wSecond, time.wMilliseconds); 
-		filename = name;
-	}
+    // prepare filename
+    char name[BUFLEN];
+    if (filename == NULL)
+    {
+        SYSTEMTIME time;
+        GetLocalTime(&time);
+        ZeroMemory(name, BUFLEN);
+        sprintf(name, "%s%s-%d%02d%02d-%02d%02d%02d%03d.bmp", GetPESInfo()->mydir, "kserv",
+                time.wYear, time.wMonth, time.wDay,
+                time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+        filename = name;
+    }
 
-	// save to file
-	DWORD wbytes;
-	HANDLE hFile = CreateFile(filename,            // file to create 
-					 GENERIC_WRITE,                // open for writing 
-					 0,                            // do not share 
-					 NULL,                         // default security 
-					 OPEN_ALWAYS,                  // overwrite existing 
-					 FILE_ATTRIBUTE_NORMAL,        // normal file 
-					 NULL);                        // no attr. template 
+    // save to file
+    DWORD wbytes;
+    HANDLE hFile = CreateFile(filename,            // file to create
+                     GENERIC_WRITE,                // open for writing
+                     0,                            // do not share
+                     NULL,                         // default security
+                     OPEN_ALWAYS,                  // overwrite existing
+                     FILE_ATTRIBUTE_NORMAL,        // normal file
+                     NULL);                        // no attr. template
 
-	if (hFile != INVALID_HANDLE_VALUE) 
-	{
-		WriteFile(hFile, &fhdr, sizeof(fhdr), (LPDWORD)&wbytes, NULL);
-		WriteFile(hFile, &infoheader, sizeof(infoheader), (LPDWORD)&wbytes, NULL);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        WriteFile(hFile, &fhdr, sizeof(fhdr), (LPDWORD)&wbytes, NULL);
+        WriteFile(hFile, &infoheader, sizeof(infoheader), (LPDWORD)&wbytes, NULL);
 
-		// write palette
-		for (int i=0; i<16; i++)
-		{
-			WriteFile(hFile, pal + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
-			WriteFile(hFile, pal + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
-			WriteFile(hFile, pal + i*4, 1, (LPDWORD)&wbytes, NULL);
-			WriteFile(hFile, pal + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
-		}
+        // write palette
+        for (int i=0; i<16; i++)
+        {
+            WriteFile(hFile, pal + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
+            WriteFile(hFile, pal + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
+            WriteFile(hFile, pal + i*4, 1, (LPDWORD)&wbytes, NULL);
+            WriteFile(hFile, pal + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
+        }
 
-		// write pixel dta
-		if (buf) {
-			for (int k=height-1; k>=0; k--)
-			{
-				int j;
-				// unshuffle pixel dta
-				for (j=0;j<width/2;j++) {
-					BYTE src = buf[k*(width/2)+j];
-					buf[k*(width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
-				}
-				WriteFile(hFile, buf + k*(width/2), width/2, (LPDWORD)&wbytes, NULL);
-				// reshuffle pixel dta
-				for (j=0;j<width/2;j++) {
-					BYTE src = buf[k*(width/2)+j];
-					buf[k*(width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
-				}
-			}
-		} else {
-			// palette-only dta: write sample stuff
-			BYTE sample[] = {0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef};
-			WriteFile(hFile, sample, sizeof(sample), (LPDWORD)&wbytes, NULL);
-		}
-		CloseHandle(hFile);
-	}
-	else 
-	{
-		Log(&k_mydll,"SaveAs4bitBMP: failed to save to file.");
-		return E_FAIL;
-	}
-	return S_OK;
+        // write pixel dta
+        if (buf) {
+            for (int k=height-1; k>=0; k--)
+            {
+                int j;
+                // unshuffle pixel dta
+                for (j=0;j<width/2;j++) {
+                    BYTE src = buf[k*(width/2)+j];
+                    buf[k*(width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
+                }
+                WriteFile(hFile, buf + k*(width/2), width/2, (LPDWORD)&wbytes, NULL);
+                // reshuffle pixel dta
+                for (j=0;j<width/2;j++) {
+                    BYTE src = buf[k*(width/2)+j];
+                    buf[k*(width/2)+j] = (src << 4 & 0xf0) | (src >> 4 & 0x0f);
+                }
+            }
+        } else {
+            // palette-only dta: write sample stuff
+            BYTE sample[] = {0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef};
+            WriteFile(hFile, sample, sizeof(sample), (LPDWORD)&wbytes, NULL);
+        }
+        CloseHandle(hFile);
+    }
+    else
+    {
+        Log(&k_mydll,"SaveAs4bitBMP: failed to save to file.");
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 /* Writes an indexed 8-bit BMP file (with palette) */
 HRESULT SaveAs8bitBMP(char* filename, BYTE* buffer)
 {
-	DECBUFFERHEADER* header = (DECBUFFERHEADER*)buffer;
-	BYTE* buf = (BYTE*)header + header->bitsOffset;
-	BYTE* pal = (BYTE*)header + header->paletteOffset;
-	LONG width = header->texWidth;
-	LONG height = header->texHeight;
+    DECBUFFERHEADER* header = (DECBUFFERHEADER*)buffer;
+    BYTE* buf = (BYTE*)header + header->bitsOffset;
+    BYTE* pal = (BYTE*)header + header->paletteOffset;
+    LONG width = header->texWidth;
+    LONG height = header->texHeight;
 
-	return SaveAs8bitBMP(filename, buf, pal, width, height);
+    return SaveAs8bitBMP(filename, buf, pal, width, height);
 }
 
 /* Writes an indexed 8-bit BMP file (with palette) */
 HRESULT SaveAs8bitBMP(char* filename, BYTE* buf, BYTE* pal, LONG width, LONG height)
 {
-	BITMAPFILEHEADER fhdr;
-	BITMAPINFOHEADER infoheader;
-	SIZE_T size = width * height; // size of dta in bytes
+    BITMAPFILEHEADER fhdr;
+    BITMAPINFOHEADER infoheader;
+    SIZE_T size = width * height; // size of dta in bytes
 
-	// fill in the headers
-	fhdr.bfType = 0x4D42; // "BM"
-	fhdr.bfSize = sizeof(fhdr) + sizeof(infoheader) + 0x400 + size;
-	fhdr.bfReserved1 = 0;
-	fhdr.bfReserved2 = 0;
-	fhdr.bfOffBits = sizeof(fhdr) + sizeof(infoheader) + 0x400;
+    // fill in the headers
+    fhdr.bfType = 0x4D42; // "BM"
+    fhdr.bfSize = sizeof(fhdr) + sizeof(infoheader) + 0x400 + size;
+    fhdr.bfReserved1 = 0;
+    fhdr.bfReserved2 = 0;
+    fhdr.bfOffBits = sizeof(fhdr) + sizeof(infoheader) + 0x400;
 
-	infoheader.biSize = sizeof(infoheader);
-	infoheader.biWidth = width;
-	infoheader.biHeight = height;
-	infoheader.biPlanes = 1;
-	infoheader.biBitCount = 8;
-	infoheader.biCompression = BI_RGB;
-	infoheader.biSizeImage = 0;
-	infoheader.biXPelsPerMeter = 0;
-	infoheader.biYPelsPerMeter = 0;
-	infoheader.biClrUsed = 256;
-	infoheader.biClrImportant = 0;
+    infoheader.biSize = sizeof(infoheader);
+    infoheader.biWidth = width;
+    infoheader.biHeight = height;
+    infoheader.biPlanes = 1;
+    infoheader.biBitCount = 8;
+    infoheader.biCompression = BI_RGB;
+    infoheader.biSizeImage = 0;
+    infoheader.biXPelsPerMeter = 0;
+    infoheader.biYPelsPerMeter = 0;
+    infoheader.biClrUsed = 256;
+    infoheader.biClrImportant = 0;
 
-	// prepare filename
-	char name[BUFLEN];
-	if (filename == NULL)
-	{
-		SYSTEMTIME time;
-		GetLocalTime(&time);
-		ZeroMemory(name, BUFLEN);
-		sprintf(name, "%s%s-%d%02d%02d-%02d%02d%02d%03d.bmp", GetPESInfo()->mydir, "kserv", 
-				time.wYear, time.wMonth, time.wDay,
-				time.wHour, time.wMinute, time.wSecond, time.wMilliseconds); 
-		filename = name;
-	}
+    // prepare filename
+    char name[BUFLEN];
+    if (filename == NULL)
+    {
+        SYSTEMTIME time;
+        GetLocalTime(&time);
+        ZeroMemory(name, BUFLEN);
+        sprintf(name, "%s%s-%d%02d%02d-%02d%02d%02d%03d.bmp", GetPESInfo()->mydir, "kserv",
+                time.wYear, time.wMonth, time.wDay,
+                time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+        filename = name;
+    }
 
-	// save to file
-	DWORD wbytes;
-	HANDLE hFile = CreateFile(filename,            // file to create 
-					 GENERIC_WRITE,                // open for writing 
-					 0,                            // do not share 
-					 NULL,                         // default security 
-					 OPEN_ALWAYS,                  // overwrite existing 
-					 FILE_ATTRIBUTE_NORMAL,        // normal file 
-					 NULL);                        // no attr. template 
+    // save to file
+    DWORD wbytes;
+    HANDLE hFile = CreateFile(filename,            // file to create
+                     GENERIC_WRITE,                // open for writing
+                     0,                            // do not share
+                     NULL,                         // default security
+                     OPEN_ALWAYS,                  // overwrite existing
+                     FILE_ATTRIBUTE_NORMAL,        // normal file
+                     NULL);                        // no attr. template
 
-	if (hFile != INVALID_HANDLE_VALUE) 
-	{
-		WriteFile(hFile, &fhdr, sizeof(fhdr), (LPDWORD)&wbytes, NULL);
-		WriteFile(hFile, &infoheader, sizeof(infoheader), (LPDWORD)&wbytes, NULL);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        WriteFile(hFile, &fhdr, sizeof(fhdr), (LPDWORD)&wbytes, NULL);
+        WriteFile(hFile, &infoheader, sizeof(infoheader), (LPDWORD)&wbytes, NULL);
 
-		// write palette
-		for (int bank=0; bank<8; bank++)
-		{
+        // write palette
+        for (int bank=0; bank<8; bank++)
+        {
             int i;
-			for (i=0; i<8; i++)
-			{
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
-			}
-			for (i=16; i<24; i++)
-			{
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
-			}
-			for (i=8; i<16; i++)
-			{
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
-			}
-			for (i=24; i<32; i++)
-			{
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
-				WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
-			}
-		}
-		// write pixel dta
-		for (int k=height-1; k>=0; k--)
-		{
-			WriteFile(hFile, buf + k*width, width, (LPDWORD)&wbytes, NULL);
-		}
-		CloseHandle(hFile);
-	}
-	else 
-	{
-		Log(&k_mydll,"SaveAs8bitBMP: failed to save to file.");
-		return E_FAIL;
-	}
-	return S_OK;
+            for (i=0; i<8; i++)
+            {
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
+            }
+            for (i=16; i<24; i++)
+            {
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
+            }
+            for (i=8; i<16; i++)
+            {
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
+            }
+            for (i=24; i<32; i++)
+            {
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 2, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 1, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4, 1, (LPDWORD)&wbytes, NULL);
+                WriteFile(hFile, pal + bank*32*4 + i*4 + 3, 1, (LPDWORD)&wbytes, NULL);
+            }
+        }
+        // write pixel dta
+        for (int k=height-1; k>=0; k--)
+        {
+            WriteFile(hFile, buf + k*width, width, (LPDWORD)&wbytes, NULL);
+        }
+        CloseHandle(hFile);
+    }
+    else
+    {
+        Log(&k_mydll,"SaveAs8bitBMP: failed to save to file.");
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 /* Writes a BMP file */
 HRESULT SaveAsBMP(char* filename, BYTE* rgbBuf, SIZE_T size, LONG width, LONG height, int bpp)
 {
-	BITMAPFILEHEADER fhdr;
-	BITMAPINFOHEADER infoheader;
+    BITMAPFILEHEADER fhdr;
+    BITMAPINFOHEADER infoheader;
 
-	// fill in the headers
-	fhdr.bfType = 0x4D42; // "BM"
-	fhdr.bfSize = sizeof(fhdr) + sizeof(infoheader) + size;
-	fhdr.bfReserved1 = 0;
-	fhdr.bfReserved2 = 0;
-	fhdr.bfOffBits = sizeof(fhdr) + sizeof(infoheader);
+    // fill in the headers
+    fhdr.bfType = 0x4D42; // "BM"
+    fhdr.bfSize = sizeof(fhdr) + sizeof(infoheader) + size;
+    fhdr.bfReserved1 = 0;
+    fhdr.bfReserved2 = 0;
+    fhdr.bfOffBits = sizeof(fhdr) + sizeof(infoheader);
 
-	infoheader.biSize = sizeof(infoheader);
-	infoheader.biWidth = width;
-	infoheader.biHeight = height;
-	infoheader.biPlanes = 1;
-	infoheader.biBitCount = bpp*8;
-	infoheader.biCompression = BI_RGB;
-	infoheader.biSizeImage = 0;
-	infoheader.biXPelsPerMeter = 0;
-	infoheader.biYPelsPerMeter = 0;
-	infoheader.biClrUsed = 0;
-	infoheader.biClrImportant = 0;
+    infoheader.biSize = sizeof(infoheader);
+    infoheader.biWidth = width;
+    infoheader.biHeight = height;
+    infoheader.biPlanes = 1;
+    infoheader.biBitCount = bpp*8;
+    infoheader.biCompression = BI_RGB;
+    infoheader.biSizeImage = 0;
+    infoheader.biXPelsPerMeter = 0;
+    infoheader.biYPelsPerMeter = 0;
+    infoheader.biClrUsed = 0;
+    infoheader.biClrImportant = 0;
 
-	// prepare filename
-	char name[BUFLEN];
-	if (filename == NULL)
-	{
-		SYSTEMTIME time;
-		GetLocalTime(&time);
-		ZeroMemory(name, BUFLEN);
-		sprintf(name, "%s%s-%d%02d%02d-%02d%02d%02d%03d.bmp", GetPESInfo()->mydir, "kserv", 
-				time.wYear, time.wMonth, time.wDay,
-				time.wHour, time.wMinute, time.wSecond, time.wMilliseconds); 
-		filename = name;
-	}
+    // prepare filename
+    char name[BUFLEN];
+    if (filename == NULL)
+    {
+        SYSTEMTIME time;
+        GetLocalTime(&time);
+        ZeroMemory(name, BUFLEN);
+        sprintf(name, "%s%s-%d%02d%02d-%02d%02d%02d%03d.bmp", GetPESInfo()->mydir, "kserv",
+                time.wYear, time.wMonth, time.wDay,
+                time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+        filename = name;
+    }
 
-	// save to file
-	DWORD wbytes;
-	HANDLE hFile = CreateFile(filename,            // file to create 
-					 GENERIC_WRITE,                // open for writing 
-					 0,                            // do not share 
-					 NULL,                         // default security 
-					 OPEN_ALWAYS,                  // overwrite existing 
-					 FILE_ATTRIBUTE_NORMAL,        // normal file 
-					 NULL);                        // no attr. template 
+    // save to file
+    DWORD wbytes;
+    HANDLE hFile = CreateFile(filename,            // file to create
+                     GENERIC_WRITE,                // open for writing
+                     0,                            // do not share
+                     NULL,                         // default security
+                     OPEN_ALWAYS,                  // overwrite existing
+                     FILE_ATTRIBUTE_NORMAL,        // normal file
+                     NULL);                        // no attr. template
 
-	if (hFile != INVALID_HANDLE_VALUE) 
-	{
-		WriteFile(hFile, &fhdr, sizeof(fhdr), (LPDWORD)&wbytes, NULL);
-		WriteFile(hFile, &infoheader, sizeof(infoheader), (LPDWORD)&wbytes, NULL);
-		WriteFile(hFile, rgbBuf, size, (LPDWORD)&wbytes, NULL);
-		CloseHandle(hFile);
-	}
-	else 
-	{
-		Log(&k_mydll,"SaveAsBMP: failed to save to file.");
-		return E_FAIL;
-	}
-	return S_OK;
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        WriteFile(hFile, &fhdr, sizeof(fhdr), (LPDWORD)&wbytes, NULL);
+        WriteFile(hFile, &infoheader, sizeof(infoheader), (LPDWORD)&wbytes, NULL);
+        WriteFile(hFile, rgbBuf, size, (LPDWORD)&wbytes, NULL);
+        CloseHandle(hFile);
+    }
+    else
+    {
+        Log(&k_mydll,"SaveAsBMP: failed to save to file.");
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 /*
 // helper function
 Kit* utilGetKit(WORD kitId)
 {
-	int id = kitId / 5; int idRem = kitId % 5;
+    int id = kitId / 5; int idRem = kitId % 5;
 
-	// sanity check
-	if (id < 0 || id > 255)
-		return NULL;
+    // sanity check
+    if (id < 0 || id > 255)
+        return NULL;
 
-	// select corresponding kit
-	Kit* kit = NULL;
-	if (g_kitExtras[kitId] != NULL) 
-		kit = g_kitExtras[kitId]->kit;
-	if (kit == NULL)
-	{
-		switch (idRem)
-		{
-			case 0: kit = kDB->goalkeepers[id].a; break;
-			case 1: kit = kDB->goalkeepers[id].b; break;
-			case 2: kit = kDB->players[id].a; break;
-			case 3: kit = kDB->players[id].b; break;
-		}
-	}
+    // select corresponding kit
+    Kit* kit = NULL;
+    if (g_kitExtras[kitId] != NULL)
+        kit = g_kitExtras[kitId]->kit;
+    if (kit == NULL)
+    {
+        switch (idRem)
+        {
+            case 0: kit = kDB->goalkeepers[id].a; break;
+            case 1: kit = kDB->goalkeepers[id].b; break;
+            case 2: kit = kDB->players[id].a; break;
+            case 3: kit = kDB->players[id].b; break;
+        }
+    }
 
-	return kit;
+    return kit;
 }
 */
 
 // helper function
 TeamAttr* utilGetTeamAttr(WORD id)
 {
-	// sanity check
-	if (id < 0 || id > 255)
-		return NULL;
+    // sanity check
+    if (id < 0 || id > 255)
+        return NULL;
 
-	DWORD teamAttrBase = *((DWORD*)dta[TEAM_COLLARS_PTR]);
-	return (TeamAttr*)(teamAttrBase + id*sizeof(TeamAttr));
+    DWORD teamAttrBase = *((DWORD*)dta[TEAM_COLLARS_PTR]);
+    return (TeamAttr*)(teamAttrBase + id*sizeof(TeamAttr));
 }
 
 // this function makes sure we have the most up-to-date information
 // about what teams are currently chosen.
 void VerifyTeams()
 {
-	g_currTeams[0] = g_currTeams[1] = 0xffff;
-	WORD* teams = (WORD*)dta[TEAM_IDS];
+    g_currTeams[0] = g_currTeams[1] = 0xffff;
+    WORD* teams = (WORD*)dta[TEAM_IDS];
 
-	// try to define both teams.
-	if (teams[0] >=0 && teams[0] <= g_numTeams) g_currTeams[0] = teams[0];
-	if (teams[1] >=0 && teams[1] <= g_numTeams) g_currTeams[1] = teams[1];
+    // try to define both teams.
+    if (teams[0] >=0 && teams[0] <= g_numTeams) g_currTeams[0] = teams[0];
+    if (teams[1] >=0 && teams[1] <= g_numTeams) g_currTeams[1] = teams[1];
 
-	// check if home team is still undefined.
-	if (g_currTeams[0] == 0xffff)
-	{
-		int which = (teams[0] == 0x0122) ? 1 : 0;
+    // check if home team is still undefined.
+    if (g_currTeams[0] == 0xffff)
+    {
+        int which = (teams[0] == 0x0122) ? 1 : 0;
 
-		// looks like it's an ML team.
-		DWORD* mlPtrs = (DWORD*)dta[MLDATA_PTRS];
-		if (mlPtrs[which] != NULL)
-		{
-			WORD* mlData = (WORD*)(mlPtrs[which] + 0x278);
-			WORD teamId = mlData[0];
-			BOOL originalTeam = mlData[1];
-			if (!originalTeam) g_currTeams[0] = teamId;
-		}
-	}
+        // looks like it's an ML team.
+        DWORD* mlPtrs = (DWORD*)dta[MLDATA_PTRS];
+        if (mlPtrs[which] != NULL)
+        {
+            WORD* mlData = (WORD*)(mlPtrs[which] + 0x278);
+            WORD teamId = mlData[0];
+            BOOL originalTeam = mlData[1];
+            if (!originalTeam) g_currTeams[0] = teamId;
+        }
+    }
 
-	// check if away team is still undefined.
-	if (g_currTeams[1] == 0xffff)
-	{
-		int which = (teams[1] == 0x0122) ? 1 : 0;
+    // check if away team is still undefined.
+    if (g_currTeams[1] == 0xffff)
+    {
+        int which = (teams[1] == 0x0122) ? 1 : 0;
 
-		// looks like it's an ML team.
-		DWORD* mlPtrs = (DWORD*)dta[MLDATA_PTRS];
-		if (mlPtrs[which] != NULL)
-		{
-			WORD* mlData = (WORD*)(mlPtrs[which] + 0x278);
-			WORD teamId = mlData[0];
-			BOOL originalTeam = mlData[1];
-			if (!originalTeam) g_currTeams[1] = teamId;
-		}
-	}
+        // looks like it's an ML team.
+        DWORD* mlPtrs = (DWORD*)dta[MLDATA_PTRS];
+        if (mlPtrs[which] != NULL)
+        {
+            WORD* mlData = (WORD*)(mlPtrs[which] + 0x278);
+            WORD teamId = mlData[0];
+            BOOL originalTeam = mlData[1];
+            if (!originalTeam) g_currTeams[1] = teamId;
+        }
+    }
 }
 
 char* getKitFoldername(string& kitFolderKey, WORD teamId, int kitType, int kitPart)
 {
-	if (kitType < GK_TYPE || kitType > PL_TYPE) return nullString;
-	if (kitPart < KITPART_SHIRT || kitPart > KITPART_FONT) return nullString;
-	if (kitFolderKey == nullString) return nullString;
-	
-	gdbFindKitsForTeam(gdb, teamId);
-	KitCollection* col = MAP_FIND(gdb->uni, teamId);
-	if (!col) return nullString;
+    if (kitType < GK_TYPE || kitType > PL_TYPE) return nullString;
+    if (kitPart < KITPART_SHIRT || kitPart > KITPART_FONT) return nullString;
+    if (kitFolderKey == nullString) return nullString;
 
-	Kit* kit = (kitType==GK_TYPE) ?
-		MAP_FIND(col->goalkeepers, kitFolderKey) :
-		MAP_FIND(col->players, kitFolderKey);
-	if (!kit) return nullString;
+    gdbFindKitsForTeam(gdb, teamId);
+    KitCollection* col = MAP_FIND(gdb->uni, teamId);
+    if (!col) return nullString;
 
-	switch (kitPart) {
-	case KITPART_SHIRT:
-	//if this was enabled, numbers and font were in the directory of the shirt
-	//case KITPART_NUMBERS:
-	//case KITPART_FONT:
-		return (kit->attDefined & SHIRT_FOLDER)?kit->shirtFolder : (char*)kitFolderKey.c_str();
-	case KITPART_SHORTS:
-		return (kit->attDefined & SHORTS_FOLDER)?kit->shortsFolder : (char*)kitFolderKey.c_str();
-	case KITPART_SOCKS:
-		return (kit->attDefined & SOCKS_FOLDER)?kit->socksFolder : (char*)kitFolderKey.c_str();
-	case KITPART_NUMBERS:
-	case KITPART_FONT:
-		// numbers and font are always in the same directory
-		return (char*)kitFolderKey.c_str();
-	}
-			
-	return nullString;
+    Kit* kit = (kitType==GK_TYPE) ?
+        MAP_FIND(col->goalkeepers, kitFolderKey) :
+        MAP_FIND(col->players, kitFolderKey);
+    if (!kit) return nullString;
+
+    switch (kitPart) {
+    case KITPART_SHIRT:
+    //if this was enabled, numbers and font were in the directory of the shirt
+    //case KITPART_NUMBERS:
+    //case KITPART_FONT:
+        return (kit->attDefined & SHIRT_FOLDER)?kit->shirtFolder : (char*)kitFolderKey.c_str();
+    case KITPART_SHORTS:
+        return (kit->attDefined & SHORTS_FOLDER)?kit->shortsFolder : (char*)kitFolderKey.c_str();
+    case KITPART_SOCKS:
+        return (kit->attDefined & SOCKS_FOLDER)?kit->socksFolder : (char*)kitFolderKey.c_str();
+    case KITPART_NUMBERS:
+    case KITPART_FONT:
+        // numbers and font are always in the same directory
+        return (char*)kitFolderKey.c_str();
+    }
+
+    return nullString;
 }
