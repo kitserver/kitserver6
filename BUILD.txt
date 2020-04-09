@@ -2,18 +2,27 @@ BUILD INSTRUCTIONS
 ==========================================================================
 
 The Makefile (in the src folder) is intended to be used by Microsoft NMAKE 
-tool, which comes with Visual Studio 2012. You will need the following 3rd-party
-software to build this program:
+tool, which comes with Visual Studio 2019 Community Edition.
 
-- DirectX 8.1 SDK 
-(Modify the setenv.vs2012.cmd so that it points to correct location
-of the SDK on your disk. Default is \dxsdk81)
+All dependencies are included, so you do not need to install any other
+software to build this program
 
-Three types of build are supported by the current Makefile: 
-"debug" and "release"
+Modify the setenv.vs2019.cmd so that it points to correct location
+of your Visual Studio.
 
-To perform "debug" build, just type "nmake".
-To perform "release" build, type "nmake release".
+Two types of build are supported:
+
+RELEASE:
+
+    nmake
+
+DEBUG:
+
+    nmake debug=1
+
+To delete all object files in preparation for clean re-build:
+
+    nmake clean-all
 
 Currently, the difference between "debug" and "release" builds is in the
 way the debug configuration parameter is treated. The "release" build
