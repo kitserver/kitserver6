@@ -1,7 +1,6 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdio.h>
-#include "d3dfont.h"
 #include "bserv.h"
 #include "crc32.h"
 #include "kload_exp.h"

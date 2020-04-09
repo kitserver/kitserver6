@@ -45,8 +45,7 @@ all_apps: apps
 #	copy speedtest.exe output
 #	copy vista_test.exe output
 
-#dlls: kload.dll kserv.dll kserv_std.dll bserv.dll bserv_preview.dll fserv.dll stadium.dll lodmixer.dll dxtools.dll savegames.dll bootserv.dll skins.dll
-dlls: kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
+dlls: pngdib kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
 apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 !if "$(debug)"=="1"
@@ -65,7 +64,7 @@ stadimp: stadimp.exe
 filedec: filedec.exe
 speedtest: speedtest.exe
 
-pngdib.obj:
+pngdib:
 	(cd soft\pngdib && $(MAKE))
 
 kload_config.obj: kload_config.cpp kload_config.h
@@ -93,51 +92,30 @@ detect.obj: detect.cpp detect.h
 kload.res: 
 	$(RC) -r -fo kload.res kload.rc
 
-#kserv.lib: kserv.obj gdb.obj kserv_config.obj dxutil.obj crc32.obj afsreader.obj pngdib.obj
-#kserv.dll: kserv.lib kserv.res
-#	$(LINK) $(LFLAGS) /out:kserv.dll /DLL kserv.obj gdb.obj kserv_config.obj crc32.obj afsreader.obj dxutil.obj kserv.res $(LIBSDLL) d3dx8.lib winmm.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) kload.lib
-#kserv.obj: kserv.cpp kserv.h shared.h kserv_config.h gdb.h lodcfg.h
-#kserv.res: 
-#	$(RC) -r -fo kserv.res kserv.rc
-
-kserv_std.lib: kserv_std.obj gdb.obj kserv_config.obj dxutil.obj crc32.obj afsreader.obj pngdib.obj
-#kserv_std.dll: kserv_std.lib kserv_std.res
-kserv.dll: kserv_std.lib kserv_std.res
-#	$(LINK) $(LFLAGS) /out:kserv_std.dll /DLL kserv_std.obj gdb.obj kserv_config.obj crc32.obj afsreader.obj dxutil.obj kserv_std.res $(LIBSDLL) d3dx8.lib winmm.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) kload.lib
+kserv_std.lib: kserv_std.obj gdb.obj kserv_config.obj dxutil.obj crc32.obj afsreader.obj
+kserv.dll: kserv_std.lib kserv_std.res kload.lib
 	$(LINK) $(LFLAGS) /out:kserv.dll /DLL kserv_std.obj gdb.obj kserv_config.obj crc32.obj afsreader.obj dxutil.obj kserv_std.res $(LIBSDLL) d3dx8.lib winmm.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) kload.lib
 kserv_std.obj: kserv_std.cpp kserv.h shared.h kserv_config.h gdb.h lodcfg.h
 kserv_std.res: 
 	$(RC) -r -fo kserv_std.res kserv_std.rc
 
-#bserv.lib: bserv.obj d3dfont.obj pngdib.obj
-#bserv.dll: bserv.lib bserv.res
-#	$(LINK) $(LFLAGS) /out:bserv.dll /DLL bserv.obj d3dfont.obj kload.lib bserv.res $(LIBSDLL) /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB)
-#bserv.obj: bserv.cpp bserv.h
-#
-#bserv.res: 
-#	$(RC) -r -fo bserv.res bserv.rc
-	
-bserv_preview.lib: bserv_preview.obj d3dfont.obj pngdib.obj crc32.obj
-#bserv_preview.dll: bserv_preview.lib bserv_preview.res
-bserv.dll: bserv_preview.lib bserv_preview.res
-#	$(LINK) $(LFLAGS) /out:bserv_preview.dll /DLL bserv_preview.obj d3dfont.obj crc32.obj kload.lib bserv_preview.res $(LIBSDLL) d3dx8.lib winmm.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) zdll.lib
-	$(LINK) $(LFLAGS) /out:bserv.dll /DLL bserv_preview.obj d3dfont.obj crc32.obj kload.lib bserv_preview.res $(LIBSDLL) d3dx8.lib winmm.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) zdll.lib
+bserv_preview.lib: bserv_preview.obj crc32.obj
+bserv.dll: bserv_preview.lib bserv_preview.res kload.lib
+	$(LINK) $(LFLAGS) /out:bserv.dll /DLL bserv_preview.obj crc32.obj kload.lib bserv_preview.res $(LIBSDLL) d3dx8.lib winmm.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) zdll.lib
 bserv_preview.obj: bserv_preview.cpp bserv.h
-
 bserv_preview.res: 
 	$(RC) -r -fo bserv_preview.res bserv_preview.rc
 	
 fserv.lib: fserv.obj
-fserv.dll: fserv.lib fserv_config.obj crc32.obj fserv.res
+fserv.dll: fserv.lib fserv_config.obj crc32.obj fserv.res kload.lib
 	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj fserv_config.obj crc32.obj kload.lib fserv.res $(LIBS) d3dx8.lib
 fserv.obj: fserv.cpp fserv.h
 fserv_config.obj: fserv_config.cpp fserv_config.h
-
 fserv.res: 
 	$(RC) -r -fo fserv.res fserv.rc
 
 bootserv.lib: bootserv.obj
-bootserv.dll: bootserv.lib bootserv.res
+bootserv.dll: bootserv.lib bootserv.res kload.lib
 	$(LINK) $(LFLAGS) /out:bootserv.dll /DLL bootserv.obj kload.lib d3dx8.lib bootserv.res $(LIBS)
 bootserv.obj: bootserv.cpp bootserv.h
 
@@ -145,23 +123,22 @@ bootserv.res:
 	$(RC) -r -fo bootserv.res bootserv.rc
 	
 skins.lib: skins.obj
-skins.dll: skins.lib skins.res
+skins.dll: skins.lib skins.res kload.lib
 	$(LINK) $(LFLAGS) /out:skins.dll /DLL skins.obj kload.lib d3dx8.lib skins.res $(LIBS)
 skins.obj: skins.cpp skins.h
 
 skins.res: 
 	$(RC) -r -fo skins.res skins.rc
 	
-stadium.lib: stadium.obj crc32.obj afsreader.obj hooklib.obj pngdib.obj
-stadium.dll: stadium.lib stadium.res
+stadium.lib: stadium.obj crc32.obj afsreader.obj hooklib.obj
+stadium.dll: stadium.lib stadium.res kload.lib
 	$(LINK) $(LFLAGS) /out:stadium.dll /DLL stadium.obj crc32.obj afsreader.obj kload.lib hooklib.obj stadium.res $(LIBSDLL) d3dx8.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB)
 stadium.obj: stadium.cpp stadium.h
-
 stadium.res: 
 	$(RC) -r -fo stadium.res stadium.rc
 
 afs2fs.lib: afs2fs.obj crc32.obj afsreader.obj hooklib.obj
-afs2fs.dll: afs2fs.lib afs2fs.res
+afs2fs.dll: afs2fs.lib afs2fs.res kload.lib
 	$(LINK) $(LFLAGS) /out:afs2fs.dll /DLL afs2fs.obj crc32.obj afsreader.obj kload.lib hooklib.obj afs2fs.res $(LIBSDLL) d3dx8.lib /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB)
 afs2fs.obj: afs2fs.cpp afs2fs.h utf8.h
 
@@ -169,7 +146,7 @@ afs2fs.res:
 	$(RC) -r -fo afs2fs.res afs2fs.rc
 
 lodmixer.lib: lodmixer.obj
-lodmixer.dll: lodmixer.lib lodmixer.res
+lodmixer.dll: lodmixer.lib lodmixer.res kload.lib
 	$(LINK) $(LFLAGS) /out:lodmixer.dll /DLL lodmixer.obj kload.lib lodmixer.res $(LIBS)
 lodmixer.obj: lodmixer.cpp lodmixer.h
 
@@ -177,7 +154,7 @@ lodmixer.res:
 	$(RC) -r -fo lodmixer.res lodmixer.rc
 	
 dxtools.lib: dxtools.obj
-dxtools.dll: dxtools.lib dxtools.res
+dxtools.dll: dxtools.lib dxtools.res kload.lib
 	$(LINK) $(LFLAGS) /out:dxtools.dll /DLL dxtools.obj kload.lib dxtools.res $(LIBS)
 dxtools.obj: dxtools.cpp dxtools.h
 
@@ -201,7 +178,7 @@ dxtools.res:
 #	$(RC) -r -fo teams.res teams.rc
 
 psc.lib: psc.obj
-psc.dll: psc.lib psc.res
+psc.dll: psc.lib psc.res kload.lib
 	$(LINK) $(LFLAGS) /out:psc.dll /DLL psc.obj kload.lib psc.res $(LIBS)
 psc.obj: psc.cpp psc.h
 
@@ -209,7 +186,7 @@ psc.res:
 	$(RC) -r -fo psc.res psc.rc
 
 clock.lib: clock.obj
-clock.dll: clock.lib clock.res
+clock.dll: clock.lib clock.res kload.lib
 	$(LINK) $(LFLAGS) /out:clock.dll /DLL clock.obj kload.lib clock.res $(LIBS)
 clock.obj: clock.cpp clock.h
 
@@ -217,13 +194,13 @@ clock.res:
 	$(RC) -r -fo clock.res clock.rc
 
 roster.lib: roster.obj md5.obj
-roster.dll: roster.lib roster.res
+roster.dll: roster.lib roster.res kload.lib
 	$(LINK) $(LFLAGS) /out:roster.dll /DLL roster.obj md5.obj kload.lib d3dx8.lib roster.res $(LIBS)
 roster.obj: roster.cpp roster.h
 md5.obj: md5.c md5.h
 
 speeder.lib: speeder.obj apihijack.obj
-speeder.dll: speeder.lib speeder.res
+speeder.dll: speeder.lib speeder.res kload.lib
 	$(LINK) $(LFLAGS) /out:speeder.dll /DLL speeder.obj apihijack.obj kload.lib speeder.res $(LIBS)
 speeder.obj: speeder.cpp speeder.h
 apihijack.obj: apihijack.cpp apihijack.h

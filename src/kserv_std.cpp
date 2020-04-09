@@ -16,7 +16,6 @@
 #include "afsreader.h"
 #include "input.h"
 
-#include "d3dfont.h"
 #include "dxutil.h"
 #include "d3d8types.h"
 #include "d3d8.h"
@@ -54,10 +53,10 @@ KMOD k_mydll={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 /**************************************
 Shared by all processes variables
 **************************************/
-#pragma data_seg(".HKT")
+//#pragma data_seg(".HKT")
 KSERV_CONFIG g_config;
-#pragma data_seg()
-#pragma comment(linker, "/section:.HKT,rws")
+//#pragma data_seg()
+//#pragma comment(linker, "/section:.HKT,rws")
 
 /************************** 
 End of shared section 

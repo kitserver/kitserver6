@@ -189,6 +189,8 @@ KEXPORT IDirect3DDevice8* GetActiveDevice();
 
 KEXPORT void SetActiveDevice(IDirect3DDevice8* n_device);
 
+void kloadMakeFonts(IDirect3DDevice8* dev);
+void kloadDestroyFonts();
 void kloadRestoreDeviceObjects(IDirect3DDevice8* dev);
 void kloadInvalidateDeviceObjects(IDirect3DDevice8* dev);
 void kloadDeleteDeviceObjects(IDirect3DDevice8* dev);
