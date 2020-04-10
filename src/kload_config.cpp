@@ -98,7 +98,7 @@ BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile)
 		{
 			float fvalue;
 			if (sscanf(pValue, "%f", &fvalue)!=1) continue;
-			LogWithNumber(&k_kload,"ReadConfig: font-size.factor = (%0.3f)", fvalue);
+			LogWithFloat(&k_kload,"ReadConfig: font-size.factor = (%0.3f)", fvalue);
 			config->fontSizeFactor = fvalue;
 		}
 		else if (lstrcmp(name, "DLL.num")==0)
