@@ -22,6 +22,8 @@ LCM g_lcm;
 BYTE g_crowdCheck;
 BYTE g_JapanCheck;
 BYTE g_aspectCheck;
+BYTE g_aspectManualCheck;
+float g_aspect = 0.0;
 BYTE g_lodLevels[] = {0,1,2,3,4};
 
 HWND hWnd = NULL;
@@ -35,6 +37,8 @@ void PopulateLodLists(BYTE* indices);
 void PopulateCrowdCheckBox(BYTE check);
 void PopulateJapanCheckBox(BYTE check);
 void PopulateAspectCheckBox(BYTE check);
+void PopulateAspectManualCheckBox(BYTE check);
+void PopulateAspectEdit(float value);
 void SetLCM();
 void GetLCM();
 void GetLCMValueFromList(HWND control, BYTE* b);
@@ -216,6 +220,27 @@ void PopulateAspectCheckBox(BYTE check)
     }
 }
 
+void PopulateAspectManualCheckBox(BYTE check)
+{
+    if (check) {
+        SendMessage(g_aspectManualCheckBox, BM_SETCHECK, BST_CHECKED, 0);
+    } else {
+        SendMessage(g_aspectManualCheckBox, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
+}
+
+void PopulateAspectEdit(float value)
+{
+    char buf[20] = {0};
+    _snprintf(buf, sizeof(buf), "%0.4f", value);
+    if (g_aspectManualCheck && value!=0.0f) {
+        SendMessage(g_aspectEdit, WM_SETTEXT, 0, (LPARAM)buf);
+    }
+    else {
+        SendMessage(g_aspectEdit, WM_SETTEXT, 0, (LPARAM)"");
+    }
+}
+
 void SetLCM()
 {
     BYTE idx;
@@ -270,6 +295,19 @@ void GetAspectCheckBox(BYTE* b)
     *b = (lResult == BST_CHECKED)?1:0;
 }
 
+void GetAspectManualCheckBox(BYTE* b)
+{
+    LRESULT lResult = SendMessage(g_aspectManualCheckBox, BM_GETCHECK, 0, 0);
+    *b = (lResult == BST_CHECKED)?1:0;
+}
+
+void GetAspectEdit(float* v)
+{
+    char buf[20] = {0};
+    SendMessage(g_aspectEdit, WM_GETTEXT, sizeof(buf)-1, (LPARAM)buf);
+    sscanf(buf, "%f", v);
+}
+
 void GetLCM()
 {
     GetLCMValueFromList(g_weatherListControl, &g_lcm.weather);
@@ -304,6 +342,10 @@ void ReadConfig()
         fread(&g_lodLevels, sizeof(g_lodLevels), 1, f);
         fread(&g_JapanCheck, 1, 1, f);
         fread(&g_aspectCheck, 1, 1, f);
+        fread(&g_aspectManualCheck, 1, 1, f);
+        if (g_aspectManualCheck) {
+            fread(&g_aspect, sizeof(float), 1, f);
+        }
         fclose(f);
     }
 }
@@ -314,6 +356,8 @@ void SaveConfig()
     GetCrowdCheckBox(&g_crowdCheck);
     GetJapanCheckBox(&g_JapanCheck);
     GetAspectCheckBox(&g_aspectCheck);
+    GetAspectManualCheckBox(&g_aspectManualCheck);
+    GetAspectEdit(&g_aspect);
     GetLCM();
     FILE* f = fopen(CFG_NAME, "wb");
     if (f) {
@@ -322,6 +366,10 @@ void SaveConfig()
         fwrite(&g_lodLevels, sizeof(g_lodLevels), 1, f);
         fwrite(&g_JapanCheck, 1, 1, f);
         fwrite(&g_aspectCheck, 1, 1, f);
+        fwrite(&g_aspectManualCheck, 1, 1, f);
+        if (g_aspectManualCheck) {
+            fwrite(&g_aspect, sizeof(float), 1, f);
+        }
         fclose(f);
 
 		// show message box with success msg
@@ -356,6 +404,8 @@ void EnableControls(BOOL flag)
     EnableWindow(g_crowdCheckBox, flag);
 //    EnableWindow(g_JapanCheckBox, flag);
     EnableWindow(g_aspectCheckBox, flag);
+    EnableWindow(g_aspectManualCheckBox, flag);
+    EnableWindow(g_aspectEdit, flag);
     EnableWindow(g_saveButtonControl, flag);
     EnableWindow(g_defButtonControl, flag);
     EnableLCM(flag);
@@ -385,6 +435,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     PopulateCrowdCheckBox(g_crowdCheck);
 //    PopulateJapanCheckBox(g_JapanCheck);
     PopulateAspectCheckBox(g_aspectCheck);
+    PopulateAspectManualCheckBox(g_aspectManualCheck);
+    PopulateAspectEdit(g_aspect);
     SetLCM();
     EnableControls(TRUE);
 

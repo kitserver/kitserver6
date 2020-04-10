@@ -9,6 +9,8 @@ HWND g_lodListControl[5];          // lod lists
 HWND g_crowdCheckBox;             // crowd
 HWND g_JapanCheckBox;             // Japan check
 HWND g_aspectCheckBox;            // aspect ratio correction check
+HWND g_aspectManualCheckBox;      // aspect ratio manual check
+HWND g_aspectEdit;                // aspect ratio manual value
 
 HWND g_weatherListControl;         // weather (default,fine,rainy,random)
 HWND g_timeListControl;            // time of the day (default,day,night)
@@ -122,7 +124,7 @@ bool BuildControls(HWND parent)
     x = spacer;
 	HWND staticCrowdBorderTopControl = CreateWindowEx(
 			xstyle, "Static", "", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
-			x, y, borW, butH*2+spacer*3,
+			x, y, borW, butH*3+spacer*4,
 			parent, NULL, NULL, NULL);
 
     y += spacer;
@@ -144,8 +146,22 @@ bool BuildControls(HWND parent)
     y += spacer + butH;
     x = spacer*2;
 	g_aspectCheckBox = CreateWindowEx(
-			xstyle, "button", "Enable aspect ratio correction (useful for widescreen modes)", style,
+			xstyle, "button", "Automatic aspect ratio (useful for widescreen modes)", style,
 			x, y, 500, butH,
+			parent, NULL, NULL, NULL);
+
+    y += spacer + butH;
+    x = spacer*2;
+	g_aspectManualCheckBox = CreateWindowEx(
+			xstyle, "button", "Manual aspect ratio", style,
+			x, y, 150, butH,
+			parent, NULL, NULL, NULL);
+
+    x += 150 + spacer;
+	style = WS_CHILD | WS_VISIBLE | ES_LEFT;
+	g_aspectEdit = CreateWindowEx(
+			WS_EX_CLIENTEDGE, "edit", "", style,
+			x, y-2, 60, butH,
 			parent, NULL, NULL, NULL);
 
     ////////////// League/Cup/ML ////////////////////////////////////
@@ -400,6 +416,8 @@ bool BuildControls(HWND parent)
     EnableWindow(g_crowdCheckBox, FALSE);
 //    EnableWindow(g_JapanCheckBox, FALSE);
     EnableWindow(g_aspectCheckBox, FALSE);
+    EnableWindow(g_aspectManualCheckBox, FALSE);
+    EnableWindow(g_aspectEdit, FALSE);
     SendMessage(g_weatherListControl, WM_SETFONT, (WPARAM)hObj, true);
     EnableWindow(g_weatherListControl, FALSE);
 
@@ -409,6 +427,8 @@ bool BuildControls(HWND parent)
 	SendMessage(g_crowdCheckBox, WM_SETFONT, (WPARAM)hObj, true);
 //	SendMessage(g_JapanCheckBox, WM_SETFONT, (WPARAM)hObj, true);
 	SendMessage(g_aspectCheckBox, WM_SETFONT, (WPARAM)hObj, true);
+	SendMessage(g_aspectManualCheckBox, WM_SETFONT, (WPARAM)hObj, true);
+	SendMessage(g_aspectEdit, WM_SETFONT, (WPARAM)hObj, true);
 
 	EnableWindow(g_saveButtonControl, FALSE);
 	EnableWindow(g_defButtonControl, FALSE);

@@ -6,12 +6,14 @@
 #include <windows.h>
 
 #define WIN_WIDTH 615 
-#define WIN_HEIGHT 485
+#define WIN_HEIGHT 515
 
 extern HWND g_lodListControl[5];          // lod lists
 extern HWND g_crowdCheckBox;              // crowd
 extern HWND g_JapanCheckBox;              // Japan check
 extern HWND g_aspectCheckBox;             // aspect ratio correction check
+extern HWND g_aspectManualCheckBox;       // aspect ratio manual check
+extern HWND g_aspectEdit;                 // aspect ratio manual value
 
 extern HWND g_weatherListControl;         // weather (default,fine,rainy,random)
 extern HWND g_timeListControl;            // time of the day (default,day,night)

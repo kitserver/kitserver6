@@ -15,6 +15,8 @@ BYTE g_crowdCheck = 0;
 BYTE g_lodLevels[] = {0,1,2,3,4};
 BYTE g_JapanCheck = 0;
 BYTE g_aspectCheck = 0;
+BYTE g_aspectManualCheck = 0;
+float g_aspect = 0.0;
 bool inited=false;
 bool isSelectMode=false;
 int setting=0;
@@ -335,6 +337,10 @@ void InitLODMixerData()
         fread(&g_lodLevels, sizeof(g_lodLevels), 1, f);
         fread(&g_JapanCheck, 1, 1, f);
         fread(&g_aspectCheck, 1, 1, f);
+        fread(&g_aspectManualCheck, 1, 1, f);
+        if (g_aspectManualCheck) {
+            fread(&g_aspect, sizeof(float), 1, f);
+        }
         fclose(f);
     }
     
@@ -429,6 +435,10 @@ void SaveLODMixerData()
         fwrite(&g_lodLevels, sizeof(g_lodLevels), 1, f);
         fwrite(&g_JapanCheck, 1, 1, f);
         fwrite(&g_aspectCheck, 1, 1, f);
+        fwrite(&g_aspectManualCheck, 1, 1, f);
+        if (g_aspectManualCheck) {
+            fwrite(&g_aspect, sizeof(float), 1, f);
+        }
         fclose(f);
       };
         
@@ -698,7 +708,8 @@ void lodCreateDevice(IDirect3D8* self, UINT Adapter,
 	
 void correctAspectRatio(UINT width, UINT height)
 {
-    if (g_aspectCheck) {
+    bool manualCorrection = g_aspectManualCheck && (g_aspect >= 0.1f);
+    if (g_aspectCheck || manualCorrection) {
         Log(&k_lodmixer,"adjusting aspect ratio corrector.");
 
         DWORD protection = 0;
@@ -709,6 +720,9 @@ void correctAspectRatio(UINT width, UINT height)
         LogWithNumber(&k_lodmixer, "cullW = %08x", (DWORD)cullW);
         if (projW && cullW && VirtualProtect(cullW, 0x80, newProtection, &protection)) {
             float reverse_aspect_ratio = height / (float)width;
+            if (manualCorrection) {
+                reverse_aspect_ratio = 1.0 / g_aspect;
+            }
             float ar_correction = 0.75 / reverse_aspect_ratio;
             *projW = 512.0 * ar_correction;
             *cullW = (WORD)(512 * ar_correction);
