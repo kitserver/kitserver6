@@ -1,6 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
-#include "keybindui.h"
+#include "keyconfui.h"
 #include "keycfg.h"
 
 HWND g_keySwitchLeftControl;

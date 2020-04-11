@@ -6,8 +6,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "keybindui.h"
-#include "keybind.h"
+#include "keyconfui.h"
+#include "keyconf.h"
 #include "keycfg.h"
 
 HWND hWnd = NULL;

@@ -21,7 +21,7 @@ all: dlls apps
 	copy *.dll output
 	copy setup.exe output
 	copy lodcfg.exe output
-	copy keybind.exe output
+	copy keyconf.exe output
 	copy filedec.exe output
 #	copy speedtest.exe output
 #	copy vista_test.exe output
@@ -40,13 +40,13 @@ all_apps: apps
 	mkdir output
 	copy setup.exe output
 	copy lodcfg.exe output
-	copy keybind.exe output
+	copy keyconf.exe output
 	copy filedec.exe output
 #	copy speedtest.exe output
 #	copy vista_test.exe output
 
 dlls: pngdib kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
-apps: setup.exe lodcfg.exe keybind.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
+apps: setup.exe lodcfg.exe keyconf.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 !if "$(debug)"=="1"
 EXTRA_CFLAGS=/DDEBUG
@@ -216,10 +216,10 @@ setup.res:
 lodcfg.exe: lodcfg.obj detect.obj lodcfgui.obj imageutil.obj
 	$(LINK) $(LFLAGS) /out:lodcfg.exe lodcfg.obj detect.obj lodcfgui.obj imageutil.obj $(LIBS)
 
-keybindui.obj: keybindui.cpp keybindui.h
-keybind.obj: keybind.cpp keybind.h keybindui.h
-keybind.exe: keybind.obj keybindui.obj keycfg.obj
-	$(LINK) $(LFLAGS) /out:keybind.exe keybind.obj keybindui.obj keycfg.obj $(LIBS)
+keyconfui.obj: keyconfui.cpp keyconfui.h
+keyconf.obj: keyconf.cpp keyconf.h keyconfui.h
+keyconf.exe: keyconf.obj keyconfui.obj keycfg.obj
+	$(LINK) $(LFLAGS) /out:keyconf.exe keyconf.obj keyconfui.obj keycfg.obj $(LIBS)
 
 afstest.obj: afstest.cpp afsreader.h
 afstest.exe: afstest.obj afsreader.obj crc32.obj alog.obj aconfig.obj
