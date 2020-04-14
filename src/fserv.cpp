@@ -13,6 +13,26 @@
 KMOD k_fserv={MODID,NAMELONG,NAMESHORT,DEFAULT_DEBUG};
 #define DEFAULT_USESPECIALHAIR 0
 
+#define CODELEN 1
+enum {
+    C_RESETFLAG2_CS,
+};
+DWORD codeArray[][CODELEN] = {
+    // PES6
+    {
+        0x9c15a7,
+    },
+    // PES6 1.10
+    {
+        0x9c1737,
+    },
+    // WE2007
+    {
+        0x9c1d97,
+    },
+};
+DWORD code[CODELEN];
+
 bool dump_it = false;
 
 HINSTANCE hInst;
@@ -125,6 +145,80 @@ HRESULT STDMETHODCALLTYPE fservCreateTexture(
         DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** ppTexture,
         DWORD src, bool* IsProcessed);
 void fservUnlockRect(IDirect3DTexture8* self,UINT Level);
+
+void fservBeginRenderPlayer(DWORD playerMainColl);
+void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res);
+
+class TexturePack {
+public:
+    TexturePack() : _big(NULL),_small(NULL),_bigFile(),_smallFile(),_bigLoaded(false),_smallLoaded(false) {}
+    ~TexturePack() {
+        if (_big) _big->Release();
+        if (_small) _small->Release();
+    }
+    IDirect3DTexture8* _big;
+    IDirect3DTexture8* _small;
+    string _bigFile;
+    string _smallFile;
+    bool _bigLoaded;
+    bool _smallLoaded;
+};
+
+unordered_map<WORD,TexturePack> g_faceTexturePacks;
+unordered_map<WORD,TexturePack> g_hairTexturePacks;
+DWORD g_faceTexturesColl[2];
+DWORD g_hairTexturesColl[2];
+DWORD g_faceTexturesPos[2];
+DWORD g_hairTexturesPos[2];
+IDirect3DTexture8* g_faceTextures[2][64]; //[big/small][32*team + posInTeam]
+IDirect3DTexture8* g_hairTextures[2][64]; //[big/small][32*team + posInTeam]
+DWORD g_fservPlayerIds[64]; //[32*team + posInTeam]
+DWORD currRenderPlayer=0xffffffff;
+PLAYER_RECORD* currRenderPlayerRecord=NULL;
+
+// keyboard hook handle
+static HHOOK g_hKeyboardHook = NULL;
+static bool dump_now(false);
+static bool dumping(false);
+
+/****************************************************************
+ * WH_KEYBOARD hook procedure                                   *
+ ****************************************************************/
+
+EXTERN_C _declspec(dllexport) LRESULT CALLBACK fservKeyboardProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    if (code < 0) // do not process message
+        return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam);
+
+    switch (code)
+    {
+        case HC_ACTION:
+            /* process the key events */
+            if (lParam & 0x80000000)
+            {
+                KEYCFG* keyCfg = GetInputCfg();
+                if (wParam == keyCfg->keyboard.keyAction2) {
+                    dump_now = true;
+                    dumping = false;
+                }
+            }
+            break;
+    }
+
+    // We must pass the all messages on to CallNextHookEx.
+    return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam);
+}
+
+/* remove keyboard hook */
+void UninstallKeyboardHook(void)
+{
+    if (g_hKeyboardHook != NULL)
+    {
+        UnhookWindowsHookEx( g_hKeyboardHook );
+        Log(&k_fserv,"Keyboard hook uninstalled.");
+        g_hKeyboardHook = NULL;
+    }
+}
 
 void SetFaceDimensions(D3DXIMAGE_INFO *ii, UINT &w, UINT &h) {
     if (g_config->npot_textures) {
@@ -610,6 +704,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	
 		//copy the FaceIDs for the right game version
 		memcpy(fIDs,fIDsArray[v],sizeof(fIDs));
+		memcpy(code,codeArray[v],sizeof(code));
 		orgCopyPlayerData=(COPYPLAYERDATA)fIDs[C_COPYPLAYERDATA];
 		orgEditCopyPlayerData=(EDITCOPYPLAYERDATA)fIDs[C_EDITCOPYPLAYERDATA];
 		orgGetHairTransp=(GETHAIRTRANSP)fIDs[C_GETHAIRTRANSP];
@@ -618,12 +713,15 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		
 		HookFunction(hk_D3D_Create,(DWORD)InitFserv);
 
-        HookFunction(hk_D3D_CreateTexture,(DWORD)fservCreateTexture);
-        HookFunction(hk_D3D_UnlockRect,(DWORD)fservUnlockRect);
+        //HookFunction(hk_D3D_CreateTexture,(DWORD)fservCreateTexture);
+        //HookFunction(hk_D3D_UnlockRect,(DWORD)fservUnlockRect);
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		Log(&k_fserv,"Detaching dll...");
+
+        /* uninstall keyboard hook */
+        UninstallKeyboardHook();
 		
 		UnhookFunction(hk_ProcessPlayerData,(DWORD)fservProcessPlayerData);
 		UnhookFunction(hk_D3D_Present,(DWORD)PrintPlayerInfo);
@@ -692,13 +790,84 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	return true;
 };
 
+void releaseTextures()
+{
+    // release the skin textures, so that we don't consume too much memory for skins
+    unordered_map<WORD,TexturePack>::iterator it;
+    for (it = g_faceTexturePacks.begin();
+            it != g_faceTexturePacks.end();
+            it++) {
+        if (it->second._big) {
+            //SafeRelease(&it->second._big);
+            it->second._big = NULL;
+            it->second._bigLoaded = false;
+            LogWithNumber(&k_fserv, "Released big face texture for player %d", it->first);
+        }
+        if (it->second._small) {
+            //SafeRelease(&it->second._small);
+            it->second._small = NULL;
+            it->second._smallLoaded = false;
+            LogWithNumber(&k_fserv, "Released small face texture for player %d", it->first);
+        }
+
+    }
+    for (it = g_hairTexturePacks.begin();
+            it != g_hairTexturePacks.end();
+            it++) {
+        if (it->second._big) {
+            //SafeRelease(&it->second._big);
+            it->second._big = NULL;
+            it->second._bigLoaded = false;
+            LogWithNumber(&k_fserv, "Released big hair texture for player %d", it->first);
+        }
+        if (it->second._small) {
+            //SafeRelease(&it->second._small);
+            it->second._small = NULL;
+            it->second._smallLoaded = false;
+            LogWithNumber(&k_fserv, "Released small hair texture for player %d", it->first);
+        }
+    }
+
+    ZeroMemory(g_faceTextures, 64*4*2);
+    ZeroMemory(g_hairTextures, 64*4*2);
+    ZeroMemory(g_fservPlayerIds, 64*4);
+}
+
+void fservBeginUniSelect()
+{
+    Log(&k_fserv,"fservBeginUniSelect: releasing face/hair textures");
+    releaseTextures();
+}
+
+DWORD fservResetFlag2()
+{
+    Log(&k_fserv,"fservResetFlag2: releasing face/hair textures");
+    releaseTextures();
+
+    // call original
+    DWORD result = MasterCallNext();
+    return result;
+}
+
 void InitFserv()
 {
 	Log(&k_fserv,"InitFserv");
 	HookFunction(hk_ProcessPlayerData,(DWORD)fservProcessPlayerData);
 	HookFunction(hk_D3D_Present,(DWORD)PrintPlayerInfo);
+
+    HookFunction(hk_BeginUniSelect,(DWORD)fservBeginUniSelect);
+    MasterHookFunction(code[C_RESETFLAG2_CS], 0, fservResetFlag2);
+    HookFunction(hk_PesGetTexture,(DWORD)fservPesGetTexture);
+    HookFunction(hk_BeginRenderPlayer,(DWORD)fservBeginRenderPlayer);
 	
 	RegisterAfsReplaceCallback(fservAfsReplace);
+
+    // install keyboard hook, if not done yet.
+    if (g_hKeyboardHook == NULL)
+    {
+        g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, fservKeyboardProc, hInst, GetCurrentThreadId());
+        LogWithNumber(&k_fserv,"Installed keyboard hook: g_hKeyboardHook = %d", (DWORD)g_hKeyboardHook);
+    }
 	
 	for (int i=0;i<4;i++) {
 		StartsStdFaces[i]=fIDs[STARTW+i];
@@ -856,6 +1025,17 @@ void GetGDBFaces()
 			AddPlayerFace(number, sfile, DEFAULT_USESPECIALHAIR);
 			break;
 		};
+
+        if (scanRes == 2 || scanRes == 3) {
+            string filename(sfile);
+            string hdfilename = filename.substr(0,filename.size()-4);
+            hdfilename += ".png";
+        
+            TexturePack pack;
+            pack._bigFile = hdfilename;
+            pack._smallFile = hdfilename;
+            g_faceTexturePacks.insert(pair<WORD,TexturePack>((WORD)number,pack));
+        }
 	};
 	fclose(cfg);
 	
@@ -946,6 +1126,17 @@ void GetGDBHair()
 			AddPlayerHair(number,sfile,255);
 			break;
 		};
+
+        if (scanRes == 2 || scanRes == 3) {
+            string filename(sfile);
+            string hdfilename = filename.substr(0,filename.size()-4);
+            hdfilename += ".png";
+        
+            TexturePack pack;
+            pack._bigFile = hdfilename;
+            pack._smallFile = hdfilename;
+            g_hairTexturePacks.insert(pair<WORD,TexturePack>((WORD)number,pack));
+        }
 	};
 	fclose(cfg);
 	
@@ -1014,8 +1205,8 @@ void fservAfsReplace(GETFILEINFO* gfi)
 		LogWithNumber(&k_fserv, "FaceID is %d",FaceID);
 		if (g_Faces[FaceID] != NULL) {
 			sprintf(filename, "%sGDB\\faces\\%s", GetPESInfo()->gdbDir, g_Faces[FaceID]);
-            g_faceFilesBig.push(filename);
-            g_faceFilesSmall.push(filename);
+            //g_faceFilesBig.push(filename);
+            //g_faceFilesSmall.push(filename);
 		} else {
 			Log(&k_fserv,"FAILED! No file is assigned to this parameter combination!");
 			return;
@@ -1028,8 +1219,8 @@ void fservAfsReplace(GETFILEINFO* gfi)
 		LogWithNumber(&k_fserv,"Processing hair id %d",HairID);
 		if (g_Hair[HairID] != NULL) {
 			sprintf(filename, "%sGDB\\hair\\%s", GetPESInfo()->gdbDir, g_Hair[HairID]);
-            g_hairFilesBig.push(filename);
-            g_hairFilesSmall.push(filename);
+            //g_hairFilesBig.push(filename);
+            //g_hairFilesSmall.push(filename);
 		} else {
 			Log(&k_fserv,"FAILED! No file is assigned to this parameter combination!");
 			return;
@@ -1435,3 +1626,256 @@ DWORD ResolvePlayerID(DWORD playerID)
 	};
 	return playerID;
 };
+
+DWORD hairPosMask = 0;
+
+void fservBeginRenderPlayer(DWORD playerMainColl)
+{
+    DWORD pmc=0, pinfo=0, playerNumber=0;
+    DWORD* bodyColl=NULL;
+    int minI=1, maxI=22;
+
+    currRenderPlayer=0xffffffff;
+    currRenderPlayerRecord=NULL;
+
+    bool edit_mode = isEditMode();
+    if (edit_mode) {
+        playerNumber = editPlayerId();
+        maxI=1;
+    }
+
+    for (int i=minI;i<=maxI;i++) {
+        if (!edit_mode)
+            playerNumber=getRecordPlayerId(i);
+
+        if (playerNumber != 0) {
+            pmc=*(playerRecord(i)->texMain);
+            pmc=*(DWORD*)(pmc+0x10);
+
+            if (pmc==playerMainColl) {
+                //PES is going to render this player now
+                currRenderPlayer = playerNumber;
+                currRenderPlayerRecord = playerRecord(i);
+
+                //LOG(&k_fserv, ">>>>>>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x",
+                //    currRenderPlayer, currRenderPlayerRecord, pmc);
+
+                hairPosMask = 0;
+
+                // dump textures for current player
+                if (dump_now) {
+                    if (dumping) {
+                        dump_now = false;
+                        dumping = false;
+                    }
+                    else {
+                        dumping = true;
+                    }
+                }
+
+                BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+                if (currRenderPlayer != g_fservPlayerIds[temp]) {
+                    g_fservPlayerIds[temp]=currRenderPlayer;
+                    g_faceTextures[0][temp]=NULL;
+                    g_faceTextures[1][temp]=NULL;
+                    g_hairTextures[0][temp]=NULL;
+                    g_hairTextures[1][temp]=NULL;
+                }
+
+                // face
+                bodyColl=*(DWORD**)(playerMainColl+0x18) + 2;
+                g_faceTexturesColl[0]=*bodyColl;  //remember p2 value for this lod level
+                g_faceTexturesPos[0] = 0;
+
+                bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
+                g_faceTexturesColl[1]=*bodyColl;  //remember p2 value for this lod level
+                g_faceTexturesPos[1] = 0;
+
+                // hair
+                bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
+                bodyColl+=5;
+                bodyColl+=5;
+                for (int lod=0;lod<2;lod++) {
+                    g_hairTexturesColl[lod]=*bodyColl;  //remember p2 value for this lod level
+                    g_hairTexturesPos[lod] = 2;
+                    //bodyColl+=5;
+                }
+            }
+        }
+    }
+    return;
+}
+
+IDirect3DTexture8* getFaceTexture(WORD playerId, bool big)
+{
+    IDirect3DTexture8* faceTexture = NULL;
+    unordered_map<WORD,TexturePack>::iterator it = g_faceTexturePacks.find(playerId);
+    if (it != g_faceTexturePacks.end()) {
+        // map has an entry for this player
+        if (big && it->second._bigLoaded) {
+            // already looked up and the texture should be loaded
+            return it->second._big;
+
+        } else if (!big && it->second._smallLoaded) {
+            // already looked up and the texture should be loaded
+            return it->second._small;
+
+        } else {
+            // haven't tried to load the textures for this player yet.
+            // Do it now.
+            char filename[BUFLEN];
+            sprintf(filename,"%sGDB\\faces\\%s", GetPESInfo()->gdbDir, it->second._bigFile.c_str());
+            if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename,
+                            0, 0, 1, 0,
+                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                            D3DX_FILTER_NONE, D3DX_FILTER_NONE,
+                            0, NULL, NULL, &faceTexture))) {
+                // store in the map
+                if (big) {
+                    it->second._big = faceTexture;
+                    LogWithNumber(&k_fserv, "getFaceTexture: loaded big texture for player %d", playerId);
+                }
+                else {
+                    it->second._small = faceTexture;
+                    LogWithNumber(&k_fserv, "getSkinTexture: loaded small texture for player %d", playerId);
+                }
+            } else {
+                LogWithString(&k_fserv, "D3DXCreateTextureFromFileEx FAILED for %s", filename);
+            }
+
+            // update loaded flags, so that we only load each texture once
+            if (big) {
+                it->second._bigLoaded = true;
+            }
+            else {
+                it->second._smallLoaded = true;
+            }
+        }
+    }
+    return faceTexture;
+}
+
+IDirect3DTexture8* getHairTexture(WORD playerId, bool big)
+{
+    IDirect3DTexture8* hairTexture = NULL;
+    unordered_map<WORD,TexturePack>::iterator it = g_hairTexturePacks.find(playerId);
+    if (it != g_hairTexturePacks.end()) {
+        // map has an entry for this player
+        if (big && it->second._bigLoaded) {
+            // already looked up and the texture should be loaded
+            return it->second._big;
+
+        } else if (!big && it->second._smallLoaded) {
+            // already looked up and the texture should be loaded
+            return it->second._small;
+
+        } else {
+            // haven't tried to load the textures for this player yet.
+            // Do it now.
+            char filename[BUFLEN];
+            sprintf(filename,"%sGDB\\hair\\%s", GetPESInfo()->gdbDir, it->second._bigFile.c_str());
+            if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename,
+                            0, 0, 1, 0,
+                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                            D3DX_FILTER_NONE, D3DX_FILTER_NONE,
+                            0, NULL, NULL, &hairTexture))) {
+                // store in the map
+                if (big) {
+                    it->second._big = hairTexture;
+                    LogWithNumber(&k_fserv, "getHairTexture: loaded big texture for player %d", playerId);
+                }
+                else {
+                    it->second._small = hairTexture;
+                    LogWithNumber(&k_fserv, "getHairTexture: loaded small texture for player %d", playerId);
+                }
+            } else {
+                LogWithString(&k_fserv, "D3DXCreateTextureFromFileEx FAILED for %s", filename);
+            }
+
+            // update loaded flags, so that we only load each texture once
+            if (big) {
+                it->second._bigLoaded = true;
+            }
+            else {
+                it->second._smallLoaded = true;
+            }
+        }
+    }
+    return hairTexture;
+}
+
+void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
+{
+    if (currRenderPlayer==0xffffffff) return;
+
+    //LOG(&k_fserv, "fservPesGetTexture:: p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+    if (dump_now) {
+        char buf[BUFLEN];
+        sprintf(buf,"%s\\%p.bmp", GetPESInfo()->mydir, *res);
+        if (SUCCEEDED(D3DXSaveTextureToFile(buf, D3DXIFF_BMP, *res, NULL))) {
+            //LOG(&k_fserv, "Saved texture [%p] to: %s", *res, buf);
+        }
+        else {
+            LOG(&k_fserv, "FAILED to save texture to: %s", buf);
+        }
+    }
+ 
+    for (int lod=0; lod<2; lod++) {
+        if (p2==g_faceTexturesColl[lod] && p3==g_faceTexturesPos[lod]) {
+            //LOG(&k_fserv, "facePesGetTexture:: ^^^ face texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+            BYTE j=lod;
+            BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+            IDirect3DTexture8* faceTexture=g_faceTextures[j][temp];
+            if ((DWORD)faceTexture != 0xffffffff) { //0xffffffff means: has no gdb face
+                if (!faceTexture) {
+                    //no face texture in cache yet
+                    faceTexture = getFaceTexture(currRenderPlayer, j==0);
+                    if (!faceTexture) {
+                        //no texture assigned
+                        faceTexture = (IDirect3DTexture8*)0xffffffff;
+                    } else {
+                        *res=faceTexture;
+                    }
+                    //cache the texture pointer
+                    g_faceTextures[j][temp]=faceTexture;
+                } else {
+                    //set texture
+                    *res=faceTexture;
+                }
+            }
+        }
+    }
+
+    for (int lod=0; lod<2; lod++) {
+        if (p2==g_hairTexturesColl[lod]) {
+            hairPosMask |= p3;
+            //LOG(&k_fserv, "fservPesGetTexture:: hairPosMask=%d", hairPosMask);
+            if (hairPosMask == 3) {
+                //LOG(&k_fserv, "fservPesGetTexture:: ^^^ hair texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+                BYTE j=lod;
+                BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+                IDirect3DTexture8* hairTexture=g_hairTextures[j][temp];
+                if ((DWORD)hairTexture != 0xffffffff) { //0xffffffff means: has no gdb hair
+                    if (!hairTexture) {
+                        //no hair texture in cache yet
+                        hairTexture = getHairTexture(currRenderPlayer, j==0);
+                        if (!hairTexture) {
+                            //no texture assigned
+                            hairTexture = (IDirect3DTexture8*)0xffffffff;
+                        } else {
+                            *res=hairTexture;
+                        }
+                        //cache the texture pointer
+                        g_hairTextures[j][temp]=hairTexture;
+                    } else {
+                        //set texture
+                        *res=hairTexture;
+                    }
+                }
+            }
+        }
+    }
+}
