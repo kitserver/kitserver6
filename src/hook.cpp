@@ -428,7 +428,7 @@ void HookOthers()
                                                     0, NewProcessPlayerData);
     Log(&k_kload,"Jump to ProcessPlayerData HOOKED at code[C_PROCESSPLAYERDATA_JMP]");
 
-    if (bootserverVersion==VERSION_ROBBIE) {
+    if (1) {//bootserverVersion==VERSION_ROBBIE) {
         // hook PesGetTexure
         bPesGetTextureHooked = HookProc(C_PES_GETTEXTURE,C_PES_GETTEXTURE_CS1,(DWORD)NewPesGetTexture,
             "C_PES_GETTEXTURE","C_PES_GETTEXTURE_CS1");
