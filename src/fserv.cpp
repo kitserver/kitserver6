@@ -59,7 +59,7 @@ WORD* randSelIDs=NULL;
 
 std::unordered_map<DWORD,LPVOID> g_Buffers;
 std::unordered_map<DWORD,LPVOID>::iterator g_BuffersIterator;
-	
+
 //Stores the filenames to a face id
 DWORD numFaces=0;
 std::unordered_map<DWORD,char*> g_Faces;
@@ -89,6 +89,13 @@ bool lastWasFromGDB=false, lastHairWasFromGDB=false, hasChanged=true;
 char lastPlayerNumberString[BUFLEN],lastFaceFileString[BUFLEN];
 char lastHairFileString[BUFLEN];
 char tmpFilename[BUFLEN]; //crashes if this is defined locally in the functions
+
+struct TEXTURE_OBJ {
+    BYTE someInfo[0x20];
+    DWORD dw0;
+    DWORD width;
+    DWORD height;
+};
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
 void InitFserv();
@@ -282,13 +289,13 @@ bool UnhookProcAtAddr(bool flag, DWORD proc, DWORD proc_cs, char* sproc, char* s
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
 	int i,j;
-	
+
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
 		Log(&k_fserv,"Attaching dll...");
-		
+
 		hInst=hInstance;
-		
+
 		int v=GetPESInfo()->GameVersion;
 		switch (v) {
 			case gvPES6PC:
@@ -300,7 +307,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		//Will land here if game version is not supported
 		Log(&k_fserv,"Your game version is currently not supported!");
 		return false;
-		
+
 		//Everything is OK!
 		GameVersIsOK:
 
@@ -317,10 +324,10 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		// read configuration
 		char cfgFile[BUFLEN];
 		ZeroMemory(cfgFile, BUFLEN);
-		strcpy(cfgFile, GetPESInfo()->mydir); 
+		strcpy(cfgFile, GetPESInfo()->mydir);
 		strcat(cfgFile, CONFIG_FILE);
 		ReadConfig(g_config, cfgFile);
-	
+
 		//copy the FaceIDs for the right game version
 		memcpy(fIDs,fIDsArray[v],sizeof(fIDs));
 		memcpy(code,codeArray[v],sizeof(code));
@@ -329,19 +336,21 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		orgGetHairTransp=(GETHAIRTRANSP)fIDs[C_GETHAIRTRANSP];
 		randSelPlayersAddr=(RANDSEL_PLAYERS)fIDs[C_RANDSEL_PLAYERS];
 		randSelIDs=(WORD*)fIDs[RANDSEL_IDS];
-		
+
 		HookFunction(hk_D3D_Create,(DWORD)InitFserv);
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		Log(&k_fserv,"Detaching dll...");
 
+#ifdef FSERV_TEXDUMP
         /* uninstall keyboard hook */
         UninstallKeyboardHook();
-		
+#endif
+
 		UnhookFunction(hk_ProcessPlayerData,(DWORD)fservProcessPlayerData);
 		UnhookFunction(hk_D3D_Present,(DWORD)PrintPlayerInfo);
-		
+
 		DWORD protection=0, newProtection=PAGE_EXECUTE_READWRITE;
 		if (fIDs[FIX_DWORDFACEID] != 0) {
             if (VirtualProtect((BYTE*)fIDs[FIX_DWORDFACEID], 2, newProtection, &protection)) {
@@ -361,36 +370,36 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		if (fIDs[C_COPYPLAYERDATA_CS] != 0)
 			if (VirtualProtect((BYTE*)fIDs[C_COPYPLAYERDATA_CS], 5, newProtection, &protection))
 				memcpy((BYTE*)fIDs[C_COPYPLAYERDATA_CS], g_savedCopyPlayerData, 5);
-			
+
 		if (fIDs[C_REPL_COPYPLAYERDATA_CS] != 0)
 			if (VirtualProtect((BYTE*)fIDs[C_REPL_COPYPLAYERDATA_CS], 11, newProtection, &protection))
 				memcpy((BYTE*)fIDs[C_REPL_COPYPLAYERDATA_CS], g_savedReplCopyPlayerData, 11);
-			
+
 		bGetHairTranspHooked=UnhookProcAtAddr(bGetHairTranspHooked,fIDs[C_GETHAIRTRANSP],
 			fIDs[C_GETHAIRTRANSP_CS],"C_GETHAIRTRANSP","C_GETHAIRTRANSP_CS");
-			
+
 		bEditCopyPlayerDataHooked=UnhookProcAtAddr(bEditCopyPlayerDataHooked,fIDs[C_EDITCOPYPLAYERDATA],
 			fIDs[C_EDITCOPYPLAYERDATA_CS],"C_EDITCOPYPLAYERDATA","C_EDITCOPYPLAYERDATA_CS");
-			
+
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA2],fservEditCopyPlayerData2);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA3],fservEditCopyPlayerData3);
 		MasterUnhookFunction(fIDs[C_EDITCOPYPLAYERDATA4],fservEditCopyPlayerData4);
 		MasterUnhookFunction(fIDs[C_EDITUNI_CPD_CS],fservEditUniCopyPlayerData);
 		MasterUnhookFunction(fIDs[C_MYTEAM_CPD_CS],fservMyTeamCPD);
-			
+
 		for (j=0;j<numFaces;j++)
 			if (g_Faces[j] != NULL)
 				delete g_Faces[j];
-		
+
 		g_Faces.clear();
-		
+
 		for (j=0;j<numHair;j++)
 			if (g_Hair[j] != NULL)
 					delete g_Hair[j];
-		
+
 		g_Hair.clear();
 		g_HairTransp.clear();
-		
+
 		g_Players.clear();
 		g_PlayersHair.clear();
 		g_PlayersAddr.clear();
@@ -399,10 +408,10 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		g_EditorAddresses.clear();
 		g_FaceExists.clear();
 		g_HairExists.clear();
-		
+
 		Log(&k_fserv,"Detaching done.");
 	};
-	
+
 	return true;
 };
 
@@ -475,25 +484,27 @@ void InitFserv()
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, fservResetFlag2);
     HookFunction(hk_PesGetTexture,(DWORD)fservPesGetTexture);
     HookFunction(hk_BeginRenderPlayer,(DWORD)fservBeginRenderPlayer);
-	
+
 	RegisterAfsReplaceCallback(fservAfsReplace);
 
+#ifdef FSERV_TEXDUMP
     // install keyboard hook, if not done yet.
     if (g_hKeyboardHook == NULL && g_config->dump_textures)
     {
         g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, fservKeyboardProc, hInst, GetCurrentThreadId());
         LogWithNumber(&k_fserv,"Installed keyboard hook: g_hKeyboardHook = %d", (DWORD)g_hKeyboardHook);
     }
-	
+#endif
+
 	for (int i=0;i<4;i++) {
 		StartsStdFaces[i]=fIDs[STARTW+i];
 	};
-	
+
 	//No need to do this later, and kits are loaded at this time as well
 	if (!Inited) {
 		GetGDBFaces();
 		GetGDBHair();
-		
+
 		Inited=true;
 	};
 
@@ -526,7 +537,7 @@ void InitFserv()
 			memset(bptr+5,0x90,13);
 	    };
 	};
-	
+
 	if (fIDs[CALCSPHAIRID] != 0)
 	{
 		bptr = (BYTE*)fIDs[CALCSPHAIRID];
@@ -549,7 +560,7 @@ void InitFserv()
 	        ptr[0] = (DWORD)fservCopyPlayerData - (DWORD)(fIDs[C_COPYPLAYERDATA_CS] + 5);
 	    };
 	};
-	
+
 	if (fIDs[C_REPL_COPYPLAYERDATA_CS] != 0)
 	{
 		bptr = (BYTE*)fIDs[C_REPL_COPYPLAYERDATA_CS];
@@ -561,21 +572,21 @@ void InitFserv()
 	        memset(bptr+5,0x90,6);
 	    };
 	};
-	
+
 	bGetHairTranspHooked=HookProcAtAddr(fIDs[C_GETHAIRTRANSP],fIDs[C_GETHAIRTRANSP_CS],
 		(DWORD)fservGetHairTransp,"C_GETHAIRTRANSP","C_GETHAIRTRANSP_CS");
-		
+
 	bEditCopyPlayerDataHooked=HookProcAtAddr(fIDs[C_EDITCOPYPLAYERDATA],fIDs[C_EDITCOPYPLAYERDATA_CS],
 		(DWORD)fservEditCopyPlayerData,"C_EDITCOPYPLAYERDATA","C_EDITCOPYPLAYERDATA_CS");
-			
+
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA2],1,fservEditCopyPlayerData2);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA3],1,fservEditCopyPlayerData3);
 	MasterHookFunction(fIDs[C_EDITCOPYPLAYERDATA4],3,fservEditCopyPlayerData4);
 	MasterHookFunction(fIDs[C_EDITUNI_CPD_CS],1,fservEditUniCopyPlayerData);
 	MasterHookFunction(fIDs[C_MYTEAM_CPD_CS],1,fservMyTeamCPD);
-	
+
 	Log(&k_fserv, "hooking done");
-	
+
 	UnhookFunction(hk_D3D_Create,(DWORD)InitFserv);
 
 	return;
@@ -592,9 +603,9 @@ bool FileExists(const char* filename)
                        OPEN_EXISTING,         // existing file only
                        FILE_ATTRIBUTE_NORMAL, // normal file
                        NULL);                 // no attr. template
-     
-    if (hFile == INVALID_HANDLE_VALUE) 
-    { 
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
         return FALSE;
     }
     CloseHandle(hFile);
@@ -609,26 +620,26 @@ void GetGDBFaces()
 	char *comment=NULL;
 	char sfile[BUFLEN];
 	DWORD number=0, useSpecialHair, scanRes;
-	
+
 	strcpy(tmp,GetPESInfo()->gdbDir);
 	strcat(tmp,"GDB\\faces\\map.txt");
-	
+
 	FILE* cfg=fopen(tmp, "rt");
 	if (cfg==NULL) {
 		Log(&k_fserv,"Couldn't find faces map!");
 		return;
 	};
-	
+
 	while (true) {
 		ZeroMemory(str, BUFLEN);
 		fgets(str, BUFLEN-1, cfg);
 		if (feof(cfg)) break;
-		
+
 		// skip comments
 		comment=NULL;
 		comment = strstr(str, "#");
 		if (comment != NULL) comment[0] = '\0';
-		
+
 		// parse line
 		ZeroMemory(sfile,BUFLEN);
 		useSpecialHair=DEFAULT_USESPECIALHAIR;
@@ -653,7 +664,7 @@ void GetGDBFaces()
         }
 	};
 	fclose(cfg);
-	
+
 	LogWithNumber(&k_fserv,"Number of GDB faces is %d",numFaces);
 	return;
 };
@@ -670,7 +681,7 @@ void AddPlayerFace(DWORD PlayerNumber, char* sfile, DWORD useSpecialHair)
 		Log(&k_fserv,"File doesn't exist, line is ignored!");
 		return;
 	};*/
-	
+
 	DWORD newId=GetIDForFaceName(sfile);
 	if (newId==0xFFFFFFFF) {
 		newId=numFaces+1000;
@@ -682,7 +693,7 @@ void AddPlayerFace(DWORD PlayerNumber, char* sfile, DWORD useSpecialHair)
 	};
 	LogWithNumber(&k_fserv,"Assigned face id is %d",newId);
 	g_Players[PlayerNumber]=newId;
-	
+
 	//don't use the hair belonging to a special face
 	if (useSpecialHair==0)
 		g_SpecialFaceHair[PlayerNumber]=0xffffffff;
@@ -696,7 +707,7 @@ DWORD GetIDForFaceName(char* sfile)
 			if (strcmp(g_FacesIterator->second,sfile)==0)
 				return g_FacesIterator->first;
 	};
-	
+
 	return 0xFFFFFFFF;
 };
 
@@ -707,26 +718,26 @@ void GetGDBHair()
 	char *comment=NULL;
 	char sfile[BUFLEN];
 	DWORD number=0, scanRes=0, transp=255;
-	
+
 	strcpy(tmp,GetPESInfo()->gdbDir);
 	strcat(tmp,"GDB\\hair\\map.txt");
-	
+
 	FILE* cfg=fopen(tmp, "rt");
 	if (cfg==NULL) {
 		Log(&k_fserv,"Couldn't find hair map!");
 		return;
 	};
-	
+
 	while (true) {
 		ZeroMemory(str, BUFLEN);
 		fgets(str, BUFLEN-1, cfg);
 		if (feof(cfg)) break;
-		
+
 		// skip comments
 		comment=NULL;
 		comment = strstr(str, "#");
 		if (comment != NULL) comment[0] = '\0';
-		
+
 		// parse line
 		number=0;
 		ZeroMemory(sfile,BUFLEN);
@@ -753,7 +764,7 @@ void GetGDBHair()
         }
 	};
 	fclose(cfg);
-	
+
 	LogWithNumber(&k_fserv,"Number of GDB hair is %d",numHair);
 	return;
 };
@@ -761,7 +772,7 @@ void GetGDBHair()
 void AddPlayerHair(DWORD PlayerNumber,char* sfile,BYTE transp)
 {
 	LogWithNumberAndString(&k_fserv,"Player # %d gets hair %s",PlayerNumber,sfile);
-	
+
 	/*char tmpFilename[BUFLEN];
 	strcpy(tmpFilename,GetPESInfo()->gdbDir);
 	strcat(tmpFilename,"GDB\\hair\\");
@@ -770,7 +781,7 @@ void AddPlayerHair(DWORD PlayerNumber,char* sfile,BYTE transp)
 		Log(&k_fserv,"File doesn't exist, line is ignored!");
 		return;
 	};*/
-	
+
 	DWORD newId=GetIDForHairName(sfile);
 	if (newId==0xFFFFFFFF) {
 		newId=numHair+1000;
@@ -792,7 +803,7 @@ DWORD GetIDForHairName(char* sfile)
 			if (strcmp(g_HairIterator->second,sfile)==0)
 				return g_HairIterator->first;
 	};
-	
+
 	return 0xFFFFFFFF;
 };
 
@@ -804,14 +815,14 @@ void fservAfsReplace(GETFILEINFO* gfi)
 
 	THREEDWORDS* threeDWORDs = GetSpecialAfsFileInfo(gfi->fileId);
 	if (threeDWORDs == NULL) return;
- 	
+
  	switch (threeDWORDs->dw1) {
  	case AFSSIG_FACEDATA:
  	case AFSSIG_HAIRDATA:
  		//get data from the cache
  		return;
  		break;
- 		
+
  	case AFSSIG_FACE:
 		//replace the data for face
 		LogWithNumber(&k_fserv,"Processing file id %x", gfi->fileId);
@@ -824,7 +835,7 @@ void fservAfsReplace(GETFILEINFO* gfi)
 			return;
 		}
 		break;
-		
+
 	case AFSSIG_HAIR:
  		//replace the data for hair
 		HairID=threeDWORDs->dw2;
@@ -836,12 +847,12 @@ void fservAfsReplace(GETFILEINFO* gfi)
 			return;
 		};
 		break;
-		
+
 	default:
 		return;
 		break;
 	}
-	
+
 	//let PES load the first face for skin color 1
 	gfi->fileId = fIDs[STARTW] + 0x10000;
 	loadReplaceFile(filename);
@@ -856,27 +867,27 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 	BYTE *Faceset=(BYTE*)(addr+0x33);
 	DWORD *FaceID=(DWORD*)(addr+0x40);
 	DWORD srcData=((*(BYTE*)(ESI+0x12))*32+*(BYTE*)(ESI+0x11))*0x348+fIDs[PLAYERDATA_BASE];
-	
+
 	isInEditPlayerMode=*(BYTE*)fIDs[ISEDITPLAYERMODE];
 	isInEditPlayerList=*(BYTE*)fIDs[ISEDITPLAYERLIST];
 	WORD editedPlayerNumber=*(WORD*)fIDs[EDITEDPLAYER];
-	
+
 	*PlayerNumber=g_PlayersAddr[srcData];
 	DWORD usedPlayerNumber=*PlayerNumber;
-	
+
 	DWORD newFaceID=0;
 
 	if (isInEditPlayerMode!=0)
 		usedPlayerNumber=editedPlayerNumber;
-		
+
 	usedPlayerNumber=ResolvePlayerID(usedPlayerNumber);
-	
+
 	lastPlayerNumber=usedPlayerNumber;
 
 	lastWasFromGDB=false;
 	lastFaceID=0xffffffff;
-	
-	
+
+
 	g_PlayersIterator=g_Players.find(usedPlayerNumber);
 
 	//If no face is assigned to this player, nothing wrong can happen later
@@ -892,7 +903,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 		g_Faces[g_PlayersIterator->second]=NULL;
 		goto NoProcessing;
 	};
-	
+
 	//No, it was no good idea to execute this command when the file was NOT found!!!
 	g_FaceExists[g_PlayersIterator->second]=true;
 
@@ -915,7 +926,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 			*FaceID=GetNextSpecialAfsFileIdForFace(*FaceID,*Skincolor);
 			lastWasFromGDB=true;
 		};
-	/*	
+	/*
 	} else {
 		TRACE2X(&k_fserv,"addr for player # %d (EDIT MODE) is %.8x",usedPlayerNumber,addr);
 		if (*Faceset==FACESET_NORMAL && *FaceID>=1000) {
@@ -924,7 +935,7 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 			*FaceID=GetNextSpecialAfsFileIdForFace(*FaceID,*Skincolor);
 			lastWasFromGDB=true;
 		};
-		
+
 		if (g_PlayersIterator != g_Players.end()) {
 			lastFaceID=g_PlayersIterator->second;
 			lastWasFromGDB=true;
@@ -934,9 +945,9 @@ void fservProcessPlayerData(DWORD ESI, DWORD* PlayerNumber)
 	NoProcessing:
 
 	hasChanged=true;
-	
+
 	g_PlayersAddr2[addr]=usedPlayerNumber;
-	
+
 	TRACEX(&k_fserv,"FaceID is 0x%x, faceset %d, skincolor %d",*FaceID,*Faceset,*Skincolor);
 	return;
 };
@@ -946,19 +957,19 @@ DWORD CalcHairFile(BYTE Caller)
 {
 	DWORD addr;
 	__asm mov addr, eax
-	
+
 	bool fromGDB=false;
 	BYTE Skincolor=*(BYTE*)(addr+0x31);
 	BYTE Faceset=*(BYTE*)(addr+0x33);
 	DWORD HairID=*(WORD*)(addr+0x34);
 	WORD FaceID=*(WORD*)(addr+0x40);
-	
+
 	DWORD res=0;
 	DWORD usedPlayerNumber=g_PlayersAddr2[addr];
 	bool hadSpecialFace=false;
 	lastHairWasFromGDB=false;
 	lastHairID=0xffffffff;
-	
+
 	if (usedPlayerNumber != 0) {
 		TRACE2(&k_fserv,"CalcHairFile for %d",usedPlayerNumber);
 		g_PlayersIterator=g_PlayersHair.find(usedPlayerNumber);
@@ -967,7 +978,7 @@ DWORD CalcHairFile(BYTE Caller)
 		//check if file exists now
 		if (g_HairExists[g_PlayersIterator->second]) goto ValidFile;
 		if (g_Hair[g_PlayersIterator->second]==NULL) goto NoProcessing;
-	
+
 		strcpy(tmpFilename,GetPESInfo()->gdbDir);
 		strcat(tmpFilename,"GDB\\hair\\");
 		strcat(tmpFilename,g_Hair[g_PlayersIterator->second]);
@@ -975,9 +986,9 @@ DWORD CalcHairFile(BYTE Caller)
 			g_Hair[g_PlayersIterator->second]=NULL;
 			goto NoProcessing;
 		};
-		
+
 		g_HairExists[g_PlayersIterator->second]=true;
-	
+
 		ValidFile:
 
 		if (isInEditPlayerMode==0) {
@@ -986,12 +997,12 @@ DWORD CalcHairFile(BYTE Caller)
 				HairID=g_PlayersIterator->second;
 				fromGDB=true;
 			};
-			
+
 			if (fromGDB && g_Hair[HairID]==NULL) {
 				LogWithTwoNumbers(&k_fserv,"WRONG HAIR ID: %x for player %d",HairID,usedPlayerNumber);
 				HairID=0;
 			};
-			
+
 			lastHairID=HairID;
 			lastHairWasFromGDB=fromGDB;
 		} else {
@@ -1001,13 +1012,13 @@ DWORD CalcHairFile(BYTE Caller)
 				lastHairWasFromGDB=true;
 			};
 		};
-		
+
 		g_PlayersIterator=g_SpecialFaceHair.find(usedPlayerNumber);
 		if (g_PlayersIterator != g_SpecialFaceHair.end()) {
 			FaceID=g_PlayersIterator->second;
 			hadSpecialFace=true;
 		};
-		
+
 		NoProcessing:
 		//dummy for compiling
 		true;
@@ -1025,7 +1036,7 @@ DWORD CalcHairFile(BYTE Caller)
 		res=((DWORD*)fIDs[HAIRSTARTARRAY])[Skincolor+4*Faceset]+HairID;
 	else
 		res=((DWORD*)fIDs[HAIRSTARTARRAY])[Skincolor+4]+FaceID;
-		
+
 	return res;
 };
 
@@ -1037,7 +1048,7 @@ void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, 
 		//KDrawText(450,4,0xffff0000,16,"NOT IN EDIT MODE!");
 		return;
 	};
-	
+
 	char tmp[BUFLEN];
 	DWORD color=0xffffffff;
 
@@ -1046,7 +1057,7 @@ void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, 
 		strcpy(lastPlayerNumberString,tmp);
 	};
 	KDrawText(450,2,color,12,lastPlayerNumberString);
-	
+
 	if (hasChanged) {
 		if (lastFaceID==0xffffffff || g_Faces[lastFaceID]==NULL) {
 			lastWasFromGDB=false;
@@ -1054,7 +1065,7 @@ void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, 
 			sprintf(tmp,"Face file: %s",g_Faces[lastFaceID]);
 			strcpy(lastFaceFileString,tmp);
 		};
-		
+
 		if (lastHairID==0xffffffff || g_Hair[lastHairID]==NULL) {
 			lastHairWasFromGDB=false;
 		} else {
@@ -1065,7 +1076,7 @@ void PrintPlayerInfo(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, 
 	hasChanged=false;
 	if (lastWasFromGDB)
 		KDrawText(450,22,color,12,lastFaceFileString);
-		
+
 	if (lastHairWasFromGDB)
 		KDrawText(450,42,color,12,lastHairFileString);
 
@@ -1077,12 +1088,12 @@ void fservCopyPlayerData(DWORD p1, DWORD p2, DWORD p3)
 	DWORD playerNumber, addr;
 	__asm mov playerNumber, ebx
 	__asm mov addr, edi
-	
+
 	orgCopyPlayerData(p1,p2,p3);
-	
+
 	g_PlayersAddr[addr-36]=playerNumber;
 	LogWithTwoNumbers(&k_fserv,"addr 0x%x -> player %d",addr-36,playerNumber);
-	
+
 	return;
 };
 
@@ -1095,17 +1106,17 @@ void fservReplCopyPlayerData()
 	__asm mov eax, [ebp]
 	__asm mov oldEBP, eax
 	LogWithNumber(&k_fserv,"fservReplCopyPlayerData: 0x%x",oldEDX-0x12c);
-	
+
 	//replace the functionality of the code we have overwritten
 	ZeroMemory((BYTE*)oldESI,16);
-	
+
 	team=FIRSTREPLPLAYERID+(((oldEDX-0x12c-fIDs[PLAYERDATA_BASE])<32*0x348)?0:32);
-	
+
 	g_PlayersAddr[oldEDX-0x12c]=0; //team+oldEBP;
-	
+
 	__asm mov eax, oldEAX
 	__asm mov edx, oldEDX
-	
+
 	return;
 };
 
@@ -1115,9 +1126,9 @@ DWORD fservEditCopyPlayerData(DWORD playerNumber, DWORD p2)
 
 	DWORD srcData=fIDs[EDITPLAYERDATA_BASE]+((*(BYTE*)(result+0x35) & 0xf0)?0x520:0x290);
 	DWORD addr=fIDs[PLAYERDATA_BASE]+((*(BYTE*)(srcData+0x12))*32+*(BYTE*)(srcData+0x11))*0x348;
-	
+
 	g_PlayersAddr[addr]=playerNumber & 0xffff;
-	
+
 	return result;
 };
 
@@ -1126,7 +1137,7 @@ DWORD fservEditCopyPlayerData2(DWORD playerNumber)
 	DWORD oldEDI;
 	__asm mov oldEDI, edi
 	g_EditorAddresses[oldEDI-0x1f*4]=playerNumber;
-	
+
 	return MasterCallNext(playerNumber);
 };
 
@@ -1135,9 +1146,9 @@ DWORD fservEditCopyPlayerData3(DWORD p1)
 	DWORD oldEBX, oldESI;
 	__asm mov oldEBX, ebx
 	__asm mov oldESI, esi
-	
+
 	g_EditorAddresses[oldEBX+0x40]=g_EditorAddresses[oldESI];
-	
+
 	__asm mov esi, oldESI
 	__asm mov ebx, oldEBX
 	return MasterCallNext(p1);
@@ -1147,12 +1158,12 @@ DWORD fservEditCopyPlayerData4(DWORD slot, DWORD editorAddress, DWORD p3)
 {
 	DWORD slot1=slot%0x17;
 	if (slot==0xff) slot1=1;
-	
+
 	DWORD srcData=fIDs[EDITPLAYERDATA_BASE]+slot*0x240;
 	DWORD addr=fIDs[PLAYERDATA_BASE]+((*(BYTE*)(srcData+0x12))*32+*(BYTE*)(srcData+0x11))*0x348;
-	
+
 	g_PlayersAddr[addr]=g_EditorAddresses[editorAddress] & 0xffff;
-	
+
 	return MasterCallNext(slot, editorAddress, p3);
 };
 
@@ -1161,7 +1172,7 @@ DWORD fservEditUniCopyPlayerData(DWORD playerNumber)
 	DWORD oldEDI;
 	__asm mov oldEDI, edi
 	g_EditorAddresses[oldEDI-0x1f*4]=0;
-	
+
 	return MasterCallNext(playerNumber);
 };
 
@@ -1177,12 +1188,12 @@ BYTE fservGetHairTransp(DWORD addr)
 	DWORD usedPlayerNumber=g_PlayersAddr2[addr];
 	BYTE *Faceset=(BYTE*)(addr+0x33);
 	DWORD *FaceID=(DWORD*)(addr+0x40);
-	
+
 	bool hadSpecialFace=false;
 	BYTE ourFaceset=*Faceset;
 	DWORD ourFaceID=*FaceID;
-	
-	
+
+
 	g_PlayersIterator=g_SpecialFaceHair.find(usedPlayerNumber);
 	if (g_PlayersIterator != g_SpecialFaceHair.end() && g_PlayersIterator->second!=0xffffffff) {
 		//set back to special face to get the right transparency for it
@@ -1190,21 +1201,21 @@ BYTE fservGetHairTransp(DWORD addr)
 		*Faceset = FACESET_SPECIAL;
 		hadSpecialFace=true;
 	};
-	
-	
+
+
 	BYTE result=orgGetHairTransp(addr);
-	
-	
+
+
 	if (hadSpecialFace) {
 		//and set back to our settings
 		*Faceset=ourFaceset;
 		*FaceID=ourFaceID;
 	};
-	
+
 	if (usedPlayerNumber != 0) // && isInEditPlayerMode==0)
 		if (g_PlayersHair.find(usedPlayerNumber) != g_PlayersHair.end())
 			result=g_HairTransp[usedPlayerNumber];
-	
+
 	return result;
 };
 
@@ -1213,7 +1224,7 @@ DWORD GetNextSpecialAfsFileIdForFace(DWORD FaceID, BYTE Skincolor)
 	DWORD result=GetNextSpecialAfsFileId(AFSSIG_FACE,FaceID,0);
 	result-=StartsStdFaces[Skincolor];
 	result-=0x10000;
-	
+
 	return result;
 };
 
@@ -1223,7 +1234,7 @@ void fservConnectAddrToId(DWORD addr, DWORD id)
 	g_PlayersAddr[addr]=id;
 	return;
 };
-                                                                      
+
 DWORD ResolvePlayerID(DWORD playerID)
 {
 	DWORD team, teamID, teamAddr;
@@ -1236,8 +1247,6 @@ DWORD ResolvePlayerID(DWORD playerID)
 	};
 	return playerID;
 };
-
-DWORD hairPosMask = 0;
 
 void fservBeginRenderPlayer(DWORD playerMainColl)
 {
@@ -1267,10 +1276,9 @@ void fservBeginRenderPlayer(DWORD playerMainColl)
                 currRenderPlayer = playerNumber;
                 currRenderPlayerRecord = playerRecord(i);
 
-                //LOG(&k_fserv, ">>>>>>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x",
-                //    currRenderPlayer, currRenderPlayerRecord, pmc);
-
-                hairPosMask = 0;
+#ifdef FSERV_TEXDUMP
+                if (dump_now) LOG(&k_fserv, ">>>>>>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x",
+                    currRenderPlayer, currRenderPlayerRecord, pmc);
 
                 // dump textures for current player
                 if (dump_now) {
@@ -1282,6 +1290,7 @@ void fservBeginRenderPlayer(DWORD playerMainColl)
                         dumping = true;
                     }
                 }
+#endif
 
                 BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
                 if (currRenderPlayer != g_fservPlayerIds[temp]) {
@@ -1305,11 +1314,7 @@ void fservBeginRenderPlayer(DWORD playerMainColl)
                 bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
                 bodyColl+=5;
                 bodyColl+=5;
-                for (int lod=0;lod<2;lod++) {
-                    g_hairTexturesColl[lod]=*bodyColl;  //remember p2 value for this lod level
-                    g_hairTexturesPos[lod] = 2;
-                    //bodyColl+=5;
-                }
+                g_hairTexturesColl[0]=*bodyColl;  //remember p2 value for this lod level
             }
         }
     }
@@ -1436,7 +1441,8 @@ void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
 {
     if (currRenderPlayer==0xffffffff) return;
 
-    //LOG(&k_fserv, "fservPesGetTexture:: p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+#ifdef FSERV_TEXDUMP
+    if (dump_now) LOG(&k_fserv, "fservPesGetTexture:: p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
 
     if (dump_now) {
         char buf[BUFLEN];
@@ -1448,7 +1454,8 @@ void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
             LOG(&k_fserv, "FAILED to save texture to: %s", buf);
         }
     }
- 
+#endif
+
     for (int lod=0; lod<2; lod++) {
         if (p2==g_faceTexturesColl[lod] && p3==g_faceTexturesPos[lod]) {
             //LOG(&k_fserv, "facePesGetTexture:: ^^^ face texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
@@ -1476,32 +1483,34 @@ void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
         }
     }
 
-    for (int lod=0; lod<2; lod++) {
-        if (p2==g_hairTexturesColl[lod]) {
-            hairPosMask |= p3;
-            //LOG(&k_fserv, "fservPesGetTexture:: hairPosMask=%d", hairPosMask);
-            if (hairPosMask == 3) {
-                //LOG(&k_fserv, "fservPesGetTexture:: ^^^ hair texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+    if (p2==g_hairTexturesColl[0] && p3>0) {
+        // check texture size
+        TEXTURE_OBJ *t = (TEXTURE_OBJ*)(*res);
+        int lod=-1;
+        if (t->width == 128 && t->height == 64) { lod = 0; }
+        else if (t->width == 64 && t->height == 32) { lod = 1; }
 
-                BYTE j=lod;
-                BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
-                IDirect3DTexture8* hairTexture=g_hairTextures[j][temp];
-                if ((DWORD)hairTexture != 0xffffffff) { //0xffffffff means: has no gdb hair
+        if (lod==0 || lod==1) {
+            //LOG(&k_fserv, "fservPesGetTexture:: ^^^ hair texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+
+            BYTE j=lod;
+            BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+            IDirect3DTexture8* hairTexture=g_hairTextures[j][temp];
+            if ((DWORD)hairTexture != 0xffffffff) { //0xffffffff means: has no gdb hair
+                if (!hairTexture) {
+                    //no hair texture in cache yet
+                    hairTexture = getHairTexture(currRenderPlayer, j==0);
                     if (!hairTexture) {
-                        //no hair texture in cache yet
-                        hairTexture = getHairTexture(currRenderPlayer, j==0);
-                        if (!hairTexture) {
-                            //no texture assigned
-                            hairTexture = (IDirect3DTexture8*)0xffffffff;
-                        } else {
-                            *res=hairTexture;
-                        }
-                        //cache the texture pointer
-                        g_hairTextures[j][temp]=hairTexture;
+                        //no texture assigned
+                        hairTexture = (IDirect3DTexture8*)0xffffffff;
                     } else {
-                        //set texture
                         *res=hairTexture;
                     }
+                    //cache the texture pointer
+                    g_hairTextures[j][temp]=hairTexture;
+                } else {
+                    //set texture
+                    *res=hairTexture;
                 }
             }
         }
