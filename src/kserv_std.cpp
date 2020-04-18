@@ -4763,7 +4763,7 @@ DWORD src, bool* IsProcessed)
     HRESULT res = D3D_OK;
     if (*IsProcessed) return res; // already handled by some other module
 
-    if (g_edit_mode) return res; // safety check
+    if (g_edit_mode && !g_config.enable_in_edit_mode) return res; // safety check
 
     // process 256x128 2-level texture
     if (width == 256 && height == 128) {
@@ -6408,7 +6408,7 @@ DWORD kservWriteKitInfo(DWORD teamId, DWORD kitOrdinal)
     // call original
     DWORD result = MasterCallNext(teamId, kitOrdinal);
 
-    if (g_edit_mode) return result;
+    if (g_edit_mode && !g_config.enable_in_edit_mode) return result;
 
     /*
     teamId &= 0xffff;
@@ -6623,7 +6623,7 @@ void kservUnpack(GETFILEINFO* gfi, DWORD part, DWORD decBuf, DWORD size)
     if (IsKitTexture(fileId)) {
         // the former UniDecode -> kits
 
-        if (g_edit_mode) return;
+        if (g_edit_mode && !g_config.enable_in_edit_mode) return;
 
         LogWithNumber(&k_mydll,"JuceUniDecode: decBuf = %08x", decBuf);
 

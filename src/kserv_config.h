@@ -25,7 +25,8 @@ public:
         vKeyGKHomeKit(DEFAULT_VKEY_GKHOMEKIT),
         vKeyGKAwayKit(DEFAULT_VKEY_GKAWAYKIT),
         ShowKitInfo(true),
-        enable_HD_kits(true)
+        enable_HD_kits(true),
+        enable_in_edit_mode(false)
     {}
 
 	WORD   vKeyHomeKit;
@@ -34,6 +35,7 @@ public:
 	WORD   vKeyGKAwayKit;
 	bool   ShowKitInfo;
     bool   enable_HD_kits;
+    bool   enable_in_edit_mode;
     std::unordered_map<int,bool> wideBackModels;
     std::unordered_map<int,bool> narrowBackModels;
     std::unordered_map<int,bool> squashedWithLogoModels;

@@ -151,6 +151,12 @@ BOOL ReadConfig(KSERV_CONFIG* config, char* cfgFile)
 			LogWithNumber(&k_mydll,"ReadConfig: enable_HD_kits = (%d)", value);
 			config->enable_HD_kits = (value > 0);
 		}
+		else if (lstrcmp(name, "edit-mode.kits.enabled")==0)
+		{
+			if (sscanf(pValue, "%d", &value)!=1) continue;
+			LogWithNumber(&k_mydll,"ReadConfig: edit-mode.kits.enabled = (%d)", value);
+			config->enable_in_edit_mode = (value > 0);
+		}
 	}
 	fclose(cfg);
 
