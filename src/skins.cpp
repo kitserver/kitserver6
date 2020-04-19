@@ -71,24 +71,27 @@ DWORD code[CODELEN];
 
 class TexturePack {
 public:
-    TexturePack() : _big(NULL),_gloves(NULL),_textureFile(),_glovesFile(),_bigLoaded(false),_glovesLoaded(false) {}
+    TexturePack() : _big(NULL),_gloves(NULL),_gk_glove_left(NULL),_gk_glove_right(NULL),
+        _textureFile(),_glovesFile(),_gkGloveLeftFile(),_gkGloveRightFile(),
+        _bigLoaded(false),_glovesLoaded(false),_gkGloveLeftLoaded(false),_gkGloveRightLoaded(false) {}
     ~TexturePack() {
         if (_big) _big->Release();
         if (_gloves) _gloves->Release();
+        if (_gk_glove_left) _gk_glove_left->Release();
+        if (_gk_glove_right) _gk_glove_right->Release();
     }
     IDirect3DTexture8* _big;
     IDirect3DTexture8* _gloves;
+    IDirect3DTexture8* _gk_glove_left;
+    IDirect3DTexture8* _gk_glove_right;
     string _textureFile;
     string _glovesFile;
+    string _gkGloveLeftFile;
+    string _gkGloveRightFile;
     bool _bigLoaded;
     bool _glovesLoaded;
-};
-
-struct TEXTURE_OBJ {
-    BYTE b0[0x20];
-    DWORD dw0;
-    DWORD width;
-    DWORD height;
+    bool _gkGloveLeftLoaded;
+    bool _gkGloveRightLoaded;
 };
 
 //////////////////////////////////////////////////////
@@ -102,6 +105,7 @@ DWORD g_skinTexturesPos[5];
 DWORD g_handsTexturesPos[5];
 DWORD g_neckTexturesPos[5];
 IDirect3DTexture8* g_skinTextures[2][64]; //[no-gloves/gloves][32*team + posInTeam]
+IDirect3DTexture8* g_gloveTextures[2][64]; //[left GK/right GK][32*team + posInTeam]
 DWORD g_skinPlayerIds[64]; //[32*team + posInTeam]
 DWORD currRenderPlayer=0xffffffff;
 PLAYER_RECORD* currRenderPlayerRecord=NULL;
@@ -250,8 +254,7 @@ void readSkinsMap()
     char tmp[BUFLEN];
     char str[BUFLEN];
     char *comment=NULL;
-    char sfile[BUFLEN];
-    char gfile[BUFLEN];
+    char buf[BUFLEN];
     WORD number=0;
 
     strcpy(tmp,GetPESInfo()->gdbDir);
@@ -273,20 +276,30 @@ void readSkinsMap()
         if (comment != NULL) comment[0] = '\0';
 
         // parse line
-        ZeroMemory(sfile,BUFLEN);
-        ZeroMemory(gfile,BUFLEN);
-        if (sscanf(str,"%d , \"%[^\"]\" , \"%[^\"]\"",&number,sfile,gfile)==3) {
-            TexturePack pack;
-            pack._textureFile = sfile;
-            pack._glovesFile = gfile;
-            // add to the map
-            g_skinTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
-        }
-        else if (sscanf(str,"%d , \"%[^\"]\"",&number,sfile)==2) {
-            TexturePack pack;
-            pack._textureFile = sfile;
-            // add to the map
-            g_skinTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+        char *p = strchr(str,',');
+        if (p) {
+            if (sscanf(str, "%d", &number)==1) {
+                TexturePack pack;
+                int token=2;
+                while (p) {
+                    ZeroMemory(buf, BUFLEN);
+                    if (sscanf(p+1, "%*[^,\"]\"%[^\"]%*[^\n]", buf)==1) {
+                        //LOG(&k_skin, "token (%d): {%s}", token, buf);
+                        switch (token) {
+                            case 2: pack._textureFile = buf; break;
+                            case 3: pack._glovesFile = buf; break;
+                            case 4: pack._gkGloveLeftFile = buf; break;
+                            case 5: pack._gkGloveRightFile = buf; break;
+                        }
+                    }
+                    token++;
+                    p = strchr(p+1,',');
+                }
+                LOG(&k_skin, "id:%d, skin:{%s}, gloves:{%s}, GK-left:{%s}, GK-right:{%s}",
+                    number, pack._textureFile.c_str(), pack._glovesFile.c_str(),
+                    pack._gkGloveLeftFile.c_str(), pack._gkGloveRightFile.c_str());
+                g_skinTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+            }
         }
 
         if (feof(cfg)) break;
@@ -314,10 +327,20 @@ void releaseTextures()
             it->second._glovesLoaded = false;
             LogWithNumber(&k_skin, "Released with-gloves skin texture for player %d", it->first);
         }
-
+        if (it->second._gk_glove_left) {
+            //SafeRelease(&it->second._gkGloveLeft);
+            it->second._gk_glove_left = NULL;
+            it->second._gkGloveLeftLoaded = false;
+        }
+        if (it->second._gk_glove_right) {
+            //SafeRelease(&it->second._gk_glove_right);
+            it->second._gk_glove_right = NULL;
+            it->second._gkGloveRightLoaded = false;
+        }
     }
 
     ZeroMemory(g_skinTextures, 64*4*2);
+    ZeroMemory(g_gloveTextures, 64*4*2);
     ZeroMemory(g_skinPlayerIds, 64*4);
 }
 
@@ -431,7 +454,7 @@ IDirect3DTexture8* getSkinTexture(WORD playerId, bool overlay_gloves)
             // already looked up and the texture should be loaded
             return it->second._gloves;
 
-        } else {
+        } else if (!it->second._textureFile.empty()) {
             // haven't tried to load the textures for this player yet.
             // Do it now.
             char filename[BUFLEN];
@@ -477,6 +500,62 @@ IDirect3DTexture8* getSkinTexture(WORD playerId, bool overlay_gloves)
     return skinTexture;
 }
 
+IDirect3DTexture8* getGkGloveTexture(WORD playerId, bool left)
+{
+    IDirect3DTexture8* gloveTexture = NULL;
+    unordered_map<WORD,TexturePack>::iterator it = g_skinTexturePacks.find(playerId);
+    if (it != g_skinTexturePacks.end()) {
+        // map has an entry for this player
+        if (left && it->second._gkGloveLeftLoaded) {
+            // already looked up and the texture should be loaded
+            return it->second._gk_glove_left;
+
+        } else if (!left && it->second._gkGloveRightLoaded) {
+            // already looked up and the texture should be loaded
+            return it->second._gk_glove_right;
+
+        } else {
+            // haven't tried to load the textures for this player yet.
+            // Do it now.
+            char filename[BUFLEN];
+            if (left) {
+                if (it->second._gkGloveLeftFile.empty()) return NULL;
+                sprintf(filename,"%sGDB\\skins\\%s", GetPESInfo()->gdbDir, it->second._gkGloveLeftFile.c_str());
+            }
+            else {
+                if (it->second._gkGloveRightFile.empty()) return NULL;
+                sprintf(filename,"%sGDB\\skins\\%s", GetPESInfo()->gdbDir, it->second._gkGloveRightFile.c_str());
+            }
+            if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename,
+                            0, 0, 1, 0,
+                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                            D3DX_FILTER_NONE, D3DX_FILTER_NONE,
+                            0, NULL, NULL, &gloveTexture))) {
+                // store in the map
+                if (left) {
+                    it->second._gk_glove_left = gloveTexture;
+                    LogWithNumber(&k_skin, "getSkinTexture: loaded left GK glove texture for player %d", playerId);
+                }
+                else {
+                    it->second._gk_glove_right = gloveTexture;
+                    LogWithNumber(&k_skin, "getSkinTexture: loaded right GK glove texture for player %d", playerId);
+                }
+            } else {
+                LogWithString(&k_skin, "D3DXCreateTextureFromFileEx FAILED for %s", filename);
+            }
+
+            // update loaded flags, so that we only load each texture once
+            if (left) {
+                it->second._gkGloveLeftLoaded = true;
+            }
+            else {
+                it->second._gkGloveRightLoaded = true;
+            }
+        }
+    }
+    return gloveTexture;
+}
+
 bool isEditPlayerMode()
 {
     return *(BYTE*)dta[EDITPLAYERMODE_FLAG] == 1;
@@ -493,6 +572,8 @@ bool isEditBootsMode()
 }
 
 bool has_gloves = false;
+int hand_count = 0;
+IDirect3DTexture8 *skinTex = NULL;
 
 void skinBeginRenderPlayer(DWORD playerMainColl)
 {
@@ -524,6 +605,7 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
                 currRenderPlayer = playerNumber;
                 currRenderPlayerRecord = playerRecord(i);
                 has_gloves = *pgloves;
+                hand_count = 0;
 
 #ifdef SKIN_TEXDUMP
                 if (dump_now) LOG(&k_skin, ">>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x, has_gloves=%d",
@@ -546,6 +628,8 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
                     g_skinPlayerIds[temp]=currRenderPlayer;
                     g_skinTextures[0][temp]=NULL;
                     g_skinTextures[1][temp]=NULL;
+                    g_gloveTextures[0][temp]=NULL;
+                    g_gloveTextures[1][temp]=NULL;
                 }
 
                 // skin
@@ -602,6 +686,7 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
 
     for (int lod=0; lod<5; lod++) {
         if (p2==g_skinTexturesColl[lod] && p3==g_skinTexturesPos[lod]) {
+            skinTex = *res;
 #ifdef SKIN_TEXDUMP
             if (dump_now) LOG(&k_skin, "skinPesGetTexture:: ^^^ skin texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
 #endif
@@ -631,12 +716,35 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
 
     for (int lod=0; lod<3; lod++) {
         if (p2==g_handsTexturesColl[lod] && p3==g_handsTexturesPos[lod]) {
+            hand_count += 1;
             // check for GK gloves
-            TEXTURE_OBJ *t = (TEXTURE_OBJ*)(*res);
-            if (t->width << 1 == t->height) {
+            if (*res != skinTex) {
 #ifdef SKIN_TEXDUMP
                 if (dump_now) LOG(&k_skin, "skinPesGetTexture:: ^^^ GK glove texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
 #endif
+                if (has_gloves) {
+                    int j=hand_count-1;
+                    BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
+                    IDirect3DTexture8* gloveTexture=g_gloveTextures[j][temp];
+                    if ((DWORD)gloveTexture != 0xffffffff) { //0xffffffff means: has no gdb skin
+                        if (!gloveTexture) {
+                            //no skin texture in cache yet
+                            gloveTexture = getGkGloveTexture(currRenderPlayer, j==0);
+                            if (!gloveTexture) {
+                                //no texture assigned
+                                gloveTexture = (IDirect3DTexture8*)0xffffffff;
+                            } else {
+                                *res=gloveTexture;
+                            }
+                            //cache the texture pointer
+                            g_gloveTextures[j][temp]=gloveTexture;
+                        } else {
+                            //set texture
+                            *res=gloveTexture;
+                        }
+                    }
+                }
+                // done for this texture
                 break;
             }
 
