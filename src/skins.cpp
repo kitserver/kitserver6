@@ -99,10 +99,10 @@ public:
 
 unordered_map<WORD,TexturePack> g_skinTexturePacks;
 DWORD g_skinTexturesColl[5];
-DWORD g_handsTexturesColl[5];
+DWORD g_handsTexturesColl[6];
 DWORD g_neckTexturesColl[5];
 DWORD g_skinTexturesPos[5];
-DWORD g_handsTexturesPos[5];
+DWORD g_handsTexturesPos[6];
 DWORD g_neckTexturesPos[5];
 IDirect3DTexture8* g_skinTextures[2][64]; //[no-gloves/gloves][32*team + posInTeam]
 IDirect3DTexture8* g_gloveTextures[2][64]; //[left GK/right GK][32*team + posInTeam]
@@ -642,14 +642,36 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
 
                 // hands
                 // for goalkeepers: keep the gloves texture
+                int j=0;
                 bodyColl=*(DWORD**)(playerMainColl+0x18) + 2;
-                for (int lod=0;lod<3;lod++) {
+                for (int i=0;i<3;i++) {
                     if ((*(DWORD*)(bodyColl+1) == 0x11) || (*(DWORD*)(bodyColl+1) == 0x12)) {
-                        g_handsTexturesColl[lod]=*bodyColl;  //remember p2 value for this lod level
-                        g_handsTexturesPos[lod] = 0;
+                        g_handsTexturesColl[j]=*bodyColl;  //remember p2 value for this lod level
+                        g_handsTexturesPos[j] = 0;
+                        j++;
                     }
                     bodyColl+=7;
                 }
+                // lod=1: gk gloves
+                bodyColl=*(DWORD**)(playerMainColl+0x14) + 1;
+                bodyColl+=2;
+                g_handsTexturesColl[j]=*bodyColl;
+                g_handsTexturesPos[j]=isTrainingMode()?5:7;
+                j++;
+                // lod=2: gk gloves
+                bodyColl+=2;
+                g_handsTexturesColl[j]=*bodyColl;
+                g_handsTexturesPos[j]=isTrainingMode()?5:6;
+                j++;
+                // lod=3: gk gloves
+                bodyColl+=2;
+                g_handsTexturesColl[j]=*bodyColl;
+                g_handsTexturesPos[j]=isTrainingMode()?5:6;
+                j++;
+                // lod=4: gk gloves
+                bodyColl+=2;
+                g_handsTexturesColl[j]=*bodyColl;
+                g_handsTexturesPos[j]=3;
 
                 // neck
                 bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
@@ -714,8 +736,8 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
         }
     }
 
-    for (int lod=0; lod<3; lod++) {
-        if (p2==g_handsTexturesColl[lod] && p3==g_handsTexturesPos[lod]) {
+    for (int i=0; i<6; i++) {
+        if (p2==g_handsTexturesColl[i] && p3==g_handsTexturesPos[i]) {
             hand_count += 1;
             // check for GK gloves
             if (*res != skinTex) {
