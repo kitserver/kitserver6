@@ -100,10 +100,10 @@ public:
 unordered_map<WORD,TexturePack> g_skinTexturePacks;
 DWORD g_skinTexturesColl[5];
 DWORD g_handsTexturesColl[6];
-DWORD g_neckTexturesColl[5];
+DWORD g_neckTexturesColl[1];
 DWORD g_skinTexturesPos[5];
 DWORD g_handsTexturesPos[6];
-DWORD g_neckTexturesPos[5];
+DWORD g_neckTexturesPos[1];
 IDirect3DTexture8* g_skinTextures[2][64]; //[no-gloves/gloves][32*team + posInTeam]
 IDirect3DTexture8* g_gloveTextures[2][64]; //[left GK/right GK][32*team + posInTeam]
 DWORD g_skinPlayerIds[64]; //[32*team + posInTeam]
@@ -676,11 +676,8 @@ void skinBeginRenderPlayer(DWORD playerMainColl)
                 // neck
                 bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
                 bodyColl+=10;
-                for (int lod=2;lod<3;lod++) {
-                    g_neckTexturesColl[lod]=*bodyColl;
-                    g_neckTexturesPos[lod]=0;
-                    bodyColl+=5;
-                }
+                g_neckTexturesColl[0]=*bodyColl;
+                g_neckTexturesPos[0]=0;
             }
         }
     }
@@ -797,8 +794,8 @@ void skinPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
         }
     }
 
-    for (int lod=0; lod<3; lod++) {
-        if (p2==g_neckTexturesColl[lod] && p3==g_neckTexturesPos[lod]) {
+    for (int i=0; i<1; i++) {
+        if (p2==g_neckTexturesColl[i] && p3==g_neckTexturesPos[i]) {
 #ifdef SKIN_TEXDUMP
             if (dump_now) LOG(&k_skin, "skinPesGetTexture:: ^^^ neck texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
 #endif
