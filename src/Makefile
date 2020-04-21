@@ -45,7 +45,7 @@ all_apps: apps
 #	copy speedtest.exe output
 #	copy vista_test.exe output
 
-dlls: pngdib kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
+dlls: pngdib kload.dll kserv.dll bserv.dll fserv.dll stadium.dll bootserv.dll gloves.dll skins.dll lodmixer.dll dxtools.dll psc.dll clock.dll afs2fs.dll roster.dll speeder.dll
 apps: setup.exe lodcfg.exe keyconf.exe filedec.exe afstest.exe afswalk.exe afsexport.exe # speedtest.exe vista_test.exe
 
 !if "$(debug)"=="1"
@@ -121,6 +121,14 @@ bootserv.obj: bootserv.cpp bootserv.h
 
 bootserv.res: 
 	$(RC) -r -fo bootserv.res bootserv.rc
+
+gloves.lib: gloves.obj
+gloves.dll: gloves.lib gloves.res kload.lib
+	$(LINK) $(LFLAGS) /out:gloves.dll /DLL gloves.obj kload.lib d3dx8.lib gloves.res $(LIBS)
+gloves.obj: gloves.cpp gloves.h
+
+gloves.res: 
+	$(RC) -r -fo gloves.res gloves.rc
 	
 skins.lib: skins.obj
 skins.dll: skins.lib skins.res kload.lib
