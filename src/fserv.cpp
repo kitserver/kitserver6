@@ -1301,11 +1301,12 @@ void fservBeginRenderPlayer(DWORD playerMainColl)
                     g_hairTextures[1][temp]=NULL;
                 }
 
-                // face
+                // face: lod=0
                 bodyColl=*(DWORD**)(playerMainColl+0x18) + 2;
                 g_faceTexturesColl[0]=*bodyColl;  //remember p2 value for this lod level
                 g_faceTexturesPos[0] = 0;
 
+                // face: lod=1
                 bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
                 g_faceTexturesColl[1]=*bodyColl;  //remember p2 value for this lod level
                 g_faceTexturesPos[1] = 0;
