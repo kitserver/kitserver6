@@ -3,6 +3,7 @@
     <title>Kitserver 6 Manual</title>
     <style>
         img { display:block;margin:10px 0 10px 0;border:1px solid #000; }
+        img.inl { display:inline; }
         table td img {border:0}
         div.note { background-color:#fdc;color:#800;padding:5px; }
         p.devnote { font-weight:bold;font-style:italic;color:#666; }
@@ -40,15 +41,16 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-    <span class="emph">April 22, 2018</span><br />
-Module Versions: <a href="#kserv">Kserv 6.6.4</a>, 
-<a href="#ballserver">Ballserver 6.6.4</a>,
-<a href="#lodmixer">LOD Mixer 6.6.4</a>,
-<a href="#stadiumserver">Stadium Server 6.6.4</a>,
-<a href="#faceserver">Faceserver 6.7.0</a>,
-<a href="#bootserver">Bootserver 6.7.0</a>,
-<a href="#afs2fs">AFS2FS 6.6.4</a>
-<a href="#speeder">Speeder 6.6.6</a>
+    <span class="emph">April 28, 2020</span><br />
+Module Versions: <a href="#kserv">Kserv 6.8.0</a>, 
+<a href="#ballserver">Ballserver 6.8.0</a>,
+<a href="#lodmixer">LOD Mixer 6.8.0</a>,
+<a href="#stadiumserver">Stadium Server 6.8.0</a>,
+<a href="#faceserver">Faceserver 6.8.0</a>,
+<a href="#bootserver">Bootserver 6.8.0</a>,
+<a href="#gloveserver">Gloveserver 6.8.0</a>,
+<a href="#afs2fs">AFS2FS 6.8.0</a>
+<a href="#speeder">Speeder 6.8.0</a>
 </div>
 
 
@@ -61,7 +63,7 @@ Soccer 2007.
 It is a loader and manager for various modules.</p>
 
 <p>
-<a href="#kserv">Kserv Module 6.6.4</a> was historically the first module implemented (that's
+<a href="#kserv">Kserv Module</a> was historically the first module implemented (that's
 where Kitserver got its original name from). It provides an alternative way of managing players and goalkeeper kits
 outside of the game's AFS file: you organize the PNG or BMP kit images into an external
 database, which is basically a collection of folders and files that follows few simple rules.
@@ -78,20 +80,20 @@ teams - licensed and unlicensed!</span>
 </p>
 
 <p>
-The <a href="#ballserver">BallServer Module 6.6.4</a> does similar things to KitServer, it offers the
+The <a href="#ballserver">BallServer Module</a> does similar things to KitServer, it offers the
 possibility of chosing a ball from the GDB. Of course it is possible to store
 as many balls as you like. You can use different texture sizes for the balls: standard - 256x256,
 and also 512x512 and 1024x1024.
 </p>
 
 <p>
-<a href="#lodmixer">LOD Mixer Module 6.6.4</a> allows to make some tweaks to the graphics engine of the game, such
+<a href="#lodmixer">LOD Mixer Module</a> allows to make some tweaks to the graphics engine of the game, such
 as Level-of-Detail ajustment, crowd-fix, automatic aspect ratio correction, as well as choosing
 some locked parameters for Cup/League/ML/Online modes - such as how full the stadium should be, 
 for example.
 </p>
 
-<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server 6.6.4</a>.
+<p>If you want to use additional stadiums, take a look at <a href="#stadiumserver">Stadium Server</a>.
 With it, you can organize your stadiums in GDB and again have as large collection as you wish,
 only limited by your hard disk space. Another benefit of using Stadium Server is that you can pick the stadium
 in situations where the game itself doesn't offer you such an option: for example in league, cup
@@ -99,19 +101,26 @@ modes or during online matches.
 </p>
 
 <p>
-<a href="#faceserver">Faceserver Module 6.7.0</a> controls players faces and hair. You can assign a face BIN and a hair BIN
+<a href="#faceserver">Faceserver Module</a> controls players faces and hair. You can assign a face BIN and a hair BIN
 to any player, so potentially every single player in the game can have his own face/hair! (If you
 have a big hard drive of course).
 </p>
 
 <p>
-Due to popular demand, we have also created <a href="#bootserver">Bootserver Module 6.7.0</a> module, which allows you to 
+Due to popular demand, we have also created <a href="#bootserver">Bootserver Module</a> module, which allows you to 
 assign each player his own boots. <span class="exclam">With bootserver, you are no longer limited
 by 9 slots for boots that the game offers.</span>
 </p>
 
 <p>
-<a href="#afs2fs">AFS2FS Module 6.6.4</a> module allows you to organize your
+Any player can now have individual goalkeeper gloves assigned to him with <a href="#gloveserver">Gloveserver Module</a>.
+The left and right gloves can have different images (although that is only visible on LOD #1), and also glove textures
+dimensions are not limited to 64x128 pixels. They can be HD high-detailed gloves! Credit to <b>Alegor</b> for suggesting
+that feature.
+</p>
+
+<p>
+<a href="#afs2fs">AFS2FS Module</a> module allows you to organize your
 patches into folders and files, instead of inserting them into AFS-files. This
 way, you can quickly add/remove patches, and also never worry about needing
 to re-build AFS, because of lack of space for a particular BIN.
@@ -1286,11 +1295,68 @@ properly, you need to go to "Edit Boots" menu in Edit mode, and set the <b>Type 
 "Editable" boots. (One easy way to accomplish this is to reset all boot types to Default).</span>
 </p>
 
+<!-- ### GLOVESERVER ### -->
+
+<h2 id="gloveserver">Gloveserver Module 6.8.0 (gloves.dll)</h2>
+
+<h3>8.1 Introduction</h3>
+<p>
+Gloveserver allows you to have <b>individual</b> goalkeeper gloves assigned to each player.
+Normally, GK gloves are part of kit - but in that case, all goalkeepers in the team share the
+same gloves. With Gloveserver, several new things are possible:
+</p>
+<ol>
+<li>Personal GK gloves can be assigned to any player</li>
+<li>GK gloves can be standard (64x128) or HD (128x256, 256x512, etc.)</li>
+<li>Separate images can be supplied for left and right gloves.</li>
+</ol>
+
+<img class="inl" src="gloves1.jpg" />
+<img class="inl" src="gloves2.jpg" />
+
+<h3>8.2 How to use</h3>
+<p>Go to <b>Edit Mode</b> to find out the ID of a player that you want to assign GK gloves.
+On the images above and below, Barcelona keeper Victor Valdes is used as an example.
+</p>
+
+<p>You organize your gloves in whatever folder hierarchy you want under <b>GDB\gloves</b>, and then
+use the map file - <b>GDB\gloves\map.txt</b> - to assign glove images to players, just like
+with any player-centric module (Faceserver, Bootserver, etc.)<br />
+</p>
+
+<img class="inl" src="gloves3.jpg" />
+
+<p>The format is simple: <i>player-id, left-glove-image, right-glove-image</i>.
+</p>
+
+<pre>
+
+3133, "Barcelona\Valdes-glove-left.png", "Barcelona\Valdes-glove-right.png"
+
+</pre>
+<p>
+The image for right glove is optional. If you don't supply it and you don't have it in the map.txt, then
+the image for left glove will be used for both textures. <span class="emph">If you have the right glove image, then make
+sure it is <b>flipped (as if viewed in a mirror)</b> - this is required for it to look correctly in the game</span>
+(as the game will mirror it again - to return to normal view, when rendering right hand glove)
+</p>
+
+<p>Example glove textures:<br />
+<b>Left</b> (normal), <b>Right</b> (mirrored):<br />
+<img class="inl" src="vv-left.png" /> <img class="inl" src="vv-right.png" />
+</p>
+
+<p class="devnote">
+(Keep in mind though that left/right distinction is only rendered for LOD #1. For any
+less detailed LODs, the left glove texture is used for both hands. That's just how the
+game works.)
+</p>
+
 <!-- ### AFS2FS ### -->
 
 <h2 id="afs2fs">AFS2FS Module 6.6.4 (afs2fs.dll)</h2>
 
-<h3>8.1. Introduction</h3>
+<h3>9.1. Introduction</h3>
 <p>
 This module allows to organize your BIN-files into folders on disk, instead of inserting them into AFS (*.afs) files, which is sometimes a pain, and may require a lot of extra disk space.
 </p>
@@ -1301,7 +1367,7 @@ This module allows to organize your BIN-files into folders on disk, instead of i
 <p>Another useful feature (which is unique to this version to AFS2FS module, and does not exist in kitservers for later versions of the game), is that multiple root folders are supported, which makes it really easy to manage multiple patches: you can install/uninstall them by dragging the folders and/or modifying the afs2fs.cfg configuration file. You can re-order them if needed, in case of the overlap in content. See the section called "AFS root folders" below for more details.
 </p>
 
-<h3>8.2. How to set up the folders</h3>
+<h3>9.2. How to set up the folders</h3>
 
 <p>
 Let's start with the simplest scenario. In <b>kitserver</b> folder, there should be a <b>dat</b> folder - if it's not there, create it, and then inside "dat", create folders, as needed, named - <b>0_text.afs</b>, <b>0_sound.afs</b>, <b>e_text.afs</b>, and so for. That's where you're going to be putting the BIN-files. 
@@ -1310,7 +1376,7 @@ Let's start with the simplest scenario. In <b>kitserver</b> folder, there should
 <p class="note">It's important to name the folders correctly: a folder must have exactly the same name as the corresponding AFS-file. For instance, if you call a folder 0_text, instead of 0_text.afs, things will not work.)
 </p>
 
-<h3>8.3. How to name the files</h3>
+<h3>9.3. How to name the files</h3>
 
 <p class="devnote">In general, you can name the files whichever way you want, but you must follow one rule: there must be a BIN number in the name, and it must be preceded by an underscore character ('_'). Also, the filenames CANNOT be longer than 63 characters.
 </p>
@@ -1329,7 +1395,7 @@ Examples of incorrectly named files:<br /><br />
 <span style="color:#800;font-weight:bold">face.bin</span> - no BIN number.<br />
 </p>
 
-<h3>8.4. AFS "root" folders</h3>
+<h3>9.4. AFS "root" folders</h3>
 <p>
 By default, the AFS2FS module expects to find the <b>dat</b> folder inside the <b>kitserver</b> folder, which serves as the single default AFS root. However, it is also possible to have a more flexible configuration. In <b>afs2fs.cfg</b> file, you can speficy the location of your root, which can be anywhere on your hard disk. You can also have multiple roots, which is very useful if you have several patches, and you don't want to lose track of which BINs came from which patches (so that you can easily uninstall a patch by just deleting its root folder).
 </p>
@@ -1370,7 +1436,7 @@ count.factor = 0.96
 
 <h2 id="advconfig">Advanced configuration</h2>
 
-<h3>9.1. Master configuration file: kload.cfg</h3>
+<h3>10.1. Master configuration file: kload.cfg</h3>
 
 <p>
 Typically, you wouldn't need to modify that, unless you're running into problems, or
@@ -1494,12 +1560,13 @@ Right away, you will notice how crappy the game looks ;-)
 <p>
 Programming: <b>juce</b>, <b>Robbie</b><br />
 Game reversing and analysis: <b>juce</b>, <b>Robbie</b>, <b>Kingsley813</b><br />
-Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun, Seax, pogoss</b><br />
+Testing: <b>biker_jim_uk, IamCool, mosu, Simonhibsey, qiankun, Seax, pogoss, Alegor</b><br />
 Kits: <b>Spark, kel, qiankun, OPM, Simonhibsey, Kleimann, danie (thedragon)</b><br />
 Balls: <b>DAMned</b><br />
 Ball models: <b>Ariel</b>, <b>Gwidon</b><br />
 Faces/Hair: <b>Mystiq</b>, <b>Alex</b><br />
 Boots: taken from boot collection by <b>Valmir</b>, actual authors unknown.<br />
+HD boots and HD goalkeeper gloves ideas: <b>Alegor</b><br />
 Kits, balls, fonts, and numbers were taken from <a href="http://www.wevolution.org">http://www.wevolution.org</a> and
 <a href="http://forums.evo-web.co.uk">http://forums.evo-web.co.uk</a> sites.<br /> and also
 from a PES5 GDB collection by <b>FabioS</b><br />
