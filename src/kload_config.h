@@ -21,6 +21,7 @@ typedef struct _KLOAD_CONFIG_STRUCT {
 	BOOL emulateHW_TnL;
 	DWORD newResMem;
 	float fontSizeFactor;
+    BOOL drawFPS;
 } KLOAD_CONFIG;
 
 BOOL ReadConfig(KLOAD_CONFIG* config, char* cfgFile);
