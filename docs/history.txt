@@ -10,6 +10,7 @@ v6.8.0
 - faceserver: re-worked HD face/hair logic - should fix errors with wrong face/hair
 - bootserver: HD boots
 - new module - gloveserver (gloves.dll): allows individual assignment of GK gloves
+- keybind.exe renamed to keyconf.exe - to avoid antivirus complaints
 
 
 2018-04-22
