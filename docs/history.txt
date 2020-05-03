@@ -11,6 +11,7 @@ v6.8.0
 - bootserver: HD boots
 - new module - gloveserver (gloves.dll): allows individual assignment of GK gloves
 - keybind.exe renamed to keyconf.exe - to avoid antivirus complaints
+- lodmixer: manual aspect ratio setting
 
 
 2018-04-22
