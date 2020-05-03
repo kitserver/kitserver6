@@ -41,7 +41,7 @@ Version history: <a href="history.txt">history.txt</a><br />
 Chinese Version is <a href="manual-chs.html">here</a>
 </div>
 <div>
-    <span class="emph">April 28, 2020</span><br />
+    <span class="emph">May 2, 2020</span><br />
 Module Versions: <a href="#kserv">Kserv 6.8.0</a>, 
 <a href="#ballserver">Ballserver 6.8.0</a>,
 <a href="#lodmixer">LOD Mixer 6.8.0</a>,
@@ -281,7 +281,7 @@ bindings can be remapped, using <b>keybind.exe</b> program:<br/>
 
 <!-- ### KITSERVER ### -->
 
-<h2 id="kserv">Kserv Module 6.6.4 (kserv.dll)</h2>
+<h2 id="kserv">Kserv Module (kserv.dll)</h2>
 
 <h3>2.1 GDB organization</h3>
 <p>
@@ -739,7 +739,7 @@ number of available pages.
 
 <!-- ### BALLSERVER ### -->
 
-<h2 id="ballserver">Ballserver Module 6.6.4 (bserv.dll)</h2>
+<h2 id="ballserver">Ballserver Module (bserv.dll)</h2>
 
 <h3>3.1 Quick summary of the features</h3>
 
@@ -883,7 +883,7 @@ in the preview. However, it has effect on the ball which is chosen for the follo
 
 <!-- ### LODMIXER ### -->
 
-<h2 id="lodmixer">LOD Mixer Module 6.6.4 (lodmixer.dll)</h2>
+<h2 id="lodmixer">LOD Mixer Module (lodmixer.dll)</h2>
 
 <h3>4.1 How to use</h3>
 
@@ -919,7 +919,7 @@ let you can change the value.  The configuration is saved automatically.
 </p>
 
 <!-- ### STADIUM SERVER ### -->
-<h2 id="stadiumserver">Stadium Server Module 6.6.4 (stadium.dll)</h2>
+<h2 id="stadiumserver">Stadium Server Module (stadium.dll)</h2>
 <h3>5.1 Introduction</h3>
 <p>
 Stadium Server is a plug-in module for Kitserver. It allows to use additional stadiums, which
@@ -1253,46 +1253,18 @@ random-boots.enabled = 1
 </pre>
 </p>
 
-<h3>7.3. Switching between implementation algorithms</h3>
-
-<p>Bootserver module actually contains two different implementations. Both accomplish the
-same task, but using different means. We have included both of them in this release of bootserver
-to increase the chance of providing correct behaviour for everyone. In other words, if everything 
-works fine for you "out of the box", you don't need to worry about this and can stop reading now. 
-If, however, you notice a problem - perhaps a significant slowdown during the match, or a situation,
-where GDB boots should be displayed but aren't, you can try to switch to alternative implementation,
-and see if that helps your case. You can do that by modifying the <b>otherVersion</b> option in 
-<b>bootserv.cfg</b> file. Here's how it looks by default:</p>
-
-<pre>
-# bootserver configuration file
-
-random-boots.enabled = 0
-otherVersion = 0
-</pre>
+<h3>7.3. HD support</h3>
 
 <p>
-Setting <b>otherVersion</b> to <b>1</b> will switch the way bootserver works internally. A few words 
-on the difference between the two. You will need to know this, if you decide to try changing it.
+Starting with Bootserver 6.8.0, high-definition (HD) boots are supported too. I would live to give credit
+to <b>Alegor</b> - who suggested that feature (along with HD goalkeeper gloves). Basically, you can feed the game
+any PNG image of the correct proportions: standard size 170x256 pixels, and going higher: 340x512, 680x1024, etc.
+This way the boots will show more detail on close-ups, replays, and so on.
 </p>
 
-<pre>otherVersion = 0</pre>
 <p>
-This is the default mode of operation. Bootserver uses a new algorithm to determine which texture
-is being processed by the game engine and replaces it accordingly, if it's a boot texture. We decided
-to make this the default mode, because it uses a more generic approach than the other implementation,
-and can potentially be used in the future for other textures that each player has (such as kit,
-hair,face,etc.). Also, it doesn't require any modifications to your current boot setup (See next
-section for more details on that.)
-</p>
-
-<pre>otherVersion = 1</pre>
-<p>
-This activates the alternative algorithm in bootserver. It's simpler and less generic, but is also
-"lighter", meaning that it introduces less additional overhead for your PC to process, which
-may result in smoother frame rate. <span class="emph">In order for this implementation to function 
-properly, you need to go to "Edit Boots" menu in Edit mode, and set the <b>Type 1</b> to 
-"Editable" boots. (One easy way to accomplish this is to reset all boot types to Default).</span>
+Example: new Neymar boots in HD resolution by <b>muga</b>
+<img src="neymar-hd-boots.png" />
 </p>
 
 <!-- ### GLOVESERVER ### -->
@@ -1354,7 +1326,7 @@ game works.)
 
 <!-- ### AFS2FS ### -->
 
-<h2 id="afs2fs">AFS2FS Module 6.6.4 (afs2fs.dll)</h2>
+<h2 id="afs2fs">AFS2FS Module (afs2fs.dll)</h2>
 
 <h3>9.1. Introduction</h3>
 <p>
@@ -1566,7 +1538,8 @@ Balls: <b>DAMned</b><br />
 Ball models: <b>Ariel</b>, <b>Gwidon</b><br />
 Faces/Hair: <b>Mystiq</b>, <b>Alex</b><br />
 Boots: taken from boot collection by <b>Valmir</b>, actual authors unknown.<br />
-HD boots and HD goalkeeper gloves ideas: <b>Alegor</b><br />
+HD Neymar boots: <b>muga</b><br />
+Original idea about HD boots and HD goalkeeper gloves: <b>Alegor</b><br />
 Kits, balls, fonts, and numbers were taken from <a href="http://www.wevolution.org">http://www.wevolution.org</a> and
 <a href="http://forums.evo-web.co.uk">http://forums.evo-web.co.uk</a> sites.<br /> and also
 from a PES5 GDB collection by <b>FabioS</b><br />

@@ -2,6 +2,16 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2020-05-02
+----------
+v6.8.0
+- all source code updated to build with modern compiler (Visual Studio 2019)
+- fixed crashes related to font memory corruption
+- faceserver: re-worked HD face/hair logic - should fix errors with wrong face/hair
+- bootserver: HD boots
+- new module - gloveserver (gloves.dll): allows individual assignment of GK gloves
+
+
 2018-04-22
 ----------
 v6.7.1

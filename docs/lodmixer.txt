@@ -1,6 +1,6 @@
-LOD Mixer Module for Kitserver 6                              November 3,2006
+LOD Mixer Module for Kitserver 6                                   May 2,2020
 =============================================================================
-Version 6.0.0 
+Version 6.8.0 
 
 
 1. SUPPORTED GAME VERSIONS
@@ -155,6 +155,18 @@ the viewing area horizontally to adjust the aspect ratio to proper value,
 calculated as vertical-resolution-in-pixels diveded by horizontal-resolution
 in pixels. So players and the ball look good again, and also you get to 
 see more of the field! After all, that's what the widescreens are for :)
+
+New in 6.8.0 is "Manual Aspect Ratio" setting. Here, you can set the exact
+aspect ratio as you want. Sometimes, this is useful, because the pixel on
+your screen may not be exactly square, or maybe you wish to have your players
+slightly more "compressed" for that retro-look :-) . Automatic mode calculates
+aspect ratio as width-of-screen divided by height-of-screen. So you can start
+with that value and tweak it as you see fit.
+
+Examples:
+~~~~~~~~~
+For exact 16:9 screen, you would need to put: 1.77778
+For exact 16:10, it would be: 1.6
 
 
 5. CREDITS
