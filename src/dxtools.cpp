@@ -170,6 +170,26 @@ IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params)
     //params->MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
     //params->SwapEffect = D3DSWAPEFFECT_DISCARD;
 
+/***
+    LOG(&k_dxtools, "dxtoolsReset: WAS FullScreen_RefreshRateHz = %u", params->FullScreen_RefreshRateInHz);
+    LOG(&k_dxtools, "dxtoolsReset: WAS FullScreen_PresentationInterval = %u", params->FullScreen_PresentationInterval);
+    LOG(&k_dxtools, "dxtoolsReset: WAS BackBufferCount = %u", params->BackBufferCount);
+    LOG(&k_dxtools, "dxtoolsReset: WAS SwapEffect = %u", params->SwapEffect);
+    LOG(&k_dxtools, "dxtoolsReset: WAS MultiSampleType = %u", params->MultiSampleType);
+
+    //params->BackBufferCount = 2;
+    //params->MultiSampleType = D3DMULTISAMPLE_8_SAMPLES;
+    //params->FullScreen_RefreshRateInHz = 60;
+    //params->FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+    //params->SwapEffect = D3DSWAPEFFECT_DISCARD; 
+
+    LOG(&k_dxtools, "dxtoolsReset: NOW FullScreen_RefreshRateHz = %u", params->FullScreen_RefreshRateInHz);
+    LOG(&k_dxtools, "dxtoolsReset: NOW FullScreen_PresentationInterval = %u", params->FullScreen_PresentationInterval);
+    LOG(&k_dxtools, "dxtoolsReset: NOW BackBufferCount = %u", params->BackBufferCount);
+    LOG(&k_dxtools, "dxtoolsReset: NOW SwapEffect = %u", params->SwapEffect);
+    LOG(&k_dxtools, "dxtoolsReset: NOW MultiSampleType = %u", params->MultiSampleType);
+***/
+
 	// CALL ORIGINAL FUNCTION
     LogWithNumber(&k_dxtools, "dxtoolsReset: calling original = %08x", (DWORD)g_reset);
 	HRESULT res = g_reset(self, params);

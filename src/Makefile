@@ -209,7 +209,7 @@ md5.obj: md5.c md5.h
 
 speeder.lib: speeder.obj apihijack.obj
 speeder.dll: speeder.lib speeder.res kload.lib
-	$(LINK) $(LFLAGS) /out:speeder.dll /DLL speeder.obj apihijack.obj kload.lib speeder.res $(LIBS)
+	$(LINK) $(LFLAGS) /out:speeder.dll /DLL speeder.obj apihijack.obj kload.lib speeder.res winmm.lib $(LIBS)
 speeder.obj: speeder.cpp speeder.h
 apihijack.obj: apihijack.cpp apihijack.h
 

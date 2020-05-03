@@ -43,6 +43,9 @@ bool readConfig(config_t& config);
 
 KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(
         LARGE_INTEGER *lpPerformanceFrequency);
+KEXPORT BOOL WINAPI Override_QueryPerformanceCounter(
+        LARGE_INTEGER *lpPerformanceCounter);
+KEXPORT DWORD WINAPI Override_timeGetTime();
 
 
 /*******************/
@@ -81,10 +84,23 @@ void initModule()
           {
               { "QueryPerformanceFrequency", 
                   Override_QueryPerformanceFrequency },
+              //{ "QueryPerformanceCounter", 
+              //    Override_QueryPerformanceCounter },
               { NULL, NULL }
           }
        };
        HookAPICalls( &Kernel32Hook );
+       SDLLHook WinmmHook = 
+       {
+          "WINMM.DLL",
+          false, NULL,		// Default hook disabled, NULL function pointer.
+          {
+              { "timeGetTime", 
+                  Override_timeGetTime },
+              { NULL, NULL }
+          }
+       };
+       //HookAPICalls( &WinmmHook );
     }
     LogWithDouble(&k_speed, "count.factor = %0.2f", 
             (double)_speeder_config.count_factor);
@@ -146,6 +162,24 @@ bool readConfig(config_t& config)
 	return true;
 }
 
+KEXPORT BOOL WINAPI Override_QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCounter)
+{
+    LARGE_INTEGER metric;
+    BOOL result = QueryPerformanceCounter((LARGE_INTEGER*)&metric);
+    metric.QuadPart = metric.QuadPart * (double)_speeder_config.count_factor;
+    //LOG(&k_speed, 
+    //        "(old) hi=%08x, lo=%08x", metric.HighPart, metric.LowPart);
+    //if (fabs(_speeder_config.count_factor-1.0)>FLOAT_ZERO)
+    //{
+    //    metric.HighPart /= _speeder_config.count_factor;
+    //    metric.LowPart /= _speeder_config.count_factor;
+    //}
+    //LOG(&k_speed, 
+    //        "(new) hi=%08x, lo=%08x", metric.HighPart, metric.LowPart);
+    *lpPerformanceCounter = metric;
+    return result;
+}
+
 KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(LARGE_INTEGER *lpPerformanceFrequency)
 {
     LARGE_INTEGER metric;
@@ -155,8 +189,7 @@ KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(LARGE_INTEGER *lpPerforma
     if (fabs(_speeder_config.count_factor-1.0)>FLOAT_ZERO)
     {
         LOG(&k_speed, "Changing frequency");
-        metric.HighPart /= _speeder_config.count_factor;
-        metric.LowPart /= _speeder_config.count_factor;
+        metric.QuadPart /= _speeder_config.count_factor;
     }
     LOG(&k_speed, 
             "(new) hi=%08x, lo=%08x", metric.HighPart, metric.LowPart);
@@ -164,3 +197,8 @@ KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(LARGE_INTEGER *lpPerforma
     return result;
 }
 
+KEXPORT DWORD WINAPI Override_timeGetTime()
+{
+    //LOG(&k_speed, "timeGetTime() CALLED!");
+    return timeGetTime() * _speeder_config.count_factor;
+}
