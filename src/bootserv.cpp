@@ -71,9 +71,8 @@ DWORD code[CODELEN];
 
 class BootServConfig {
 public:
-    BootServConfig() : _randomBootsEnabled(false), _version(BOOT_DEFAULT_VERSION) {}
+    BootServConfig() : _randomBootsEnabled(false) {}
     bool _randomBootsEnabled;
-    int _version;
 };
 
 class TexturePack {
@@ -167,19 +166,14 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		
 		// read config
     	readConfig();
-    	SetBootserverVersion(g_config._version);
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		Log(&k_boot,"Detaching dll...");
 		UnhookFunction(hk_D3D_CreateDevice,(DWORD)bootInit);
         UnhookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
-        if (g_config._version==VERSION_JUCE) {
-        	UnhookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
-        } else {
-        	UnhookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
-			UnhookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
-		};
+        UnhookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
+        UnhookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
 	}
 
 	return true;
@@ -196,14 +190,8 @@ void bootInit(IDirect3D8* self, UINT Adapter,
     
     HookFunction(hk_BeginUniSelect,(DWORD)bootBeginUniSelect);
     MasterHookFunction(code[C_RESETFLAG2_CS], 0, bootResetFlag2);
-    if (g_config._version==VERSION_JUCE) {
-	    MasterHookFunction(code[C_COPYPLAYERDATA_CS], 3, bootCopyPlayerData);
-	    HookFunction(hk_D3D_UnlockRect,(DWORD)bootUnlockRect);
-	
-	} else {
-		HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
-    	HookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
-    };
+    HookFunction(hk_PesGetTexture,(DWORD)bootPesGetTexture);
+    HookFunction(hk_BeginRenderPlayer,(DWORD)bootBeginRenderPlayer);
 
     // read the map
     readMap();
@@ -248,16 +236,11 @@ void readConfig()
         int val = 0;
 		if (sscanf(str,"random-boots.enabled = %d",&val)==1) {
             g_config._randomBootsEnabled = (val==1);
-        } else if (sscanf(str,"otherVersion = %d",&val)==1) {
-        	if (val==1)
-            	g_config._version = 1-BOOT_DEFAULT_VERSION;
         }
 
 		if (feof(cfg)) break;
 	}
 	fclose(cfg);
-	LogWithString(&k_boot, "readConfig: USING VERSION BY %s", 
-			(g_config._version==VERSION_JUCE)?"JUCE":"ROBBIE");
     LogWithNumber(&k_boot, "readConfig: g_config._randomBootsEnabled = %d", 
             g_config._randomBootsEnabled);
 }
@@ -375,10 +358,8 @@ void releaseBootTextures()
         }
     }
 
-    if (g_config._version==VERSION_ROBBIE) {
-		ZeroMemory(g_bootTextures, 64*4*2);
-	    ZeroMemory(g_bootPlayerIds, 64*4);
-	};
+    ZeroMemory(g_bootTextures, 64*4*2);
+    ZeroMemory(g_bootPlayerIds, 64*4);
 }
 
 void bootBeginUniSelect()
@@ -405,6 +386,19 @@ vector<string>::iterator getRandomElement(vector<string>& vec)
     return vec.begin() + pos;
 }
 
+static void SetDimensions(D3DXIMAGE_INFO *ii, UINT &w, UINT &h) {
+    // Find closest smaller Power-Of-2 texture
+    h = 256;
+    while ((h<<1) <= ii->Height) h = h<<1;
+    if (ii->Height == ii->Width) {
+        w = h;
+    }
+    else {
+        w = 170;
+        while ((w<<1) <= ii->Width) w = w<<1;
+    }
+}
+
 IDirect3DTexture8* getBootTexture(WORD playerId, bool big)
 {
     IDirect3DTexture8* bootTexture = NULL;
@@ -422,45 +416,53 @@ IDirect3DTexture8* getBootTexture(WORD playerId, bool big)
         } else {
             // haven't tried to load the textures for this player yet.
             // Do it now.
+            D3DXIMAGE_INFO ii;
             IDirect3DTexture8* temp;
             char filename[BUFLEN];
             sprintf(filename,"%sGDB\\boots\\%s", GetPESInfo()->gdbDir, it->second._textureFile.c_str());
-            if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                            GetActiveDevice(), filename,
-                            0, 0, 1, 0, 
+
+            if (SUCCEEDED(D3DXGetImageInfoFromFile(filename, &ii))) {
+                UINT w, h;
+                SetDimensions(&ii, w, h);
+                w = (big)? w : w/4;
+                h = (big)? h : h/4;
+                if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename,
+                            w, h, 1, 0,
                             D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
-                            D3DX_FILTER_NONE, D3DX_FILTER_NONE,
+                            D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
                             0, NULL, NULL, &temp))) {
-                D3DSURFACE_DESC desc;
-                temp->GetLevelDesc(0, &desc);
-                UINT Height = (big)? desc.Height : desc.Height/4;
-                UINT Width = Height*2;
-                // create canvas
-                char canvasFilename[512];
-                sprintf(canvasFilename, "%s\\bcanvas.png", GetPESInfo()->mydir);
-                if (SUCCEEDED(D3DXCreateTextureFromFileEx(
-                                GetActiveDevice(), canvasFilename,
-                                Width, Height, 1, 0, 
-                                D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
-                                D3DX_FILTER_NONE, D3DX_FILTER_NONE,
-                                0, NULL, NULL, &bootTexture))) {
-                    // copy the temp texture to canvas 3 times
-                    ReplaceBootTexture2(bootTexture, temp, Height);
-                }
-				// release the temp texture, as we don't need it anymore
-                temp->Release();
+                    UINT Height = h;
+                    UINT Width = Height*2;
+                    // create canvas
+                    char canvasFilename[512];
+                    sprintf(canvasFilename, "%s\\bcanvas.png", GetPESInfo()->mydir);
+                    if (SUCCEEDED(D3DXCreateTextureFromFileEx(
+                                    GetActiveDevice(), canvasFilename,
+                                    Width, Height, 1, 0, 
+                                    D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                                    D3DX_FILTER_NONE, D3DX_FILTER_NONE,
+                                    0, NULL, NULL, &bootTexture))) {
+                        // copy the temp texture to canvas 3 times
+                        ReplaceBootTexture2(bootTexture, temp, Height);
+                    }
+                    // release the temp texture, as we don't need it anymore
+                    temp->Release();
 
-                // store in the map
-                if (big) {
-                    it->second._big = bootTexture;
-                    LogWithNumber(&k_boot, "getBootTexture: loaded big texture for player %d", playerId);
+                    // store in the map
+                    if (big) {
+                        it->second._big = bootTexture;
+                        LOG(&k_boot, "getBootTexture: loaded big (%dx%d) texture for player %d", w, h, playerId);
+                    } else {
+                        it->second._small = bootTexture;
+                        LOG(&k_boot, "getBootTexture: loaded small (%dx%d) texture for player %d", w, h, playerId);
+                    }
+
                 } else {
-                    it->second._small = bootTexture;
-                    LogWithNumber(&k_boot, "getBootTexture: loaded small texture for player %d", playerId);
+                    LogWithString(&k_boot, "D3DXCreateTextureFromFileEx FAILED for %s", filename);
                 }
-
-            } else {
-                LogWithString(&k_boot, "D3DXCreateTextureFromFileEx FAILED for %s", filename);
+            }
+            else {
+                LogWithString(&k_boot, "D3DXGetImageInfoFromFile FAILED for %s", filename);
             }
 
             // update loaded flags, so that we only load each texture once

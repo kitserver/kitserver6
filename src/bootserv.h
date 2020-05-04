@@ -1,7 +1,7 @@
 // bootserv.h
 
 #define MODID 102
-#define NAMELONG "Bootserver 6.8.0"
+#define NAMELONG "Bootserver 6.8.1"
 #define NAMESHORT "BOOTSERV"
 
 #define DEFAULT_DEBUG 1
@@ -19,5 +19,3 @@ typedef struct _LINEUP_RECORD {
     BYTE isAway;
     WORD unknown3[0x22c];
 } LINEUP_RECORD;
-
-#define BOOT_DEFAULT_VERSION VERSION_ROBBIE
