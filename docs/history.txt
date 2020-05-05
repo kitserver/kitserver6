@@ -2,6 +2,13 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2020-05-05
+----------
+v6.8.1
+- fixed "transparent boots": supporting boots of wrong sizes again, when possible
+- fixed HD hair problems
+
+
 2020-05-02
 ----------
 v6.8.0

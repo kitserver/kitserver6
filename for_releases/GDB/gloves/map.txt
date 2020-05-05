@@ -1,0 +1,7 @@
+# Goalkeeper glove textures map
+# format:
+# <player-id>, "<left-glove>", "<right-glove>"
+
+3133, "Barcelona\VictorValdes-left.png", "Barcelona\VictorValdes-right.png"   # V.Valdes
+599, "Real Madrid\bandeeta-left.png", "Real Madrid\bandeeta-right.png"        # Casillas
+
