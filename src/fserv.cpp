@@ -90,13 +90,6 @@ char lastPlayerNumberString[BUFLEN],lastFaceFileString[BUFLEN];
 char lastHairFileString[BUFLEN];
 char tmpFilename[BUFLEN]; //crashes if this is defined locally in the functions
 
-struct TEXTURE_OBJ {
-    BYTE someInfo[0x20];
-    DWORD dw0;
-    DWORD width;
-    DWORD height;
-};
-
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
 void InitFserv();
 
@@ -1305,17 +1298,26 @@ void fservBeginRenderPlayer(DWORD playerMainColl)
                 bodyColl=*(DWORD**)(playerMainColl+0x18) + 2;
                 g_faceTexturesColl[0]=*bodyColl;  //remember p2 value for this lod level
                 g_faceTexturesPos[0] = 0;
+#ifdef FSERV_TEXDUMP
+                if (dump_now) LOG(&k_fserv, ">>>>>> g_faceTexturesColl[0]=%p", g_faceTexturesColl[0]);
+#endif
 
                 // face: lod=1
                 bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
                 g_faceTexturesColl[1]=*bodyColl;  //remember p2 value for this lod level
                 g_faceTexturesPos[1] = 0;
+#ifdef FSERV_TEXDUMP
+                if (dump_now) LOG(&k_fserv, ">>>>>> g_faceTexturesColl[1]=%p", g_faceTexturesColl[1]);
+#endif
 
                 // hair
                 bodyColl=*(DWORD**)(playerMainColl+0x1c) + 2;
                 bodyColl+=5;
                 bodyColl+=5;
                 g_hairTexturesColl[0]=*bodyColl;  //remember p2 value for this lod level
+#ifdef FSERV_TEXDUMP
+                if (dump_now) LOG(&k_fserv, ">>>>>> g_hairTexturesColl[0]=%p", g_hairTexturesColl[0]);
+#endif
             }
         }
     }
@@ -1342,29 +1344,34 @@ IDirect3DTexture8* getFaceTexture(WORD playerId, bool big)
             string filename(GetPESInfo()->gdbDir);
             filename += "GDB\\faces\\";
             filename += it->second._filename;
-            D3DXIMAGE_INFO ii;
-            ZeroMemory(&ii, sizeof(ii));
-            if (SUCCEEDED(D3DXGetImageInfoFromFile(filename.c_str(), &ii))) {
-                UINT w, h;
-                SetFaceDimensions(&ii, w, h);
-                w = (big)? w : w/2;
-                h = (big)? h : h/2;
-                if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename.c_str(),
-                            w, h, 1, 0,
-                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
-                            D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
-                            0, NULL, NULL, &faceTexture))) {
-                    // store in the map
-                    if (big) {
-                        it->second._big = faceTexture;
-                        LOG(&k_fserv, "getFaceTexture: loaded big (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
+            if (FileExists(filename.c_str())) {
+                D3DXIMAGE_INFO ii;
+                ZeroMemory(&ii, sizeof(ii));
+                if (SUCCEEDED(D3DXGetImageInfoFromFile(filename.c_str(), &ii))) {
+                    UINT w, h;
+                    SetFaceDimensions(&ii, w, h);
+                    w = (big)? w : w/2;
+                    h = (big)? h : h/2;
+                    if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename.c_str(),
+                                w, h, 1, 0,
+                                D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                                D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
+                                0, NULL, NULL, &faceTexture))) {
+                        // store in the map
+                        if (big) {
+                            it->second._big = faceTexture;
+                            LOG(&k_fserv, "getFaceTexture: loaded big (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
+                        }
+                        else {
+                            it->second._small = faceTexture;
+                            LOG(&k_fserv, "getFaceTexture: loaded small (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
+                        }
+                    } else {
+                        LOG(&k_fserv, "D3DXCreateTextureFromFileEx FAILED for %s", filename.c_str());
                     }
-                    else {
-                        it->second._small = faceTexture;
-                        LOG(&k_fserv, "getFaceTexture: loaded small (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
-                    }
-                } else {
-                    LOG(&k_fserv, "D3DXCreateTextureFromFileEx FAILED for %s", filename.c_str());
+                }
+                else {
+                    LOG(&k_fserv, "D3DXGetImageInfoFromFile FAILED for %s", filename.c_str());
                 }
             }
 
@@ -1400,29 +1407,34 @@ IDirect3DTexture8* getHairTexture(WORD playerId, bool big)
             string filename(GetPESInfo()->gdbDir);
             filename += "GDB\\hair\\";
             filename += it->second._filename;
-            D3DXIMAGE_INFO ii;
-            ZeroMemory(&ii, sizeof(ii));
-            if (SUCCEEDED(D3DXGetImageInfoFromFile(filename.c_str(), &ii))) {
-                UINT w, h;
-                SetHairDimensions(&ii, w, h);
-                w = (big)? w : w/2;
-                h = (big)? h : h/2;
-                if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename.c_str(),
-                            w, h, 1, 0,
-                            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
-                            D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
-                            0, NULL, NULL, &hairTexture))) {
-                    // store in the map
-                    if (big) {
-                        it->second._big = hairTexture;
-                        LOG(&k_fserv, "getHairTexture: loaded big (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
+            if (FileExists(filename.c_str())) {
+                D3DXIMAGE_INFO ii;
+                ZeroMemory(&ii, sizeof(ii));
+                if (SUCCEEDED(D3DXGetImageInfoFromFile(filename.c_str(), &ii))) {
+                    UINT w, h;
+                    SetHairDimensions(&ii, w, h);
+                    w = (big)? w : w/2;
+                    h = (big)? h : h/2;
+                    if (SUCCEEDED(D3DXCreateTextureFromFileEx(GetActiveDevice(), filename.c_str(),
+                                w, h, 1, 0,
+                                D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                                D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
+                                0, NULL, NULL, &hairTexture))) {
+                        // store in the map
+                        if (big) {
+                            it->second._big = hairTexture;
+                            LOG(&k_fserv, "getHairTexture: loaded big (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
+                        }
+                        else {
+                            it->second._small = hairTexture;
+                            LOG(&k_fserv, "getHairTexture: loaded small (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
+                        }
+                    } else {
+                        LOG(&k_fserv, "D3DXCreateTextureFromFileEx FAILED for %s", filename.c_str());
                     }
-                    else {
-                        it->second._small = hairTexture;
-                        LOG(&k_fserv, "getHairTexture: loaded small (%dx%d) texture for player %d: %s", w, h, playerId, filename.c_str());
-                    }
-                } else {
-                    LOG(&k_fserv, "D3DXCreateTextureFromFileEx FAILED for %s", filename.c_str());
+                }
+                else {
+                    LOG(&k_fserv, "D3DXGetImageInfoFromFile FAILED for %s", filename.c_str());
                 }
             }
 
@@ -1459,7 +1471,9 @@ void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
 
     for (int lod=0; lod<2; lod++) {
         if (p2==g_faceTexturesColl[lod] && p3==g_faceTexturesPos[lod]) {
-            //LOG(&k_fserv, "facePesGetTexture:: ^^^ face texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+#ifdef FSERV_TEXDUMP
+            if (dump_now) LOG(&k_fserv, "fservPesGetTexture:: ^^^ face texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+#endif
 
             BYTE j=lod;
             BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
@@ -1486,13 +1500,35 @@ void fservPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
 
     if (p2==g_hairTexturesColl[0] && p3>0) {
         // check texture size
-        TEXTURE_OBJ *t = (TEXTURE_OBJ*)(*res);
+#ifdef FSERV_TEXDUMP
+        if (dump_now) {
+            BYTE *p = (BYTE*)(*res);
+            for (int k=0;k<0x100;k+=0x10) {
+                LOG(&k_fserv, "fservPesGetTexture:: %p: %02x %02x %02x %02x | %02x %02x %02x %02x | %02x %02x %02x %02x | %02x %02x %02x %02x",
+                    p+k,
+                    p[k+0],p[k+1],p[k+2],p[k+3],
+                    p[k+4],p[k+5],p[k+6],p[k+7],
+                    p[k+8],p[k+9],p[k+10],p[k+11],
+                    p[k+12],p[k+13],p[k+14],p[k+15]);
+            }
+        }
+#endif
         int lod=-1;
-        if (t->width == 128 && t->height == 64) { lod = 0; }
-        else if (t->width == 64 && t->height == 32) { lod = 1; }
+        D3DSURFACE_DESC desc;
+        if ((*res)->GetLevelDesc(0, &desc) != D3D_OK) {
+            return;
+        }
+        if (desc.Width == 128 && desc.Height == 64) { lod = 0; }
+        else if (desc.Width == 64 && desc.Height == 32) { lod = 1; }
+
+#ifdef FSERV_TEXDUMP
+        if (dump_now) LOG(&k_fserv, "fservPesGetTexture:: ^^^ texture dimensions: %dx%d", desc.Width, desc.Height);
+#endif
 
         if (lod==0 || lod==1) {
-            //LOG(&k_fserv, "fservPesGetTexture:: ^^^ hair texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+#ifdef FSERV_TEXDUMP
+            if (dump_now) LOG(&k_fserv, "fservPesGetTexture:: ^^^ hair texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
+#endif
 
             BYTE j=lod;
             BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
