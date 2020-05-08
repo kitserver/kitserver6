@@ -216,8 +216,8 @@ void dxtoolsPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, H
     }
     SetWindowPos(hFocusWin, HWND_NOTOPMOST,
         rect.left, rect.top,
-        (dxconfig.window.width>0) ? dxconfig.window.width : 0,
-        (dxconfig.window.height>0) ? dxconfig.window.height : 0,
+        (dxconfig.window.width>0) ? rect.right-rect.left : 0,
+        (dxconfig.window.height>0) ? rect.bottom-rect.top : 0,
         flags);
 
     // enforce internal resolution
