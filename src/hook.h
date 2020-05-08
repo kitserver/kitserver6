@@ -263,6 +263,7 @@ enum HOOKS {
 	hk_D3D_UnlockRect,
 	hk_PesGetTexture,
 	hk_BeginRenderPlayer,
+	hk_D3D_BeforeCreateDevice,
 };
 
 KEXPORT void HookFunction(HOOKS h,DWORD addr);

@@ -10,24 +10,20 @@ HWND hFocusWin;
 HINSTANCE hInst;
 DXCONFIG dxconfig = {
     { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT},
+    DEFAULT_WINDOW_X, DEFAULT_WINDOW_Y,
+    0xFFFFFFFF, 0xFFFFFFFF,
     { DEFAULT_FULLSCREEN_WIDTH, DEFAULT_FULLSCREEN_HEIGHT},
     { DEFAULT_INTERNAL_WIDTH, DEFAULT_INTERNAL_HEIGHT }
 };
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
-EXTERN_C HRESULT _declspec(dllexport) STDMETHODCALLTYPE dxtoolsReset(
-    IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params);
-HRESULT STDMETHODCALLTYPE dxtoolsPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest,
-	HWND hWnd, LPVOID unused);
+void dxtoolsReset(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params);
+void dxtoolsPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused);
 void dxtoolsCreateDevice(IDirect3D8* self, UINT Adapter,
     D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
     D3DPRESENT_PARAMETERS *pPresentationParameters, 
     IDirect3DDevice8** ppReturnedDeviceInterface);
 BOOL ReadConfig(DXCONFIG* config, char* cfgFile);
-
-typedef HRESULT (STDMETHODCALLTYPE *PFNRESETFUNC)(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS*);
-PFNRESETFUNC g_reset = NULL;
-PFNPRESENTPROC g_present = NULL;
 
 #define DATALEN 2
 
@@ -64,13 +60,15 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		char tmp[512];
 		sprintf(tmp,"%skload.cfg",GetPESInfo()->mydir);
         ReadConfig(&dxconfig, tmp);
-		HookFunction(hk_D3D_CreateDevice,(DWORD)dxtoolsCreateDevice);
+		HookFunction(hk_D3D_BeforeCreateDevice,(DWORD)dxtoolsCreateDevice);
+		HookFunction(hk_D3D_Reset,(DWORD)dxtoolsReset);
 		
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
 		Log(&k_dxtools,"Detaching dll...");
-		UnhookFunction(hk_D3D_CreateDevice,(DWORD)dxtoolsCreateDevice);
+		UnhookFunction(hk_D3D_BeforeCreateDevice,(DWORD)dxtoolsCreateDevice);
+		UnhookFunction(hk_D3D_Reset,(DWORD)dxtoolsReset);
 	}
 
 	return true;
@@ -98,6 +96,44 @@ void SetInternalResolution(DXCONFIG *cfg)
     }
 }
 
+void dxtoolsSetDimensions(D3DPRESENT_PARAMETERS* params)
+{
+    LOG(&k_dxtools, "dxtoolsSetDimensions: params->Windowed = %d", params->Windowed);
+    LOG(&k_dxtools, "dxtoolsSetDimensions: backbuffer now: %dx%d", params->BackBufferWidth, params->BackBufferHeight);
+
+    if (params->Windowed) {
+        if (dxconfig.window.width>0 && dxconfig.window.height>0) {
+            // window
+            params->BackBufferWidth = dxconfig.window.width;
+            params->BackBufferHeight = dxconfig.window.height;
+            LOG(&k_dxtools, "dxtoolsSetDimensions: setting backbuffer for window: %dx%d",
+                    dxconfig.window.width, dxconfig.window.height);
+        }
+    }
+    else {
+        if (dxconfig.window.width==0 && dxconfig.window.height==0) {
+            // save window info for restoring backbuffer
+            dxconfig.window.width = params->BackBufferWidth;
+            dxconfig.window.height = params->BackBufferHeight;
+        }
+        if (dxconfig.fullscreen.width>0 && dxconfig.fullscreen.height>0) {
+            // fullscreen
+            params->BackBufferWidth = dxconfig.fullscreen.width;
+            params->BackBufferHeight = dxconfig.fullscreen.height;
+            LOG(&k_dxtools, "dxtoolsSetDimensions: setting fullscreen resolution: %dx%d",
+                    dxconfig.fullscreen.width, dxconfig.fullscreen.height);
+
+        }
+    }
+
+    if (params->Windowed) {
+        if (dxconfig.window.width>0 && dxconfig.window.height>0) {
+            // to resize window
+            HookFunction(hk_D3D_Present,(DWORD)dxtoolsPresent);
+        }
+    }
+}
+
 void dxtoolsCreateDevice(IDirect3D8* self, UINT Adapter,
     D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
     D3DPRESENT_PARAMETERS *pPresentationParameters, 
@@ -108,30 +144,8 @@ void dxtoolsCreateDevice(IDirect3D8* self, UINT Adapter,
 	DWORD newProtection;
 
     hFocusWin = hFocusWindow;
-	
-    vtable = (DWORD*)(*((DWORD*)*ppReturnedDeviceInterface));
-	protection = 0;
-	newProtection = PAGE_EXECUTE_READWRITE;
 
-    // hook Reset method
-    if (!g_reset) {
-        g_reset = (PFNRESETFUNC)vtable[VTAB_RESET];
-		if (VirtualProtect(vtable+VTAB_RESET, 4, newProtection, &protection))
-		{
-            vtable[VTAB_RESET] = (DWORD)dxtoolsReset;
-			Log(&k_dxtools,"Reset hooked.");
-		}
-    }
-
-    // hook Present method
-    if (!g_present) {
-        g_present = (PFNPRESENTPROC)vtable[VTAB_PRESENT];
-		if (VirtualProtect(vtable+VTAB_PRESENT, 4, newProtection, &protection))
-		{
-            vtable[VTAB_PRESENT] = (DWORD)dxtoolsPresent;
-			Log(&k_dxtools,"Present hooked.");
-		}
-    }
+    HookFunction(hk_D3D_Present,(DWORD)dxtoolsPresent);
 
     // Determine the game version
     int v = GetPESInfo()->GameVersion;
@@ -139,115 +153,55 @@ void dxtoolsCreateDevice(IDirect3D8* self, UINT Adapter,
     {
         memcpy(dta, dtaArray[v], sizeof(dta));
     }
+
+    dxtoolsSetDimensions(pPresentationParameters);
 }
 
-bool needs_setwindowpos(false);
-
-/* New Reset function */
-EXTERN_C HRESULT _declspec(dllexport) STDMETHODCALLTYPE dxtoolsReset(
-IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params)
+void dxtoolsReset(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params)
 {
-    LOG(&k_dxtools, "params = %p", params);
-    if (!params->Windowed) {
-        if (dxconfig.fullscreen.width>0 && dxconfig.fullscreen.height>0) {
-            // fullscreen
-            //dxconfig.window.width = params->BackBufferWidth;
-            //dxconfig.window.height = params->BackBufferHeight;
-            params->BackBufferWidth = dxconfig.fullscreen.width;
-            params->BackBufferHeight = dxconfig.fullscreen.height;
-            LogWithTwoNumbers(&k_dxtools, "dxtoolsReset: forcing fullscreen resolution: %dx%d",
-                    dxconfig.fullscreen.width, dxconfig.fullscreen.height);
+    LOG(&k_dxtools, "dxtoolsReset:: CALLED");
+    dxtoolsSetDimensions(params);
 
-        }
+    // enforce internal resolution
+    if (dxconfig.internal.width>0 && dxconfig.internal.height>0) {
+        SetInternalResolution(&dxconfig);
     }
-    else {
-        if (dxconfig.window.width>0 && dxconfig.window.height>0) {
-            // window
-            params->BackBufferWidth = dxconfig.window.width;
-            params->BackBufferHeight = dxconfig.window.height;
-            LogWithTwoNumbers(&k_dxtools, "dxtoolsReset: setting backbuffer for window: %dx%d",
-                    dxconfig.window.width, dxconfig.window.height);
-            //dxconfig.window.width = 0;
-            //dxconfig.window.height = 0;
+}
+
+void dxtoolsPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused)
+{
+    LOG(&k_dxtools, "dxtoolsPresent:: CALLED");
+    // resize window
+    if (dxconfig.window.width>0 && dxconfig.window.height>0) {
+        LOG(&k_dxtools, "dxtoolsPresent: resizing window");
+        UINT style = GetWindowLong(hFocusWin, GWL_STYLE);
+        LOG(&k_dxtools, "dxtoolsPresent: window style: 0x%x", style);
+        if (dxconfig.window_style != 0xFFFFFFFF) {
+            style = dxconfig.window_style;
+            SetWindowLong(hFocusWin, GWL_STYLE, style);
+            LOG(&k_dxtools, "dxtoolsPresent: window new style: 0x%x", style);
         }
+        if (dxconfig.window_exstyle != 0xFFFFFFFF) {
+            SetWindowLong(hFocusWin, GWL_EXSTYLE, dxconfig.window_exstyle);
+            LOG(&k_dxtools, "dxtoolsPresent: window new exstyle: 0x%x", dxconfig.window_exstyle);
+        }
+        RECT rect;
+        rect.left = dxconfig.window_x;
+        rect.top = dxconfig.window_y;
+        rect.right = rect.left + dxconfig.window.width;
+        rect.bottom = rect.top + dxconfig.window.height;
+        LOG(&k_dxtools, "dxtoolsPresent: window client area: {%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
+        AdjustWindowRect(&rect, style, FALSE);
+        LOG(&k_dxtools, "dxtoolsPresent: window rect adjusted: {%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
+        SetWindowPos(hFocusWin, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_FRAMECHANGED); 
     }
-
-    // force anti-aliasing
-    //params->MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
-    //params->SwapEffect = D3DSWAPEFFECT_DISCARD;
-
-/***
-    LOG(&k_dxtools, "dxtoolsReset: WAS FullScreen_RefreshRateHz = %u", params->FullScreen_RefreshRateInHz);
-    LOG(&k_dxtools, "dxtoolsReset: WAS FullScreen_PresentationInterval = %u", params->FullScreen_PresentationInterval);
-    LOG(&k_dxtools, "dxtoolsReset: WAS BackBufferCount = %u", params->BackBufferCount);
-    LOG(&k_dxtools, "dxtoolsReset: WAS SwapEffect = %u", params->SwapEffect);
-    LOG(&k_dxtools, "dxtoolsReset: WAS MultiSampleType = %u", params->MultiSampleType);
-
-    //params->BackBufferCount = 2;
-    //params->MultiSampleType = D3DMULTISAMPLE_8_SAMPLES;
-    //params->FullScreen_RefreshRateInHz = 60;
-    //params->FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-    //params->SwapEffect = D3DSWAPEFFECT_DISCARD; 
-
-    LOG(&k_dxtools, "dxtoolsReset: NOW FullScreen_RefreshRateHz = %u", params->FullScreen_RefreshRateInHz);
-    LOG(&k_dxtools, "dxtoolsReset: NOW FullScreen_PresentationInterval = %u", params->FullScreen_PresentationInterval);
-    LOG(&k_dxtools, "dxtoolsReset: NOW BackBufferCount = %u", params->BackBufferCount);
-    LOG(&k_dxtools, "dxtoolsReset: NOW SwapEffect = %u", params->SwapEffect);
-    LOG(&k_dxtools, "dxtoolsReset: NOW MultiSampleType = %u", params->MultiSampleType);
-***/
-
-	// CALL ORIGINAL FUNCTION
-    LogWithNumber(&k_dxtools, "dxtoolsReset: calling original = %08x", (DWORD)g_reset);
-	HRESULT res = g_reset(self, params);
 
     // enforce internal resolution
     if (dxconfig.internal.width>0 && dxconfig.internal.height>0) {
         SetInternalResolution(&dxconfig);
     }
 
-    if (params->Windowed) {
-        if (dxconfig.window.width>0 && dxconfig.window.height>0) {
-            needs_setwindowpos = true;
-        }
-    }
-
-	return res;
-}
-
-/* New Present function */
-HRESULT STDMETHODCALLTYPE dxtoolsPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest,
-	HWND hWnd, LPVOID unused)
-{
-    /*
-    // force anisotropic filtering
-    for (int i=0; i<8; i++) {
-        self->SetTextureStageState(i, D3DTSS_MAGFILTER, D3DTEXF_ANISOTROPIC);
-        self->SetTextureStageState(i, D3DTSS_MINFILTER, D3DTEXF_ANISOTROPIC);
-        self->SetTextureStageState(i, D3DTSS_MIPFILTER, D3DTEXF_ANISOTROPIC);
-    }
-    */
-
-    if (needs_setwindowpos) {
-        needs_setwindowpos = false;
-        if (dxconfig.window.width>0 && dxconfig.window.height>0) {
-            UINT style = GetWindowLong(hFocusWin, GWL_STYLE);
-            RECT rect;
-            //GetWindowRect(hFocusWin, &rect);
-            //LOG(&k_dxtools, "rect was:{%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
-            rect.left = 100;
-            rect.top = 100;
-            rect.right = rect.left + dxconfig.window.width;
-            rect.bottom = rect.top + dxconfig.window.height;
-            LOG(&k_dxtools, "rect then:{%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
-            AdjustWindowRect(&rect, style, FALSE);
-            LOG(&k_dxtools, "rect adjusted:{%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
-            SetWindowPos(hFocusWin, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_FRAMECHANGED); 
-        }
-    }
-
-	// CALL ORIGINAL FUNCTION
-	HRESULT res = g_present(self, src, dest, hWnd, unused);
-	return res;
+    UnhookFunction(hk_D3D_Present,(DWORD)dxtoolsPresent);
 }
 
 /**
@@ -310,6 +264,30 @@ BOOL ReadConfig(DXCONFIG* config, char* cfgFile)
 			if (sscanf(pValue, "%d", &value)!=1) continue;
 			LogWithNumber(&k_dxtools,"ReadConfig: dx.window.height = (%d)", value);
             config->window.height = value;
+		}
+        else if (lstrcmp(name, "dx.window.x")==0)
+		{
+			if (sscanf(pValue, "%d", &value)!=1) continue;
+			LogWithNumber(&k_dxtools,"ReadConfig: dx.window.x = (%d)", value);
+            config->window_x = value;
+		}
+        else if (lstrcmp(name, "dx.window.y")==0)
+		{
+			if (sscanf(pValue, "%d", &value)!=1) continue;
+			LogWithNumber(&k_dxtools,"ReadConfig: dx.window.y = (%d)", value);
+            config->window_y = value;
+		}
+        else if (lstrcmp(name, "dx.window.style")==0)
+		{
+			if (sscanf(pValue, "%x", &value)!=1) continue;
+			LogWithNumber(&k_dxtools,"ReadConfig: dx.window.style = (0x%x)", value);
+            config->window_style = value;
+		}
+        else if (lstrcmp(name, "dx.window.exstyle")==0)
+		{
+			if (sscanf(pValue, "%x", &value)!=1) continue;
+			LogWithNumber(&k_dxtools,"ReadConfig: dx.window.exstyle = (0x%x)", value);
+            config->window_exstyle = value;
 		}
         else if (lstrcmp(name, "internal.resolution.width")==0)
         {

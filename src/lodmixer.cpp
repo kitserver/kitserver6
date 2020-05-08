@@ -130,6 +130,7 @@ void ReadMenuData();
 void lodShowMenu();
 void lodInput(int code1, WPARAM wParam, LPARAM lParam);
 void lodReset(IDirect3DDevice8* self, LPVOID params);
+void lodPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused);
 void lodCreateDevice(IDirect3D8* self, UINT Adapter,
     D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
     D3DPRESENT_PARAMETERS *p, IDirect3DDevice8** ppReturnedDeviceInterface);
@@ -695,22 +696,41 @@ BYTE GetRandom(BYTE val, BYTE randBit)
 
 void lodReset(IDirect3DDevice8* self, LPVOID params)
 {
-    D3DPRESENT_PARAMETERS *p = (D3DPRESENT_PARAMETERS*)params;
-    correctAspectRatio(p->BackBufferWidth, p->BackBufferHeight);
+    HookFunction(hk_D3D_Present,(DWORD)lodPresent);
 }
 
 void lodCreateDevice(IDirect3D8* self, UINT Adapter,
     D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
     D3DPRESENT_PARAMETERS *p, IDirect3DDevice8** ppReturnedDeviceInterface) 
 {
-    correctAspectRatio(p->BackBufferWidth, p->BackBufferHeight);
+    HookFunction(hk_D3D_Present,(DWORD)lodPresent);
+}
+
+void lodPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused)
+{
+    D3DVIEWPORT8 vp;
+    LOG(&k_lodmixer, "lodPresent CALLED");
+
+    IDirect3DSurface8* bb;
+    // get the 0th backbuffer.
+    if (SUCCEEDED(self->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &bb)))
+    {
+        D3DSURFACE_DESC desc;
+        bb->GetDesc(&desc);
+        bb->Release();
+        correctAspectRatio(desc.Width, desc.Height);
+    }
+    else {
+        LOG(&k_lodmixer, "FAILED to get backbuffer");
+    }
+    UnhookFunction(hk_D3D_Present,(DWORD)lodPresent);
 }
 	
 void correctAspectRatio(UINT width, UINT height)
 {
     bool manualCorrection = g_aspectManualCheck && (g_aspect >= 0.1f);
     if (g_aspectCheck || manualCorrection) {
-        Log(&k_lodmixer,"adjusting aspect ratio corrector.");
+        LOG(&k_lodmixer,"adjusting aspect ratio corrector (for %dx%d)", width, height);
 
         DWORD protection = 0;
         DWORD newProtection = PAGE_EXECUTE_READWRITE;

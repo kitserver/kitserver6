@@ -256,6 +256,7 @@ PES_GETTEXTURE orgPesGetTexture = NULL;
 
 CALLLINE l_D3D_Create={0,NULL};
 CALLLINE l_D3D_GetDeviceCaps={0,NULL};
+CALLLINE l_D3D_BeforeCreateDevice={0,NULL};
 CALLLINE l_D3D_CreateDevice={0,NULL};
 CALLLINE l_D3D_Present={0,NULL};
 CALLLINE l_D3D_Reset={0,NULL};
@@ -1055,6 +1056,15 @@ HRESULT STDMETHODCALLTYPE NewCreateDevice(IDirect3D8* self, UINT Adapter,
         BehaviorFlags &= ~D3DCREATE_HARDWARE_VERTEXPROCESSING;
         BehaviorFlags &= ~D3DCREATE_MIXED_VERTEXPROCESSING;
         Log(&k_kload,"forcing SW TnL.");
+    }
+
+    for (int i=0;i<(l_D3D_BeforeCreateDevice.num);i++) {
+        if (l_D3D_BeforeCreateDevice.addr[i]!=0) {
+            LogWithNumber(&k_kload,"NewCreateDevice: calling 'before' function %x",l_D3D_BeforeCreateDevice.addr[i]);
+            NextCall=(PFNCREATEDEVICEPROC)l_D3D_BeforeCreateDevice.addr[i];
+            NextCall(self, Adapter, DeviceType, hFocusWindow,
+                BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
+        }
     }
 
     // Set antialiasing
@@ -2021,6 +2031,7 @@ CALLLINE* LineFromID(HOOKS h)
         case hk_D3D_UnlockRect: cl = &l_D3D_UnlockRect; break;
         case hk_PesGetTexture: cl = &l_PesGetTexture; break;
         case hk_BeginRenderPlayer: cl = &l_BeginRenderPlayer; break;
+        case hk_D3D_BeforeCreateDevice: cl = &l_D3D_BeforeCreateDevice; break;
     };
     return cl;
 };
