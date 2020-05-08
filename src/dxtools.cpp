@@ -50,6 +50,8 @@ DWORD dtaArray[][DATALEN] = {
 
 DWORD dta[DATALEN];
 
+DIMENSIONS _window;
+
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
@@ -62,7 +64,9 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
         ReadConfig(&dxconfig, tmp);
 		HookFunction(hk_D3D_BeforeCreateDevice,(DWORD)dxtoolsCreateDevice);
 		HookFunction(hk_D3D_Reset,(DWORD)dxtoolsReset);
-		
+    
+        _window.width = 0;
+        _window.height = 0;
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
@@ -109,12 +113,18 @@ void dxtoolsSetDimensions(D3DPRESENT_PARAMETERS* params)
             LOG(&k_dxtools, "dxtoolsSetDimensions: setting backbuffer for window: %dx%d",
                     dxconfig.window.width, dxconfig.window.height);
         }
+        else if (_window.width>0 && _window.height>0) {
+            params->BackBufferWidth = _window.width;
+            params->BackBufferHeight = _window.height;
+            LOG(&k_dxtools, "dxtoolsSetDimensions: setting backbuffer for window: %dx%d",
+                    _window.width, _window.height);
+        }
     }
     else {
         if (dxconfig.window.width==0 && dxconfig.window.height==0) {
-            // save window info for restoring backbuffer
-            dxconfig.window.width = params->BackBufferWidth;
-            dxconfig.window.height = params->BackBufferHeight;
+            // save window info for later
+            _window.width = params->BackBufferWidth;
+            _window.height = params->BackBufferHeight;
         }
         if (dxconfig.fullscreen.width>0 && dxconfig.fullscreen.height>0) {
             // fullscreen
@@ -127,10 +137,8 @@ void dxtoolsSetDimensions(D3DPRESENT_PARAMETERS* params)
     }
 
     if (params->Windowed) {
-        if (dxconfig.window.width>0 && dxconfig.window.height>0) {
-            // to resize window
-            HookFunction(hk_D3D_Present,(DWORD)dxtoolsPresent);
-        }
+        // to resize/restyle window
+        HookFunction(hk_D3D_Present,(DWORD)dxtoolsPresent);
     }
 }
 
@@ -171,30 +179,46 @@ void dxtoolsReset(IDirect3DDevice8* self, D3DPRESENT_PARAMETERS* params)
 void dxtoolsPresent(IDirect3DDevice8* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused)
 {
     LOG(&k_dxtools, "dxtoolsPresent:: CALLED");
-    // resize window
+
+    // resize and/or restyle window
+    LOG(&k_dxtools, "dxtoolsPresent: resizing window");
+    UINT style = GetWindowLong(hFocusWin, GWL_STYLE);
+    UINT exstyle = GetWindowLong(hFocusWin, GWL_EXSTYLE);
+    LOG(&k_dxtools, "dxtoolsPresent: window had style: 0x%x", style);
+    LOG(&k_dxtools, "dxtoolsPresent: window had exstyle: 0x%x", exstyle);
+    if (dxconfig.window_style != 0xFFFFFFFF) {
+        style = dxconfig.window_style;
+        SetWindowLong(hFocusWin, GWL_STYLE, style);
+        LOG(&k_dxtools, "dxtoolsPresent: window new style: 0x%x", style);
+    }
+    if (dxconfig.window_exstyle != 0xFFFFFFFF) {
+        SetWindowLong(hFocusWin, GWL_EXSTYLE, dxconfig.window_exstyle);
+        LOG(&k_dxtools, "dxtoolsPresent: window new exstyle: 0x%x", dxconfig.window_exstyle);
+    }
+
+    RECT rect = {0, 0, 0, 0};
+    rect.left = (dxconfig.window_x != 0xFFFFFFFF) ? dxconfig.window_x : 0;
+    rect.top =  (dxconfig.window_y != 0xFFFFFFFF) ? dxconfig.window_y : 0;
     if (dxconfig.window.width>0 && dxconfig.window.height>0) {
-        LOG(&k_dxtools, "dxtoolsPresent: resizing window");
-        UINT style = GetWindowLong(hFocusWin, GWL_STYLE);
-        LOG(&k_dxtools, "dxtoolsPresent: window style: 0x%x", style);
-        if (dxconfig.window_style != 0xFFFFFFFF) {
-            style = dxconfig.window_style;
-            SetWindowLong(hFocusWin, GWL_STYLE, style);
-            LOG(&k_dxtools, "dxtoolsPresent: window new style: 0x%x", style);
-        }
-        if (dxconfig.window_exstyle != 0xFFFFFFFF) {
-            SetWindowLong(hFocusWin, GWL_EXSTYLE, dxconfig.window_exstyle);
-            LOG(&k_dxtools, "dxtoolsPresent: window new exstyle: 0x%x", dxconfig.window_exstyle);
-        }
-        RECT rect;
-        rect.left = dxconfig.window_x;
-        rect.top = dxconfig.window_y;
         rect.right = rect.left + dxconfig.window.width;
         rect.bottom = rect.top + dxconfig.window.height;
         LOG(&k_dxtools, "dxtoolsPresent: window client area: {%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
-        AdjustWindowRect(&rect, style, FALSE);
+        AdjustWindowRectEx(&rect, style, FALSE, exstyle);
         LOG(&k_dxtools, "dxtoolsPresent: window rect adjusted: {%d,%d,%d,%d}", rect.left, rect.top, rect.right, rect.bottom);
-        SetWindowPos(hFocusWin, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_FRAMECHANGED); 
     }
+
+    UINT flags = SWP_FRAMECHANGED | SWP_NOZORDER;
+    if (dxconfig.window_x==0xFFFFFFFF || dxconfig.window_y==0xFFFFFFFF) {
+        flags |= SWP_NOMOVE;
+    }
+    if (dxconfig.window.width==0 || dxconfig.window.height==0) {
+        flags |= SWP_NOSIZE;
+    }
+    SetWindowPos(hFocusWin, HWND_NOTOPMOST,
+        rect.left, rect.top,
+        (dxconfig.window.width>0) ? dxconfig.window.width : 0,
+        (dxconfig.window.height>0) ? dxconfig.window.height : 0,
+        flags);
 
     // enforce internal resolution
     if (dxconfig.internal.width>0 && dxconfig.internal.height>0) {
