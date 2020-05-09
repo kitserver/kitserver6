@@ -272,15 +272,22 @@ void readSkinsMap()
                 int token=2;
                 while (p) {
                     ZeroMemory(buf, BUFLEN);
-                    if (sscanf(p+1, "%*[^,\"]\"%[^\"]%*[^\n]", buf)==1) {
-                        //LOG(&k_skin, "token (%d): {%s}", token, buf);
-                        switch (token) {
-                            case 2: pack._textureFile = buf; break;
-                            case 3: pack._glovesFile = buf; break;
-                        }
+                    char *start = strchr(p+1,'\"');
+                    if (!start) {
+                        break;
+                    }
+                    char *finish = strchr(start+1,'\"');
+                    if (!finish) {
+                        break;
+                    }
+                    memcpy(buf, start+1, finish-start-1);
+                    //LOG(&k_skin, "token (%d): {%s}", token, buf);
+                    switch (token) {
+                        case 2: pack._textureFile = buf; break;
+                        case 3: pack._glovesFile = buf; break;
                     }
                     token++;
-                    p = strchr(p+1,',');
+                    p = strchr(finish+1,',');
                 }
                 LOG(&k_skin, "id:%d, skin:{%s}, gloves:{%s}",
                     number, pack._textureFile.c_str(), pack._glovesFile.c_str());

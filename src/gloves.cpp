@@ -270,15 +270,22 @@ void readMap()
                 int token=2;
                 while (p) {
                     ZeroMemory(buf, BUFLEN);
-                    if (sscanf(p+1, "%*[^,\"]\"%[^\"]%*[^\n]", buf)==1) {
-                        //LOG(&k_gloves, "token (%d): {%s}", token, buf);
-                        switch (token) {
-                            case 2: pack._leftFile = buf; break;
-                            case 3: pack._rightFile = buf; break;
-                        }
+                    char *start = strchr(p+1,'\"');
+                    if (!start) {
+                        break;
+                    }
+                    char *finish = strchr(start+1,'\"');
+                    if (!finish) {
+                        break;
+                    }
+                    memcpy(buf, start+1, finish-start-1);
+                    //LOG(&k_gloves, "token (%d): {%s}", token, buf);
+                    switch (token) {
+                        case 2: pack._leftFile = buf; break;
+                        case 3: pack._rightFile = buf; break;
                     }
                     token++;
-                    p = strchr(p+1,',');
+                    p = strchr(finish+1,',');
                 }
                 LOG(&k_gloves, "id:%d, left:{%s}, right:{%s}", number, pack._leftFile.c_str(), pack._rightFile.c_str());
                 g_glovesTexturePacks.insert(pair<WORD,TexturePack>(number,pack));

@@ -1,7 +1,7 @@
 // gloves.h
 
 #define MODID 114
-#define NAMELONG "Gloveserver 6.8.0"
+#define NAMELONG "Gloveserver 6.8.2"
 #define NAMESHORT "GLOVES"
 
 #define DEFAULT_DEBUG 1
