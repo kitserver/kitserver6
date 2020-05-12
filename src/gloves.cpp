@@ -90,8 +90,8 @@ public:
 unordered_map<WORD,TexturePack> g_glovesTexturePacks;
 DWORD g_skinTexturesColl[5];
 DWORD g_skinTexturesPos[5];
-DWORD g_handsTexturesColl[6];
-DWORD g_handsTexturesPos[6];
+DWORD g_handsTexturesColl[7];
+DWORD g_handsTexturesPos[7];
 IDirect3DTexture8* g_gloveTextures[2][64]; //[left GK/right GK][32*team + posInTeam]
 DWORD g_playerIds[64]; //[32*team + posInTeam]
 DWORD currRenderPlayer=0xffffffff;
@@ -287,8 +287,11 @@ void readMap()
                     token++;
                     p = strchr(finish+1,',');
                 }
-                LOG(&k_gloves, "id:%d, left:{%s}, right:{%s}", number, pack._leftFile.c_str(), pack._rightFile.c_str());
-                g_glovesTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+                if (!pack._leftFile.empty()) {
+                    pack._rightFile = (pack._rightFile.empty()) ? pack._leftFile : pack._rightFile;
+                    LOG(&k_gloves, "id:%d, left:{%s}, right:{%s}", number, pack._leftFile.c_str(), pack._rightFile.c_str());
+                    g_glovesTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+                }
             }
         }
 
@@ -399,7 +402,6 @@ bool isEditPlayerMode()
 }
 
 bool has_gloves = false;
-int hand_count = 0;
 IDirect3DTexture8 *skinTex = NULL;
 
 void glovesBeginRenderPlayer(DWORD playerMainColl)
@@ -432,7 +434,6 @@ void glovesBeginRenderPlayer(DWORD playerMainColl)
                 currRenderPlayer = playerNumber;
                 currRenderPlayerRecord = playerRecord(i);
                 has_gloves = *pgloves;
-                hand_count = 0;
 
 #ifdef GLOVES_TEXDUMP
                 if (dump_now) LOG(&k_gloves, ">>>>>>>>>>>> currRenderPlayer: %d, currRenderPlayerRecord: %p, pmc = %08x, has_gloves=%d",
@@ -476,8 +477,12 @@ void glovesBeginRenderPlayer(DWORD playerMainColl)
                     }
                     bodyColl+=7;
                 }
-                // lod=1: gk gloves
                 bodyColl=*(DWORD**)(playerMainColl+0x14) + 1;
+                g_handsTexturesColl[j]=*bodyColl;
+                g_handsTexturesPos[j]=isTrainingMode()?5:7;
+                j++;
+
+                // lod=1: gk gloves
                 bodyColl+=2;
                 g_handsTexturesColl[j]=*bodyColl;
                 g_handsTexturesPos[j]=isTrainingMode()?5:7;
@@ -531,16 +536,15 @@ void glovesPesGetTexture(DWORD p1, DWORD p2, DWORD p3, IDirect3DTexture8** res)
         }
     }
 
-    for (int i=0; i<6; i++) {
+    for (int i=0; i<7; i++) {
         if (p2==g_handsTexturesColl[i] && p3==g_handsTexturesPos[i]) {
-            hand_count += 1;
             // check for GK gloves
             if (*res != skinTex) {
 #ifdef GLOVES_TEXDUMP
                 if (dump_now) LOG(&k_gloves, "glovesPesGetTexture:: ^^^ GK glove texture!! p1=%08x, p2=%08x, p3=%08x, *res=%p", p1, p2, p3, *res);
 #endif
                 if (has_gloves) {
-                    int j=hand_count-1;
+                    int j = (i!=1)?0:1;
                     BYTE temp=32*currRenderPlayerRecord->team + currRenderPlayerRecord->posInTeam;
                     IDirect3DTexture8* gloveTexture=g_gloveTextures[j][temp];
                     if ((DWORD)gloveTexture != 0xffffffff) { //0xffffffff means: has no gdb gloves
