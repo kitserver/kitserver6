@@ -289,9 +289,11 @@ void readSkinsMap()
                     token++;
                     p = strchr(finish+1,',');
                 }
-                LOG(&k_skin, "id:%d, skin:{%s}, gloves:{%s}",
-                    number, pack._textureFile.c_str(), pack._glovesFile.c_str());
-                g_skinTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+                if (!pack._textureFile.empty()) {
+                    LOG(&k_skin, "id:%d, skin:{%s}, gloves:{%s}",
+                        number, pack._textureFile.c_str(), pack._glovesFile.c_str());
+                    g_skinTexturePacks.insert(pair<WORD,TexturePack>(number,pack));
+                }
             }
         }
 
