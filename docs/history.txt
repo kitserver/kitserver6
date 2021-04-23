@@ -2,6 +2,13 @@ Kitserver 6 HISTORY notes
 =========================
 
 
+2021-04-22
+----------
+v6.8.2
+- skinserver: new module to assign individual skins to players
+- window mode play: full control over window size, position, and decoration
+
+
 2020-05-05
 ----------
 v6.8.1
