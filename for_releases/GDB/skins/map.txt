@@ -1,0 +1,6 @@
+# Skin textures map
+# format:
+# <player-id>, "<skin-texture>", "<player-gloves-overlay>"
+
+3133, "Barcelona\Valdes.png"
+1044, "skin2.bmp", "gloves-purple.png"  # Ronaldinho
